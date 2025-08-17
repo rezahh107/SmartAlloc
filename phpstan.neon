@@ -1,0 +1,15 @@
+parameters:
+    level: max
+    paths:
+        - src/
+        - tests/
+    excludePaths:
+        - vendor/
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    ignoreErrors:
+        - '#Call to an undefined method [a-zA-Z0-9\\_]+::[a-zA-Z0-9\\_]+\(\)#'
+        - '#Access to an undefined property [a-zA-Z0-9\\_]+::\$[a-zA-Z0-9\\_]+#'
+    bootstrapFiles:
+        - tests/bootstrap.php
+    tmpDir: .phpstan-cache 

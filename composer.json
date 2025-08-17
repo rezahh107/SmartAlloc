@@ -1,0 +1,40 @@
+{
+    "name": "smartalloc/wordpress-plugin",
+    "description": "Event-driven student support allocation with Gravity Forms + Exporter",
+    "type": "wordpress-plugin",
+    "version": "1.1.2",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "رضا هاشمی حسینی",
+            "email": "developer@smartalloc.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.0",
+        "squizlabs/php_codesniffer": "^3.7",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SmartAlloc\\": "src/"
+        }
+    },
+    "scripts": {
+        "lint": "phpcs --standard=phpcs.xml",
+        "analyze": "phpstan analyse --memory-limit=1G",
+        "test": "phpunit --colors=always",
+        "prezip": "php -d detect_unicode=0 bin/check-version-sync.php",
+        "zip": "bash bin/make-zip.sh"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+} 
