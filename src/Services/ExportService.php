@@ -10,6 +10,8 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 /**
  * Enhanced Export Service with config-driven export functionality
+ *
+ * @note Filename generation sanitizes prefixes to prevent path traversal.
  */
 final class ExportService
 {
@@ -360,10 +362,13 @@ final class ExportService
     private function generateFilename(): string
     {
         $prefix = $this->config['filename_prefix'] ?? 'SabtExport';
+        $prefix = sanitize_file_name($prefix);
+        $prefix = str_replace(['..', '/', '\\'], '', $prefix);
+
         $date = current_time('Y_m_d');
         $counter = $this->getNextExportCounter();
         $batchNumber = $this->getNextBatchNumber();
-        
+
         return sprintf('%s-ALLOCATED-%s-%04d-B%03d.xlsx', $prefix, $date, $counter, $batchNumber);
     }
 

@@ -16,7 +16,10 @@ use SmartAlloc\Integration\{GravityForms, ActionSchedulerAdapter};
 
 /**
  * Main Bootstrap class for SmartAlloc plugin
- * Handles initialization, DI container setup, and service wiring
+ * Handles initialization, DI container setup, and service wiring.
+ *
+ * @note Event listeners now wired to `StudentSubmitted` as the initial
+ *       event in the allocation chain.
  */
 final class Bootstrap
 {
@@ -189,10 +192,10 @@ final class Bootstrap
         $bus = self::$container->get(EventBus::class);
 
         // Auto-assignment listener
-        $bus->on('AutoAssignRequested', new \SmartAlloc\Listeners\AutoAssignListener(self::$container));
+        $bus->on('StudentSubmitted', new \SmartAlloc\Listeners\AutoAssignListener(self::$container));
 
         // Activity logging listener
-        $bus->on('AutoAssignRequested', new \SmartAlloc\Listeners\LogActivityListener(self::$container));
+        $bus->on('StudentSubmitted', new \SmartAlloc\Listeners\LogActivityListener(self::$container));
 
         // Notification listener
         $bus->on('MentorAssigned', new \SmartAlloc\Listeners\NotifyListener(self::$container));

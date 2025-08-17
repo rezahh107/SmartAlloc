@@ -10,6 +10,9 @@ use SmartAlloc\Contracts\LoggerInterface;
 
 /**
  * Gravity Forms integration
+ *
+ * @note Dispatches `StudentSubmitted` before `AutoAssignRequested` for
+ *       event chain alignment.
  */
 final class GravityForms
 {
@@ -53,14 +56,19 @@ final class GravityForms
 
             // Extract student data
             $studentData = $this->extractStudentData($entry, $form);
-            
-            // Dispatch allocation event
-            $this->eventBus->dispatch('AutoAssignRequested', [
-                'student_id' => $entry['id'],
+
+            $payload = [
+                'student_id'   => $entry['id'],
                 'student_data' => $studentData,
-                'form_id' => $form['id'],
-                'timestamp' => current_time('mysql')
-            ]);
+                'form_id'      => $form['id'],
+                'timestamp'    => current_time('mysql')
+            ];
+
+            // Dispatch submission event before auto-assignment
+            $this->eventBus->dispatch('StudentSubmitted', $payload);
+
+            // Dispatch allocation event
+            $this->eventBus->dispatch('AutoAssignRequested', $payload);
 
         } catch (\Throwable $e) {
             $this->logger->error('Error handling form submission', [

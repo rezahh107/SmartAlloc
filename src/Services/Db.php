@@ -6,6 +6,9 @@ namespace SmartAlloc\Services;
 
 /**
  * Database service with migrations and helper methods
+ *
+ * @note QueryBuilder now builds WHERE clauses using prepared statements
+ *       to avoid SQL injection.
  */
 class Db
 {
@@ -322,6 +325,7 @@ class QueryBuilder
     private string $table;
     private array $select = ['*'];
     private array $where = [];
+    private array $params = [];
     private array $orderBy = [];
     private ?int $limit = null;
     private ?int $offset = null;
@@ -345,7 +349,9 @@ class QueryBuilder
 
     public function where(string $column, string $operator, $value): self
     {
-        $this->where[] = compact('column', 'operator', 'value');
+        $placeholder = is_numeric($value) ? '%d' : '%s';
+        $this->where[] = compact('column', 'operator', 'placeholder');
+        $this->params[] = $value;
         return $this;
     }
 
@@ -411,6 +417,10 @@ class QueryBuilder
             $sql .= " OFFSET {$this->offset}";
         }
 
+        if (!empty($this->params)) {
+            $sql = $this->wpdb->prepare($sql, $this->params);
+        }
+
         return $sql;
     }
 
@@ -418,7 +428,7 @@ class QueryBuilder
     {
         $clauses = [];
         foreach ($this->where as $condition) {
-            $clauses[] = "{$condition['column']} {$condition['operator']} '{$condition['value']}'";
+            $clauses[] = "{$condition['column']} {$condition['operator']} {$condition['placeholder']}";
         }
         return implode(' AND ', $clauses);
     }
