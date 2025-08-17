@@ -267,9 +267,9 @@ final class GravityForms
 
         foreach ($otherLiaisonFields as $otherFieldId) {
             $otherField = $this->getFieldById($form, $otherFieldId);
-            if ($otherField && !empty($otherField['value']) && !empty($value)) {
+            if ($otherField && !empty($otherField->value) && !empty($value)) {
                 $normalizedValue = $this->normalizeDigits($value);
-                $normalizedOther = $this->normalizeDigits($otherField['value']);
+                $normalizedOther = $this->normalizeDigits($otherField->value);
                 
                 if ($normalizedValue === $normalizedOther) {
                     $result['is_valid'] = false;
