@@ -7,6 +7,8 @@ namespace SmartAlloc\Services;
 /**
  * Three-layer cache service
  * L1: Object Cache (Redis/Memcached), L2: Transients, L3: Database
+ *
+ * @note L2 clearing scoped to `smartalloc_` transients with prepared queries.
  */
 final class Cache
 {
@@ -269,8 +271,18 @@ final class Cache
     {
         try {
             global $wpdb;
-            $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_%'");
-            $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_%'");
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    '_transient_smartalloc_%'
+                )
+            );
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    '_transient_timeout_smartalloc_%'
+                )
+            );
             return true;
         } catch (\Throwable $e) {
             return false;

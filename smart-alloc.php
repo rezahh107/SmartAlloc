@@ -10,6 +10,12 @@ Requires PHP: 8.1
 Update URI: false
 */
 
+/**
+ * Main plugin bootstrap.
+ *
+ * @note Admin menu and page titles are now localized.
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -81,48 +87,48 @@ if (defined('WP_CLI') && WP_CLI) {
 // Persian Admin Menu
 add_action('admin_menu', function() {
     add_menu_page(
-        'مدیریت تخصیص هوشمند', // Page title
-        'مدیریت تخصیص هوشمند', // Menu title
-        SMARTALLOC_CAP, // Capability
-        'smartalloc-dashboard', // Menu slug
-        function() { SmartAlloc\Http\Admin\AdminController::dashboard(); }, // Callback
-        'dashicons-groups', // Icon
-        30 // Position
+        esc_html__('مدیریت تخصیص هوشمند', 'smart-alloc'),
+        esc_html__('مدیریت تخصیص هوشمند', 'smart-alloc'),
+        SMARTALLOC_CAP,
+        'smartalloc-dashboard',
+        function() { SmartAlloc\Http\Admin\AdminController::dashboard(); },
+        'dashicons-groups',
+        30
     );
-    
+
     add_submenu_page(
         'smartalloc-dashboard',
-        'داشبورد',
-        'داشبورد',
+        esc_html__('داشبورد', 'smart-alloc'),
+        esc_html__('داشبورد', 'smart-alloc'),
         SMARTALLOC_CAP,
         'smartalloc-dashboard',
         function() { SmartAlloc\Http\Admin\AdminController::dashboard(); }
     );
-    
+
     add_submenu_page(
         'smartalloc-dashboard',
-        'تنظیمات',
-        'تنظیمات',
+        esc_html__('تنظیمات', 'smart-alloc'),
+        esc_html__('تنظیمات', 'smart-alloc'),
         SMARTALLOC_CAP,
         'smartalloc-settings',
         function() { SmartAlloc\Http\Admin\AdminController::settings(); }
     );
-    
+
     add_submenu_page(
         'smartalloc-dashboard',
-        'گزارش‌ها',
-        'گزارش‌ها',
+        esc_html__('گزارش‌ها', 'smart-alloc'),
+        esc_html__('گزارش‌ها', 'smart-alloc'),
         SMARTALLOC_CAP,
         'smartalloc-reports',
         function() { SmartAlloc\Http\Admin\AdminController::reports(); }
     );
-    
+
     add_submenu_page(
         'smartalloc-dashboard',
-        'لاگ‌ها',
-        'لاگ‌ها',
+        esc_html__('لاگ‌ها', 'smart-alloc'),
+        esc_html__('لاگ‌ها', 'smart-alloc'),
         SMARTALLOC_CAP,
         'smartalloc-logs',
         function() { SmartAlloc\Http\Admin\AdminController::logs(); }
     );
-}); 
+});
