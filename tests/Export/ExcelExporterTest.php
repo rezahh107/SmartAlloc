@@ -6,6 +6,7 @@ namespace SmartAlloc\Tests\Export;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use SmartAlloc\Infra\Export\ExcelExporter;
+use SmartAlloc\Infra\Export\CountersRepository;
 use SmartAlloc\Tests\BaseTestCase;
 
 final class ExcelExporterTest extends BaseTestCase
@@ -23,7 +24,13 @@ final class ExcelExporterTest extends BaseTestCase
     {
         $wpdb = $this->mockWpdb($this->sampleRows());
         $configPath = dirname(__DIR__, 2) . '/SmartAlloc_Exporter_Config_v1.json';
-        return new ExcelExporter($wpdb, $configPath, sys_get_temp_dir());
+        $repo = new class extends CountersRepository {
+            private int $d = 0;
+            private int $b = 0;
+            public function __construct() {}
+            public function getNextCounters(): array { $this->d++; $this->b++; return [$this->d, $this->b]; }
+        };
+        return new ExcelExporter($wpdb, $configPath, sys_get_temp_dir(), $repo);
     }
 
     public function test_file_naming_pattern(): void

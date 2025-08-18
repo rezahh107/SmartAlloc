@@ -7,6 +7,8 @@ namespace SmartAlloc\Infra\Export;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Settings;
+use PhpOffice\PhpSpreadsheet\CachedObjectStorageFactory;
 
 /**
  * Excel exporter aligned with SmartAlloc spec.
@@ -17,16 +19,15 @@ class ExcelExporter
     private string $configPath;
     private string $exportDir;
 
-    private static int $batchCounter = 1;
-    private static string $lastDate = '';
-    private static int $dailyCounter = 0;
+    private CountersRepository $counters;
 
-    public function __construct(private $wpdb, ?string $configPath = null, ?string $exportDir = null)
+    public function __construct(private $wpdb, ?string $configPath = null, ?string $exportDir = null, ?CountersRepository $counters = null)
     {
         $this->configPath = $configPath ?? dirname(__DIR__, 3) . '/SmartAlloc_Exporter_Config_v1.json';
         $this->exportDir  = $exportDir  ?? sys_get_temp_dir();
         $configContent    = file_get_contents($this->configPath) ?: '{}';
         $this->config     = json_decode($configContent, true) ?: [];
+        $this->counters   = $counters ?? new CountersRepository($this->wpdb);
     }
 
     /**
@@ -78,6 +79,12 @@ class ExcelExporter
      */
     private function buildSpreadsheet(array $rows): array
     {
+        if (count($rows) > 1000) {
+            Settings::setCacheStorageMethod(CachedObjectStorageFactory::cache_to_discISAM, [
+                'dir' => sys_get_temp_dir(),
+            ]);
+        }
+
         $spreadsheet = new Spreadsheet();
         $spreadsheet->removeSheetByIndex(0);
 
@@ -99,6 +106,7 @@ class ExcelExporter
         $filename = $this->generateFilename();
         $path     = $this->exportDir . DIRECTORY_SEPARATOR . $filename;
         $writer   = new Xlsx($spreadsheet);
+        $writer->setPreCalculateFormulas(false);
         $writer->save($path);
 
         return ['path' => $path, 'spreadsheet' => $spreadsheet];
@@ -113,14 +121,18 @@ class ExcelExporter
         $manual    = $this->countByStatus($rows, 'manual');
         $rejected  = $this->countByStatus($rows, 'rejected');
         $total     = count($rows);
-        $fuzzy     = count(array_filter($rows, static fn($r) => !empty($r['fuzzy'])));
+        $fuzzyAuto = count(array_filter($rows, static fn($r) => ($r['status'] ?? '') === 'allocated' && !empty($r['fuzzy'])));
+        $fuzzyManual = count(array_filter($rows, static fn($r) => ($r['status'] ?? '') === 'manual' && !empty($r['fuzzy'])));
+        $fuzzyTotal  = count(array_filter($rows, static fn($r) => !empty($r['fuzzy'])));
 
         $data = [
-            'allocated'      => $allocated,
-            'manual'         => $manual,
-            'rejected'       => $rejected,
-            'capacity_usage' => $total > 0 ? round($allocated / $total, 2) : 0,
-            'fuzzy_rate'     => $total > 0 ? round($fuzzy / $total, 2) : 0,
+            'allocated'         => $allocated,
+            'manual'            => $manual,
+            'rejected'          => $rejected,
+            'capacity_usage'    => $total > 0 ? round($allocated / $total, 2) : 0,
+            'fuzzy_auto_rate'   => $allocated > 0 ? round($fuzzyAuto / $allocated, 2) : 0,
+            'fuzzy_manual_rate' => $manual > 0 ? round($fuzzyManual / $manual, 2) : 0,
+            'fuzzy_rate'        => $total > 0 ? round($fuzzyTotal / $total, 2) : 0,
         ];
 
         $columns = $this->config['Summary'] ?? [];
@@ -172,20 +184,19 @@ class ExcelExporter
         return count(array_filter($rows, static fn($r) => ($r['status'] ?? '') === $status));
     }
 
+    private function getNextCounters(): array
+    {
+        return $this->counters->getNextCounters();
+    }
+
     private function generateFilename(): string
     {
-        $date = date('Y_m_d');
-        if (self::$lastDate !== $date) {
-            self::$dailyCounter = 0;
-            self::$lastDate     = $date;
-        }
-        self::$dailyCounter++;
-        $daily = str_pad((string) self::$dailyCounter, 4, '0', STR_PAD_LEFT);
+        [$daily, $batch] = $this->getNextCounters();
+        $date   = date('Y_m_d');
+        $dailyS = str_pad((string) $daily, 4, '0', STR_PAD_LEFT);
+        $batchS = str_pad((string) $batch, 3, '0', STR_PAD_LEFT);
 
-        $batch = str_pad((string) self::$batchCounter, 3, '0', STR_PAD_LEFT);
-        self::$batchCounter++;
-
-        return sprintf('SabtExport-ALLOCATED-%s-%s-B%s.xlsx', $date, $daily, $batch);
+        return sprintf('SabtExport-ALLOCATED-%s-%s-B%s.xlsx', $date, $dailyS, $batchS);
     }
 }
 
