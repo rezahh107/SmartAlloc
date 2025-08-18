@@ -30,14 +30,10 @@
         }
     },
     "scripts": {
-        "lint": "phpcs --parallel=4",
-        "fix": "phpcbf",
-        "analyze": "phpstan analyse --memory-limit=1G",
-        "test": "phpunit --colors=always",
-        "test:security": "phpunit tests/Security && psalm --taint-analysis src/Infra/Export",
-        "test:ci": "composer test:security && phpcs && psalm --taint-analysis",
-        "prezip": "php -d detect_unicode=0 bin/check-version-sync.php",
-        "zip": "bash bin/make-zip.sh"
+        "lint": "phpcs --standard=phpcs.xml.dist",
+        "test:security": "vendor/bin/phpunit tests/Security && vendor/bin/psalm --no-cache --taint-analysis --show-info=false",
+        "test": "vendor/bin/phpunit",
+        "ci": "composer lint && composer test:security && composer test"
     },
     "config": {
         "allow-plugins": {
