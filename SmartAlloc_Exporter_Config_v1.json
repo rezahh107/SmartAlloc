@@ -1,0 +1,14 @@
+{
+  "Summary": [
+    {"key": "allocated", "label": "Allocated"},
+    {"key": "manual", "label": "Manual"},
+    {"key": "rejected", "label": "Rejected"},
+    {"key": "capacity_usage", "label": "Capacity Usage"},
+    {"key": "fuzzy_rate", "label": "Fuzzy Rate"}
+  ],
+  "Errors": [
+    {"key": "id", "label": "ID"},
+    {"key": "status", "label": "Status"},
+    {"key": "reason_code", "label": "Reason"}
+  ]
+}
