@@ -7,6 +7,7 @@ use Brain\Monkey\Functions;
 use SmartAlloc\Contracts\LoggerInterface;
 use SmartAlloc\Infra\GF\SabtEntryMapper;
 use SmartAlloc\Infra\GF\SabtSubmissionHandler;
+use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Services\AllocationService;
 
 final class SabtSubmissionHandlerTest extends \PHPUnit\Framework\TestCase
@@ -36,7 +37,8 @@ final class SabtSubmissionHandlerTest extends \PHPUnit\Framework\TestCase
             public function warning(string $message, array $context = []): void {}
             public function error(string $message, array $context = []): void {}
         };
-        return new SabtSubmissionHandler($mapper, $allocator, $logger, $wpdb);
+        $repo = new AllocationsRepository($logger, $wpdb);
+        return new SabtSubmissionHandler($mapper, $allocator, $logger, $repo);
     }
 
     public function test_handle_rejects_invalid_mapper_output_records_reason(): void
@@ -126,39 +128,43 @@ final class SabtSubmissionHandlerTest extends \PHPUnit\Framework\TestCase
     }
 }
 
-class wpdb {}
+if (!class_exists('wpdb')) {
+    class wpdb {}
+}
 
-class WpdbStub extends wpdb
-{
-    public string $prefix = 'wp_';
-    public array $rows = [];
-    public string $last_error = '';
-
-    public function prepare(string $query, ...$args): string
+if (!class_exists('WpdbStub')) {
+    class WpdbStub extends wpdb
     {
-        foreach ($args as &$a) {
-            $a = is_numeric($a) ? (int)$a : $a;
-        }
-        return vsprintf(str_replace('%d', '%u', $query), $args);
-    }
+        public string $prefix = 'wp_';
+        public array $rows = [];
+        public string $last_error = '';
 
-    public function get_row(string $sql, $output = ARRAY_A)
-    {
-        if (preg_match('/entry_id = (\d+)/', $sql, $m)) {
-            $id = (int) $m[1];
-            return $this->rows[$id] ?? null;
+        public function prepare(string $query, ...$args): string
+        {
+            foreach ($args as &$a) {
+                $a = is_numeric($a) ? (int)$a : $a;
+            }
+            return vsprintf(str_replace('%d', '%u', $query), $args);
         }
-        return null;
-    }
 
-    public function insert(string $table, array $data)
-    {
-        $id = $data['entry_id'];
-        if (isset($this->rows[$id])) {
-            $this->last_error = 'duplicate';
-            return false;
+        public function get_row(string $sql, $output = ARRAY_A)
+        {
+            if (preg_match('/entry_id = (\d+)/', $sql, $m)) {
+                $id = (int) $m[1];
+                return $this->rows[$id] ?? null;
+            }
+            return null;
         }
-        $this->rows[$id] = $data;
-        return 1;
+
+        public function insert(string $table, array $data)
+        {
+            $id = $data['entry_id'];
+            if (isset($this->rows[$id])) {
+                $this->last_error = 'duplicate';
+                return false;
+            }
+            $this->rows[$id] = $data;
+            return 1;
+        }
     }
 }
