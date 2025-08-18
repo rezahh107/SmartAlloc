@@ -113,11 +113,16 @@ class Db
             status VARCHAR(16) NOT NULL,
             mentor_id BIGINT UNSIGNED NULL,
             candidates LONGTEXT NULL,
+            reviewer_id BIGINT UNSIGNED NULL,
+            review_notes TEXT NULL,
+            reviewed_at DATETIME NULL,
+            reason_code VARCHAR(64) NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             UNIQUE KEY entry_id (entry_id),
             KEY mentor_id (mentor_id),
             KEY status (status),
+            KEY reviewed_at (reviewed_at),
             KEY created_at (created_at)
         ) ENGINE=InnoDB $charset";
 
@@ -144,6 +149,32 @@ class Db
                 if ($res === false) {
                     error_log('SmartAlloc migration WARN: unable to alter candidates column: ' . $wpdb->last_error);
                 }
+            }
+        }
+
+        $columns = [
+            'reviewer_id BIGINT NULL',
+            'review_notes TEXT NULL',
+            'reviewed_at DATETIME NULL',
+            'reason_code VARCHAR(64) NULL',
+        ];
+
+        foreach ($columns as $definition) {
+            [$name] = explode(' ', $definition);
+            $col = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE '{$name}'");
+            if (!$col) {
+                $res = $wpdb->query("ALTER TABLE {$table} ADD {$definition}");
+                if ($res === false) {
+                    error_log('SmartAlloc migration WARN: unable to add column ' . $name . ': ' . $wpdb->last_error);
+                }
+            }
+        }
+
+        $idx = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'reviewed_at'");
+        if (!$idx) {
+            $res = $wpdb->query("ALTER TABLE {$table} ADD KEY reviewed_at (reviewed_at)");
+            if ($res === false) {
+                error_log('SmartAlloc migration WARN: unable to add reviewed_at index: ' . $wpdb->last_error);
             }
         }
     }

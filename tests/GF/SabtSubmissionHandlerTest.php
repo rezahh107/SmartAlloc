@@ -137,14 +137,19 @@ if (!class_exists('WpdbStub')) {
     {
         public string $prefix = 'wp_';
         public array $rows = [];
+        public array $results = [];
+        public int $var = 0;
+        public array $mentors = [];
         public string $last_error = '';
+        public int $rows_affected = 0;
 
         public function prepare(string $query, ...$args): string
         {
             foreach ($args as &$a) {
-                $a = is_numeric($a) ? (int)$a : $a;
+                $a = is_numeric($a) ? (int)$a : "'{$a}'";
             }
-            return vsprintf(str_replace('%d', '%u', $query), $args);
+            $query = str_replace('%d', '%u', $query);
+            return vsprintf($query, $args);
         }
 
         public function get_row(string $sql, $output = ARRAY_A)
@@ -165,6 +170,55 @@ if (!class_exists('WpdbStub')) {
             }
             $this->rows[$id] = $data;
             return 1;
+        }
+
+        public function get_results($sql, $output = ARRAY_A)
+        {
+            return $this->results;
+        }
+
+        public function get_var($sql)
+        {
+            return $this->var;
+        }
+
+        public function query(string $sql)
+        {
+            if (stripos($sql, 'START TRANSACTION') !== false || stripos($sql, 'COMMIT') !== false || stripos($sql, 'ROLLBACK') !== false) {
+                return 1;
+            }
+            if (preg_match('/UPDATE wp_salloc_mentors SET assigned = assigned \+ 1 WHERE mentor_id = (\d+)/', $sql, $m)) {
+                $id = (int) $m[1];
+                $mentor = $this->mentors[$id] ?? ['assigned' => 0, 'capacity' => 0];
+                if ($mentor['assigned'] < $mentor['capacity']) {
+                    $mentor['assigned']++;
+                    $this->mentors[$id] = $mentor;
+                    $this->rows_affected = 1;
+                } else {
+                    $this->rows_affected = 0;
+                }
+                return 1;
+            }
+            if (preg_match("/UPDATE wp_smartalloc_allocations SET status = '([^']+)'/i", $sql, $m)) {
+                if (preg_match('/WHERE entry_id = (\d+)/', $sql, $m2)) {
+                    $id = (int) $m2[1];
+                    if (!isset($this->rows[$id])) {
+                        $this->rows_affected = 0;
+                        return 0;
+                    }
+                    $status = $m[1];
+                    $this->rows[$id]['status'] = $status;
+                    if (preg_match('/mentor_id = (\d+)/', $sql, $m3)) {
+                        $this->rows[$id]['mentor_id'] = (int) $m3[1];
+                    }
+                    if (preg_match("/reason_code = '([^']+)'/", $sql, $m4)) {
+                        $this->rows[$id]['reason_code'] = $m4[1];
+                    }
+                    $this->rows_affected = 1;
+                    return 1;
+                }
+            }
+            return 0;
         }
     }
 }

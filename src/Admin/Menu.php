@@ -18,5 +18,14 @@ final class Menu
             'smartalloc-export',
             [ExportPage::class, 'render']
         );
+
+        add_submenu_page(
+            'smartalloc-dashboard',
+            esc_html__('Manual Review', 'smartalloc'),
+            esc_html__('Manual Review', 'smartalloc'),
+            SMARTALLOC_CAP,
+            'smartalloc-manual-review',
+            [\SmartAlloc\Admin\Pages\ManualReviewPage::class, 'render']
+        );
     }
 }
