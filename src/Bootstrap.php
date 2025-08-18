@@ -14,6 +14,7 @@ use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\{LoggerInterface, EventStoreInterface};
 use SmartAlloc\Http\RestController;
 use SmartAlloc\Integration\{GravityForms, ActionSchedulerAdapter};
+use SmartAlloc\Infra\Upgrade\MigrationRunner;
 
 /**
  * Main Bootstrap class for SmartAlloc plugin
@@ -67,10 +68,17 @@ final class Bootstrap
     /**
      * Plugin activation hook
      */
-    public static function activate(): void
+    public static function activate(bool $network_wide = false): void
     {
-        // Run database migrations
-        Services\Db::migrate();
+        if (is_multisite() && $network_wide) {
+            foreach (get_sites() as $site) {
+                switch_to_blog((int) $site->blog_id);
+                MigrationRunner::maybeRun();
+                restore_current_blog();
+            }
+        } else {
+            MigrationRunner::maybeRun();
+        }
 
         // Create upload directory
         $upload = wp_upload_dir();
