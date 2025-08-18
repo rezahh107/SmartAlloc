@@ -82,6 +82,15 @@ class Db
             allocations_committed INT UNSIGNED DEFAULT 0
         ) $charset";
 
+        $sql[] = "CREATE TABLE {$prefix}smartalloc_counters (
+            id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+            current_date CHAR(10) NOT NULL,
+            daily_counter INT NOT NULL DEFAULT 0,
+            batch_counter INT NOT NULL DEFAULT 0,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY uniq_id (id)
+        ) $charset";
+
         // Allocation results table
         $sql[] = "CREATE TABLE {$prefix}smartalloc_allocations (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
