@@ -11,6 +11,31 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../stubs/wp-stubs.php';
 require_once __DIR__ . '/BaseTestCase.php';
 
+// Ensure WP_DEBUG is enabled but errors are not displayed
+if (!defined('WP_DEBUG')) {
+    define('WP_DEBUG', true);
+}
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+set_error_handler(function ($severity, $message, $file, $line) {
+    if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
+        return false;
+    }
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+    throw new \ErrorException($message, 0, $severity, $file, $line);
+});
+
+if (!function_exists('_doing_it_wrong')) {
+    function _doing_it_wrong($function, $message, $version) {
+        throw new \BadMethodCallException(
+            sprintf('%s was called incorrectly. %s. This message was added in version %s.', $function, $message, $version)
+        );
+    }
+}
+
 // Mock WordPress functions for testing
 // Simple in-memory caches for tests
 $GLOBALS['sa_wp_cache'] = [];
@@ -131,7 +156,10 @@ if (!function_exists('trailingslashit')) {
 
 if (!function_exists('wp_mkdir_p')) {
     function wp_mkdir_p($path) {
-        return mkdir($path, 0755, true);
+        if (is_dir($path)) {
+            return true;
+        }
+        return @mkdir($path, 0755, true);
     }
 }
 
