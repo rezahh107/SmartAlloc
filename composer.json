@@ -20,7 +20,9 @@
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^10.0",
         "vimeo/psalm": "^5.0",
-        "brain/monkey": "^2.6"
+        "brain/monkey": "^2.6",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpcompatibility/php-compatibility": "^9.3"
     },
     "autoload": {
         "psr-4": {
@@ -28,10 +30,12 @@
         }
     },
     "scripts": {
-        "lint": "phpcs --standard=phpcs.xml",
+        "lint": "phpcs --parallel=4",
+        "fix": "phpcbf",
         "analyze": "phpstan analyse --memory-limit=1G",
         "test": "phpunit --colors=always",
         "test:security": "phpunit tests/Security && psalm --taint-analysis src/Infra/Export",
+        "test:ci": "composer test:security && phpcs && psalm --taint-analysis",
         "prezip": "php -d detect_unicode=0 bin/check-version-sync.php",
         "zip": "bash bin/make-zip.sh"
     },

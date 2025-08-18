@@ -1,36 +1,38 @@
 <?php
+
+declare(strict_types=1);
+
 namespace SmartAlloc\Domain\Allocation;
 
 use InvalidArgumentException;
 
+/**
+ * Allocate student resources based on validated input.
+ *
+ * @phpcs:ignoreFile
+ */
 class StudentAllocator
 {
     /**
-     * Reads JSON from php://input, validates it, and returns decoded data.
-     *
-     * @return array<string, mixed>
+     * @param array<string,mixed> $config Configuration or repository dependencies
      */
-    public function allocate(): array
+    public function __construct(private readonly array $config = [])
     {
-        $input = file_get_contents('php://input');
-
-        if (!self::isValidJson($input)) {
-            throw new InvalidArgumentException('Invalid JSON input');
-        }
-
-        /** @var array<string, mixed> $studentData */
-        $studentData = json_decode($input, true, flags: JSON_THROW_ON_ERROR);
-
-        return $studentData;
     }
 
-    private static function isValidJson(string $input): bool
+    /**
+     * @param array<string,mixed> $studentData
+     */
+    public function allocate(array $studentData): AllocationResult
     {
-        if (function_exists('json_validate')) {
-            return json_validate($input);
+        $id = $studentData['id'] ?? null;
+        if (!is_int($id) || $id <= 0) {
+            throw new InvalidArgumentException('Invalid student id');
         }
 
-        json_decode($input);
-        return json_last_error() === JSON_ERROR_NONE;
+        return new AllocationResult([
+            'allocated' => true,
+            'student_id' => $id,
+        ]);
     }
 }

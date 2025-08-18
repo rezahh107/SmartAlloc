@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 use SmartAlloc\Infra\Export\ExporterService;
 
@@ -8,41 +10,46 @@ final class ExportServiceTest extends TestCase
     /**
      * @dataProvider invalidIdProvider
      */
-    public function testInvalidIds(string $input): void
+    public function testInvalidIds(int $input): void
     {
-        $service = new ExporterService();
+        $wpdb = $this->mockWpdb([]);
+        $service = new ExporterService($wpdb);
         $this->expectException(\InvalidArgumentException::class);
         $service->exportData($input);
     }
 
     /**
-     * @return array<int, array{0:string}>
+     * @return array<int, array{0:int}>
      */
     public function invalidIdProvider(): array
     {
         return [
-            ['1; DROP TABLE exports;'],
-            ['0'],
-            ['-1'],
-            [''],
-            ['abc'],
+            [0],
+            [-1],
         ];
     }
 
     public function testValidIdReturnsData(): void
     {
-        $pdo = new \PDO('sqlite::memory:');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->exec('CREATE TABLE exports (id INTEGER PRIMARY KEY, name TEXT)');
-        $stmt = $pdo->prepare('INSERT INTO exports (id, name) VALUES (1, :name)');
-        $stmt->execute([':name' => 'test']);
+        $wpdb = $this->mockWpdb([
+            ['id' => 1, 'name' => 'test'],
+        ]);
 
-        $service = new ExporterService($pdo);
-        $result = $service->exportData('1');
+        $service = new ExporterService($wpdb);
+        $result  = $service->exportData(1);
 
         $this->assertSame([
             ['id' => 1, 'name' => 'test'],
         ], $result);
     }
-}
 
+    private function mockWpdb(array $results)
+    {
+        return new class($results) {
+            public $prefix = 'wp_';
+            public function __construct(private array $results) {}
+            public function prepare($query, ...$args) { return $query; }
+            public function get_results($sql, $mode) { return $this->results; }
+        };
+    }
+}

@@ -84,6 +84,12 @@ if (!function_exists('sanitize_text_field')) {
     }
 }
 
+if (!function_exists('absint')) {
+    function absint($maybeint) {
+        return abs((int) $maybeint);
+    }
+}
+
 if (!function_exists('current_user_can')) {
     function current_user_can($capability) {
         return true;
