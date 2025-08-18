@@ -5,6 +5,7 @@
 # Build artifacts
 /build/
 *.zip
+*.xlsx
 
 # IDE files
 .vscode/
