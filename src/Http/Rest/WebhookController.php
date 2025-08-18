@@ -31,6 +31,10 @@ final class WebhookController
         if ('application/json' !== strtolower((string) $request->get_header('Content-Type'))) {
             return new WP_Error('invalid_content_type', 'Invalid content type', ['status' => 415]);
         }
+        $requestId = (string) $request->get_header('X-Request-Id');
+        if ($requestId === '') {
+            return new WP_Error('missing_request_id', __('Missing request id', 'smartalloc'), ['status' => 400]);
+        }
         $ts = (int) $request->get_header('X-SmartAlloc-Timestamp');
         if (abs(time() - $ts) > 300) {
             return new WP_Error('invalid_timestamp', 'Timestamp skew', ['status' => 400]);
@@ -41,6 +45,22 @@ final class WebhookController
         if (!$sig || !hash_equals($expected, $sig)) {
             return new WP_Error('invalid_signature', 'Signature verification failed', ['status' => 403]);
         }
+
+        // Replay protection
+        $key = 'smartalloc_wh_' . md5($sig . '|' . $ts . '|' . $requestId);
+        if (get_transient($key)) {
+            return new WP_Error('replay', __('Duplicate request', 'smartalloc'), ['status' => 409]);
+        }
+        set_transient($key, 1, 10 * MINUTE_IN_SECONDS);
+
+        // Rate limiting
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $rateKey = 'smartalloc_rl_' . md5($secret . '|' . $ip);
+        $hits = (int) get_transient($rateKey);
+        if ($hits >= 60) {
+            return new WP_Error('rate_limited', __('Too many requests', 'smartalloc'), ['status' => 429]);
+        }
+        set_transient($rateKey, $hits + 1, 5 * MINUTE_IN_SECONDS);
         return new WP_REST_Response(['ok' => true], 200);
     }
 }

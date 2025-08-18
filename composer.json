@@ -2,8 +2,8 @@
     "name": "smartalloc/wordpress-plugin",
     "description": "Event-driven student support allocation with Gravity Forms + Exporter",
     "type": "wordpress-plugin",
-    "version": "1.1.2",
-    "license": "GPL-2.0-or-later",
+    "version": "1.0.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "رضا هاشمی حسینی",
@@ -33,7 +33,9 @@
         "lint": "phpcs --standard=phpcs.xml.dist",
         "test:security": "vendor/bin/phpunit tests/Security && vendor/bin/psalm --no-cache --taint-analysis --show-info=false",
         "test": "vendor/bin/phpunit",
-        "ci": "composer lint && composer test:security && composer test"
+        "ci": "composer lint && composer test:security && composer test",
+        "build": "rm -rf dist && mkdir dist && VERSION=$(php -r \"include 'smart-alloc.php'; echo SMARTALLOC_VERSION;\") && rsync -a . dist/smartalloc --exclude 'tests' --exclude 'stubs' --exclude 'docs' --exclude 'node_modules' --exclude '.github' --exclude 'dist' && cd dist && zip -r smartalloc-v$VERSION.zip smartalloc && rm -rf smartalloc",
+        "dist": "composer lint && composer test:security && composer test && composer build"
     },
     "config": {
         "allow-plugins": {

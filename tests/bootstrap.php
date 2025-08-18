@@ -77,7 +77,8 @@ if (!function_exists('wp_json_encode')) {
 
   if (!function_exists('current_time')) {
       function current_time($type = 'mysql') {
-          return gmdate('Y-m-d H:i:s');
+          $format = $type === 'mysql' ? 'Y-m-d H:i:s' : $type;
+          return gmdate($format);
       }
   }
 
@@ -137,6 +138,11 @@ if (!function_exists('wp_mkdir_p')) {
 if (!function_exists('sanitize_text_field')) {
     function sanitize_text_field($str) {
         return trim(strip_tags($str));
+    }
+}
+if (!function_exists('sanitize_file_name')) {
+    function sanitize_file_name($name) {
+        return preg_replace('/[^A-Za-z0-9._-]/', '', $name);
     }
 }
 
@@ -217,7 +223,13 @@ if (!defined('ABSPATH')) {
 }
 
 if (!defined('SMARTALLOC_VERSION')) {
-    define('SMARTALLOC_VERSION', '1.1.0');
+    define('SMARTALLOC_VERSION', '1.0.0');
+}
+if (!defined('SMARTALLOC_DB_VERSION')) {
+    define('SMARTALLOC_DB_VERSION', '1.0.0');
+}
+if (!defined('MINUTE_IN_SECONDS')) {
+    define('MINUTE_IN_SECONDS', 60);
 }
 
 if (!defined('SMARTALLOC_CAP')) {

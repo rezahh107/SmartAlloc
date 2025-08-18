@@ -246,9 +246,13 @@ The plugin creates several tables with the prefix `wp_salloc_`:
 
 For support and documentation, please refer to the plugin documentation or contact the development team.
 
+## Uninstall
+
+Set the `purge_on_uninstall` option to true to remove SmartAlloc options and caches. By default only transient caches are cleared and allocation data remains.
+
 ## License
 
-This plugin is licensed under the GPL v2 or later.
+This plugin is licensed under the MIT License. See `LICENSE` for details.
 
 ## Changelog
 
