@@ -9,4 +9,6 @@ wp core download --path="$WORKDIR/wordpress" --version="$WP_VERSION" --skip-cont
 cp -R "$(pwd)" "$WORKDIR/wordpress/wp-content/plugins/smart-alloc"
 wp plugin install plugin-check --path="$WORKDIR/wordpress" --activate --quiet
 wp plugin activate smart-alloc --path="$WORKDIR/wordpress" --quiet
-wp plugin check smart-alloc --path="$WORKDIR/wordpress" "$@"
+
+# Run plugin check and capture output
+wp plugin check smart-alloc --path="$WORKDIR/wordpress" "$@" | tee plugin_check.txt

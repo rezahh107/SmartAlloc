@@ -14,6 +14,11 @@ a daily cron task based on the **export_retention_days** setting.
 The `/smartalloc/v1/metrics` endpoint aggregates allocation statistics. Results
 are cached for a short period (configurable via **metrics_cache_ttl**).
 
+## How we validate releases
+Every build produces a `validation_report.md` artifact summarising lint, static
+analysis, tests and plugin checks. Operators can review this report to confirm a
+release passes all automated quality gates.
+
 ## CLI usage
 ```
 wp smartalloc export --from=2024-01-01 --to=2024-01-31 --format=json
