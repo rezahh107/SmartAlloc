@@ -49,3 +49,11 @@ wp-content/wp-cache-config.php
 # Temporary files
 *.tmp
 *.temp 
+# Debug artifacts
+allocation-test-debug.json
+focused-tests.xml
+focused-tests.json
+critical-issues.json
+critical_issues.csv
+exporter-security-check.json
+diagnostic-report.json
