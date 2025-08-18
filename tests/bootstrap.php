@@ -291,3 +291,42 @@ if (!defined('SMARTALLOC_CAP')) {
 if (!defined('SMARTALLOC_UPLOAD_DIR')) {
     define('SMARTALLOC_UPLOAD_DIR', 'smart-alloc');
 } 
+// === SMARTALLOC TEST FOUNDATION START ===
+if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
+    define('SMARTALLOC_TEST_FOUNDATION', true);
+    $patch = __DIR__ . '/../vendor/antecedent/patchwork/src/patchwork.php';
+    if (file_exists($patch)) {
+        require_once $patch;
+    }
+    foreach (['EnvReset', 'AdminTest', 'HttpTest', 'WpdbSpy'] as $h) {
+        $p = __DIR__ . '/Helpers/' . $h . '.php';
+        if (file_exists($p)) {
+            require_once $p;
+        }
+    }
+    \Brain\Monkey\Functions\when('wp_redirect')->alias(function ($location, $status = 302) {
+        if (isset($GLOBALS['_sa_redirect_collector'])) {
+            ($GLOBALS['_sa_redirect_collector'])($location, $status);
+        }
+        return true;
+    });
+    \Brain\Monkey\Functions\when('wp_die')->alias(function ($message = '', $title = '', $args = []) {
+        if (isset($GLOBALS['_sa_die_collector'])) {
+            ($GLOBALS['_sa_die_collector'])($message, $title, $args);
+        }
+        return '';
+    });
+    ini_set('display_errors', '0');
+    error_reporting(E_ALL);
+    set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+        if ($errno === E_DEPRECATED || $errno === E_USER_DEPRECATED) {
+            error_log('[DEPRECATED] ' . $errstr);
+            return true;
+        }
+        if (!(error_reporting() & $errno)) {
+            return false;
+        }
+        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+    });
+}
+// === SMARTALLOC TEST FOUNDATION END ===
