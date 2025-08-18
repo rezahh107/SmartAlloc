@@ -6,6 +6,7 @@
 
 // Load Composer autoloader
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../stubs/wp-stubs.php';
 
 // Mock WordPress functions for testing
 if (!function_exists('wp_cache_get')) {
@@ -77,18 +78,6 @@ if (!function_exists('wp_mkdir_p')) {
     }
 }
 
-if (!function_exists('get_option')) {
-    function get_option($key, $default = false) {
-        return $default;
-    }
-}
-
-if (!function_exists('update_option')) {
-    function update_option($key, $value) {
-        return true;
-    }
-}
-
 if (!function_exists('sanitize_text_field')) {
     function sanitize_text_field($str) {
         return trim(strip_tags($str));
@@ -101,33 +90,9 @@ if (!function_exists('current_user_can')) {
     }
 }
 
-if (!function_exists('add_action')) {
-    function add_action($hook, $callback, $priority = 10, $accepted_args = 1) {
-        return true;
-    }
-}
-
-if (!function_exists('add_filter')) {
-    function add_filter($hook, $callback, $priority = 10, $accepted_args = 1) {
-        return true;
-    }
-}
-
 if (!function_exists('register_rest_route')) {
     function register_rest_route($namespace, $route, $args = []) {
         return true;
-    }
-}
-
-if (!function_exists('do_action')) {
-    function do_action($hook, ...$args) {
-        return true;
-    }
-}
-
-if (!function_exists('apply_filters')) {
-    function apply_filters($hook, $value, ...$args) {
-        return $value;
     }
 }
 

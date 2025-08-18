@@ -31,6 +31,7 @@
         "lint": "phpcs --standard=phpcs.xml",
         "analyze": "phpstan analyse --memory-limit=1G",
         "test": "phpunit --colors=always",
+        "test:security": "phpunit tests/Security && psalm --taint-analysis src/Infra/Export",
         "prezip": "php -d detect_unicode=0 bin/check-version-sync.php",
         "zip": "bash bin/make-zip.sh"
     },
