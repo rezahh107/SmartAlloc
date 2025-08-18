@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../bootstrap.php';
 
 use SmartAlloc\Tests\AllocationServiceTest;
 
@@ -9,6 +9,11 @@ try {
     $test = new AllocationServiceTest();
     $test->testDuplicateStudent(); // یا تست موردنظر
     $report['status'] = 'success';
+} catch (\InvalidArgumentException $e) {
+    $report = [
+        'status' => 'invalid',
+        'error'  => $e->getMessage(),
+    ];
 } catch (\Throwable $e) {
     $report = [
         'status' => 'error',

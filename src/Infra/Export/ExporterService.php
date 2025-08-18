@@ -25,7 +25,7 @@ class ExporterService
      */
     public function exportData(string $id): array
     {
-        if (!ctype_digit($id)) {
+        if (!ctype_digit($id) || (int) $id <= 0) {
             throw new InvalidArgumentException('Invalid id');
         }
 

@@ -51,6 +51,7 @@ wp-content/wp-cache-config.php
 *.temp 
 # Debug artifacts
 allocation-test-debug.json
+tests/debug/*.json
 focused-tests.xml
 focused-tests.json
 critical-issues.json
