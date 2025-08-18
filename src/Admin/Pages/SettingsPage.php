@@ -49,7 +49,19 @@ final class SettingsPage
         echo '<textarea id="postal_code_alias" name="smartalloc_settings[postal_code_alias]" rows="5" cols="50">' . esc_html($aliases) . '</textarea>';
         echo '</td></tr>';
 
-        self::numberField('export_retention_days', __('Export retention days', 'smartalloc'), $values, 'min="0"');
+          self::numberField('export_retention_days', __('Export retention days', 'smartalloc'), $values, 'min="0"');
+          self::numberField('log_retention_days', __('Log retention days', 'smartalloc'), $values, 'min="0"');
+          self::numberField('metrics_cache_ttl', __('Metrics cache TTL', 'smartalloc'), $values, 'min="0"');
+
+          echo '<tr><th scope="row"><label for="webhook_secret">' . esc_html__('Webhook secret', 'smartalloc') . '</label></th><td>';
+          $secret = $values['webhook_secret'] ?? '';
+          echo '<input type="text" id="webhook_secret" name="smartalloc_settings[webhook_secret]" value="' . esc_attr((string)$secret) . '" />';
+          echo '</td></tr>';
+
+          $checked = !empty($values['enable_incoming_webhook']);
+          echo '<tr><th scope="row"><label for="enable_incoming_webhook">' . esc_html__('Enable incoming webhook', 'smartalloc') . '</label></th><td>';
+          echo '<input type="checkbox" id="enable_incoming_webhook" name="smartalloc_settings[enable_incoming_webhook]" value="1"' . checked($checked, true, false) . ' />';
+          echo '</td></tr>';
 
         echo '</tbody></table>';
         submit_button();

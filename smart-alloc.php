@@ -72,16 +72,24 @@ register_uninstall_hook(__FILE__, 'SmartAlloc\\Bootstrap::uninstall');
                 if (file_exists($autoload)) {
                     require_once $autoload;
                 }
-                SmartAlloc\Bootstrap::init();
-                
-                // Set container in AdminController
-                SmartAlloc\Http\Admin\AdminController::setContainer(SmartAlloc\Bootstrap::container());
-            });
+                  SmartAlloc\Bootstrap::init();
+
+                  // Set container in AdminController
+                  SmartAlloc\Http\Admin\AdminController::setContainer(SmartAlloc\Bootstrap::container());
+                  \SmartAlloc\Cron\RetentionTasks::register();
+                  (new \SmartAlloc\Http\Rest\WebhookController())->register_routes();
+              });
 
 // WP-CLI Commands Registration
 if (defined('WP_CLI') && WP_CLI) {
     require_once __DIR__ . '/src/Infra/CLI/Commands.php';
     WP_CLI::add_command('smartalloc', \SmartAlloc\Infra\CLI\Commands::class);
+    require_once __DIR__ . '/src/Cli/ExportCommand.php';
+    require_once __DIR__ . '/src/Cli/AllocateCommand.php';
+    require_once __DIR__ . '/src/Cli/ReviewCommand.php';
+    WP_CLI::add_command('smartalloc export', \SmartAlloc\Cli\ExportCommand::class);
+    WP_CLI::add_command('smartalloc allocate', \SmartAlloc\Cli\AllocateCommand::class);
+    WP_CLI::add_command('smartalloc review', \SmartAlloc\Cli\ReviewCommand::class);
 }
 
 // Persian Admin Menu

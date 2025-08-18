@@ -36,12 +36,18 @@ if (!function_exists('wp_cache_delete')) {
     }
 }
 
-if (!function_exists('wp_cache_flush')) {
-    function wp_cache_flush() {
-        $GLOBALS['sa_wp_cache'] = [];
-        return true;
-    }
-}
+  if (!function_exists('wp_cache_flush')) {
+      function wp_cache_flush() {
+          $GLOBALS['sa_wp_cache'] = [];
+          return true;
+      }
+  }
+
+  if (!function_exists('wp_upload_dir')) {
+      function wp_upload_dir() {
+          return ['basedir' => ($GLOBALS['wp_upload_dir_basedir'] ?? sys_get_temp_dir())];
+      }
+  }
 
 if (!function_exists('get_transient')) {
     function get_transient($key) {
@@ -69,11 +75,39 @@ if (!function_exists('wp_json_encode')) {
     }
 }
 
-if (!function_exists('current_time')) {
-    function current_time($type = 'mysql') {
-        return gmdate('Y-m-d H:i:s');
-    }
-}
+  if (!function_exists('current_time')) {
+      function current_time($type = 'mysql') {
+          return gmdate('Y-m-d H:i:s');
+      }
+  }
+
+  if (!class_exists('WP_REST_Request')) {
+      class WP_REST_Request {
+          private string $body = '';
+          private array $headers = [];
+          public function set_body(string $body): void { $this->body = $body; }
+          public function get_body(): string { return $this->body; }
+          public function set_header(string $k, string $v): void { $this->headers[strtolower($k)] = $v; }
+          public function get_header(string $k): string { return $this->headers[strtolower($k)] ?? ''; }
+          public function get_params(): array { return []; }
+      }
+  }
+
+  if (!class_exists('WP_REST_Response')) {
+      class WP_REST_Response {
+          public function __construct(private array $data = [], private int $status = 200) {}
+          public function get_data(): array { return $this->data; }
+          public function get_status(): int { return $this->status; }
+      }
+  }
+
+  if (!class_exists('WP_Error')) {
+      class WP_Error {
+          public function __construct(public string $code = '', public string $message = '', public array $data = []) {}
+          public function get_error_code(): string { return $this->code; }
+          public function get_error_data(): array { return $this->data; }
+      }
+  }
 
 if (!defined('ARRAY_A')) {
     define('ARRAY_A', 'ARRAY_A');
