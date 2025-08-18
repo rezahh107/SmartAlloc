@@ -9,7 +9,7 @@ use SmartAlloc\Event\EventBus;
 /**
  * Enhanced Allocation Service with mentor ranking and fuzzy matching
  */
-final class AllocationService
+class AllocationService
 {
     private const DEFAULT_CAPACITY = 60;
     private const FUZZY_ACCEPT_THRESHOLD = 0.90;

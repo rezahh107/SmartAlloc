@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
 use SmartAlloc\Infra\Export\ExporterService;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class ExportServiceTest extends TestCase
+final class ExportServiceTest extends BaseTestCase
 {
     /**
      * @dataProvider invalidIdProvider
@@ -43,13 +43,30 @@ final class ExportServiceTest extends TestCase
         ], $result);
     }
 
+    public function testInvalidTypeThrowsTypeError(): void
+    {
+        $service = new ExporterService($this->mockWpdb([]));
+        $this->expectException(\TypeError::class);
+        /** @phpstan-ignore-next-line */
+        $service->exportData('abc');
+    }
+
+    public function testUsesTablePrefix(): void
+    {
+        $wpdb = $this->mockWpdb([]);
+        $service = new ExporterService($wpdb);
+        $service->exportData(1);
+        $this->assertStringContainsString($wpdb->prefix . 'exports', $wpdb->lastSql);
+    }
+
     private function mockWpdb(array $results)
     {
         return new class($results) {
             public $prefix = 'wp_';
+            public string $lastSql = '';
             public function __construct(private array $results) {}
-            public function prepare($query, ...$args) { return $query; }
-            public function get_results($sql, $mode) { return $this->results; }
+            public function prepare($query, ...$args) { $this->lastSql = $query; return $query; }
+            public function get_results($sql, $mode) { $this->lastSql = $sql; return $this->results; }
         };
     }
 }

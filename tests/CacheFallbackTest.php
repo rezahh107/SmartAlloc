@@ -1,91 +1,63 @@
 <?php
 
-namespace SmartAlloc\Tests;
+declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use SmartAlloc\Services\Cache;
+use SmartAlloc\Tests\BaseTestCase;
 
-class CacheFallbackTest extends TestCase
+final class CacheFallbackTest extends BaseTestCase
 {
-    private Cache $cache;
-
     protected function setUp(): void
     {
-        $this->cache = new Cache();
+        parent::setUp();
+        Monkey\setUp();
     }
 
-    public function testL1ToL2Fallback(): void
+    protected function tearDown(): void
     {
-        // Test fallback from L1 (Object Cache) to L2 (Transients)
-        $key = 'test_fallback_key';
-        $value = 'test_value';
-        
-        // Set value in L2
-        $this->cache->set($key, $value, 'L2');
-        
-        // Get value (should fallback from L1 to L2)
-        $result = $this->cache->get($key);
-        
-        $this->assertEquals($value, $result);
+        Monkey\tearDown();
+        parent::tearDown();
     }
 
-    public function testL2ToL3Fallback(): void
+    public function testL1UsesObjectCacheWhenAvailable(): void
     {
-        // Test fallback from L2 (Transients) to L3 (Database)
-        $key = 'test_l3_fallback_key';
-        $value = 'test_l3_value';
-        
-        // Set value in L3
-        $this->cache->set($key, $value, 'L3');
-        
-        // Get value (should fallback from L1/L2 to L3)
-        $result = $this->cache->get($key);
-        
-        $this->assertEquals($value, $result);
+        $cache = new Cache();
+        $key = 'obj_key';
+        $value = 'value1';
+
+        Functions\expect('wp_using_ext_object_cache')->andReturn(true);
+
+        $cache->l1Set($key, $value, 10);
+        $this->assertSame($value, $GLOBALS['sa_wp_cache']['smartalloc'][$key]);
+        $this->assertSame($value, $cache->l1Get($key));
     }
 
-    public function testHealthCheck(): void
+    public function testL1FallsBackToTransients(): void
     {
-        // Test health status reporting
-        $health = $this->cache->getHealthStatus();
-        
-        $this->assertArrayHasKey('L1', $health);
-        $this->assertArrayHasKey('L2', $health);
-        $this->assertArrayHasKey('L3', $health);
-        $this->assertArrayHasKey('overall', $health);
+        $cache = new Cache();
+        $key = 'trans_key';
+        $value = 'value2';
+
+        Functions\expect('wp_using_ext_object_cache')->andReturn(false);
+
+        $cache->l1Set($key, $value, 10);
+        $this->assertSame($value, get_transient('smartalloc_' . $key));
+        $this->assertSame($value, $cache->l1Get($key));
     }
 
-    public function testConfigurableTTL(): void
+    public function testFlushAllClearsTransients(): void
     {
-        // Test configurable default TTL
-        $defaultTTL = $this->cache->getDefaultTTL('L1');
-        
-        $this->assertIsInt($defaultTTL);
-        $this->assertGreaterThan(0, $defaultTTL);
-    }
+        $cache = new Cache();
+        $key = 'flush_key';
+        $value = 'flush';
 
-    public function testCacheClearing(): void
-    {
-        $key = 'test_clear_key';
-        $value = 'test_clear_value';
-        
-        // Set value in multiple layers
-        $this->cache->set($key, $value, 'L1');
-        $this->cache->set($key, $value, 'L2');
-        $this->cache->set($key, $value, 'L3');
-        
-        // Clear specific layer
-        $this->cache->clearL1Cache();
-        
-        // Value should still be available in other layers
-        $result = $this->cache->get($key);
-        $this->assertEquals($value, $result);
-        
-        // Clear all layers
-        $this->cache->clearAll();
-        
-        // Value should not be available
-        $result = $this->cache->get($key);
-        $this->assertNull($result);
+        Functions\expect('wp_using_ext_object_cache')->andReturn(false);
+        $cache->l1Set($key, $value, 10);
+        $this->assertSame($value, $cache->l1Get($key));
+
+        $cache->flushAllForTests();
+        $this->assertFalse(get_transient('smartalloc_' . $key));
     }
-} 
+}

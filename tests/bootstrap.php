@@ -4,43 +4,61 @@
  * PHPUnit bootstrap file for SmartAlloc tests
  */
 
+define('PHPUNIT_RUNNING', true);
+
 // Load Composer autoloader
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../stubs/wp-stubs.php';
+require_once __DIR__ . '/BaseTestCase.php';
 
 // Mock WordPress functions for testing
+// Simple in-memory caches for tests
+$GLOBALS['sa_wp_cache'] = [];
+$GLOBALS['sa_transients'] = [];
+
 if (!function_exists('wp_cache_get')) {
     function wp_cache_get($key, $group = '') {
-        return false;
+        return $GLOBALS['sa_wp_cache'][$group][$key] ?? false;
     }
 }
 
 if (!function_exists('wp_cache_set')) {
     function wp_cache_set($key, $value, $group = '', $ttl = 0) {
+        $GLOBALS['sa_wp_cache'][$group][$key] = $value;
         return true;
     }
 }
 
 if (!function_exists('wp_cache_delete')) {
     function wp_cache_delete($key, $group = '') {
+        unset($GLOBALS['sa_wp_cache'][$group][$key]);
+        return true;
+    }
+}
+
+if (!function_exists('wp_cache_flush')) {
+    function wp_cache_flush() {
+        $GLOBALS['sa_wp_cache'] = [];
         return true;
     }
 }
 
 if (!function_exists('get_transient')) {
     function get_transient($key) {
-        return false;
+        return $GLOBALS['sa_transients'][$key] ?? false;
     }
 }
 
 if (!function_exists('set_transient')) {
     function set_transient($key, $value, $ttl = 0) {
+        $GLOBALS['sa_transients'][$key] = $value;
         return true;
     }
 }
 
 if (!function_exists('delete_transient')) {
     function delete_transient($key) {
+        unset($GLOBALS['sa_transients'][$key]);
         return true;
     }
 }
@@ -87,12 +105,6 @@ if (!function_exists('sanitize_text_field')) {
 if (!function_exists('absint')) {
     function absint($maybeint) {
         return abs((int) $maybeint);
-    }
-}
-
-if (!function_exists('current_user_can')) {
-    function current_user_can($capability) {
-        return true;
     }
 }
 

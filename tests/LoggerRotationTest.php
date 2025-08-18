@@ -2,10 +2,9 @@
 
 namespace SmartAlloc\Tests;
 
-use PHPUnit\Framework\TestCase;
 use SmartAlloc\Services\Logging;
 
-class LoggerRotationTest extends TestCase
+class LoggerRotationTest extends BaseTestCase
 {
     private Logging $logger;
     private string $testLogPath;
