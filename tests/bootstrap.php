@@ -125,6 +125,12 @@ if (!function_exists('do_action')) {
     }
 }
 
+if (!function_exists('apply_filters')) {
+    function apply_filters($hook, $value, ...$args) {
+        return $value;
+    }
+}
+
 if (!function_exists('rgar')) {
     function rgar($array, $key, $default = '') {
         return $array[$key] ?? $default;
