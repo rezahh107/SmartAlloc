@@ -6,7 +6,13 @@ if (!function_exists('makeNonce')) {
     function makeNonce(string $action): string {
         Functions\when('check_admin_referer')->alias(function (string $expected = '-1', string $query_arg = '_wpnonce') use ($action) {
             $nonce = $_REQUEST[$query_arg] ?? '';
-            return $expected === $action && $nonce === 'sa-test-nonce';
+            if ($expected === $action && $nonce === 'sa-test-nonce') {
+                return true;
+            }
+            if (function_exists('wp_die')) {
+                wp_die('forbidden', '', ['response' => 403]);
+            }
+            return false;
         });
         return 'sa-test-nonce';
     }
@@ -52,7 +58,8 @@ if (!function_exists('runAdminPost')) {
 
         if (function_exists('do_action')) {
             do_action('admin_post_' . $action);
-        } elseif (function_exists($cb = 'admin_post_' . $action)) {
+        }
+        if (function_exists($cb = 'admin_post_' . $action)) {
             $cb();
         }
 
