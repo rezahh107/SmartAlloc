@@ -78,6 +78,19 @@ class Db
             allocations_committed INT UNSIGNED DEFAULT 0
         ) $charset";
 
+        // Allocation results table
+        $sql[] = "CREATE TABLE {$prefix}smartalloc_allocations (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            entry_id BIGINT UNSIGNED NOT NULL,
+            student_hash VARBINARY(32) NOT NULL,
+            status ENUM('auto','manual','reject') NOT NULL,
+            mentor_id BIGINT UNSIGNED NULL,
+            candidates JSON NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY uniq_entry (entry_id)
+        ) $charset";
+
         // Execute migrations
         foreach ($sql as $query) {
             dbDelta($query);
