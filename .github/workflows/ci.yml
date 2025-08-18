@@ -9,14 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['8.0', '8.2']
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        wp: ['latest', 'latest-1', 'latest-2']
+    env:
+      WP_VERSION: ${{ matrix.wp }}
     steps:
       - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
       - run: composer install --no-progress --no-interaction --ignore-platform-req=php
-      - run: composer ci
+      - run: composer qa
+      - run: composer test:security
+      - run: composer test
       - if: failure()
         uses: actions/upload-artifact@v3
         with:

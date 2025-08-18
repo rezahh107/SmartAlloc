@@ -9,6 +9,7 @@ use SmartAlloc\Tests\BaseTestCase;
 final class ExportSmokeTest extends BaseTestCase
 {
     private $oldWpdb;
+    private $oldUploadDir;
 
     protected function setUp(): void
     {
@@ -17,17 +18,25 @@ final class ExportSmokeTest extends BaseTestCase
         $this->oldWpdb = $wpdb;
         $wpdb = new class {
             public $prefix = 'wp_';
+            public $insert_id = 1;
             public function insert($table, $data) { return true; }
             public function get_results($q, $type) { return []; }
             public function prepare($q, ...$a) { return $q; }
             public function query($q) { return true; }
         };
+        $this->oldUploadDir = $GLOBALS['wp_upload_dir_basedir'] ?? null;
+        $GLOBALS['wp_upload_dir_basedir'] = sys_get_temp_dir();
     }
 
     protected function tearDown(): void
     {
         global $wpdb;
         $wpdb = $this->oldWpdb;
+        if ($this->oldUploadDir !== null) {
+            $GLOBALS['wp_upload_dir_basedir'] = $this->oldUploadDir;
+        } else {
+            unset($GLOBALS['wp_upload_dir_basedir']);
+        }
         parent::tearDown();
     }
     public function test_export_creates_file_and_sheets(): void
