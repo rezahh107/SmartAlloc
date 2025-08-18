@@ -1,5 +1,0 @@
-
-Fatal error: Uncaught Error: Class "SmartAlloc\Tests\AllocationServiceTest" not found in Command line code:1
-Stack trace:
-#0 {main}
-  thrown in Command line code on line 1
