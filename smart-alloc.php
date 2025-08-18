@@ -133,4 +133,8 @@ add_action('admin_menu', function() {
     );
 });
 
+add_action('admin_menu', ['SmartAlloc\\Admin\\Menu', 'register']);
+add_action('admin_post_smartalloc_export_generate', ['SmartAlloc\\Admin\\Actions\\ExportGenerateAction', 'handle']);
+add_action('admin_post_smartalloc_export_download', ['SmartAlloc\\Admin\\Actions\\ExportDownloadAction', 'handle']);
+
 add_action('gform_after_submission_150', [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
