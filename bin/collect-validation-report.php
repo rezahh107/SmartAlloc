@@ -18,10 +18,11 @@ function read_tail(string $file): string {
 }
 
 $sections = [
-    'PHPCS' => 'phpcs.log',
-    'Psalm' => 'psalm.log',
+    'PHPCS'   => 'phpcs.log',
+    'Psalm'   => 'psalm.log',
     'PHPUnit' => 'phpunit.log',
     'PHPStan' => 'phpstan.log',
+    'Budgets' => 'budgets.log',
 ];
 
 foreach ($sections as $title => $file) {
