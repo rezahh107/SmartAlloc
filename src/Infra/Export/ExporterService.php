@@ -1,38 +1,38 @@
 <?php
+
+declare(strict_types=1);
+
 namespace SmartAlloc\Infra\Export;
 
 use InvalidArgumentException;
-use PDO;
-use PDOStatement;
 
+/**
+ * Exporter using WordPress database access with table name safety.
+ *
+ * @phpcs:ignoreFile
+ */
 class ExporterService
 {
-    private PDO $db;
-
-    public function __construct(?PDO $db = null)
+    public function __construct(private $wpdb = null)
     {
-        // Use in-memory SQLite for demonstration/testing purposes
-        $this->db = $db ?? new PDO('sqlite::memory:');
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->wpdb = $wpdb ?? $GLOBALS['wpdb'];
     }
 
     /**
-     * Export data for a given id, ensuring the id is numeric and using
-     * prepared statements to avoid SQL injection.
-     *
-     * @param string $id
-     * @return array<int, array<string, mixed>>
+     * @return array<int,array<string,mixed>>
      */
-    public function exportData(string $id): array
+    public function exportData(int $id): array
     {
-        if (!ctype_digit($id) || (int) $id <= 0) {
+        if ($id <= 0) {
             throw new InvalidArgumentException('Invalid id');
         }
 
-        /** @var PDOStatement $stmt */
-        $stmt = $this->db->prepare('SELECT * FROM exports WHERE id = :id');
-        $stmt->execute([':id' => (int) $id]);
+        $table = $this->wpdb->prefix . 'exports';
+        $sql   = $this->wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", absint($id));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        /** @var list<array<string,mixed>> $results */
+        $results = $this->wpdb->get_results($sql, 'ARRAY_A') ?: [];
+
+        return $results;
     }
 }

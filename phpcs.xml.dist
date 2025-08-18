@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<ruleset name="SmartAlloc">
+    <rule ref="WordPress-Core"/>
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Core">
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+        <exclude name="WordPress.NamingConventions.ValidFunctionName.*"/>
+    </rule>
+    <file>src/Domain/Allocation/StudentAllocator.php</file>
+    <file>src/Domain/Allocation/AllocationResult.php</file>
+    <file>src/Http/Rest/AllocationController.php</file>
+    <file>src/Http/Ajax/AllocationAction.php</file>
+    <file>src/Infra/Export/ExporterService.php</file>
+    <exclude-pattern>vendor/</exclude-pattern>
+    <exclude-pattern>tests/</exclude-pattern>
+    <exclude-pattern>stubs/</exclude-pattern>
+</ruleset>
