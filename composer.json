@@ -31,7 +31,8 @@
     },
     "scripts": {
         "lint": "phpcs --standard=phpcs.xml.dist -p",
-        "stan": "phpstan analyse",
+        "stan": "phpstan analyse --no-progress",
+        "stan:baseline": "phpstan analyse --generate-baseline",
         "psalm": "psalm --no-cache --taint-analysis --show-info=false",
         "test": "phpunit",
         "test:security": "phpunit --testsuite Security && psalm --no-cache --taint-analysis --show-info=false",

@@ -16,10 +16,12 @@ if (!defined('WP_DEBUG')) {
     define('WP_DEBUG', true);
 }
 ini_set('display_errors', '0');
-error_reporting(E_ALL);
+error_reporting(E_ALL | E_STRICT);
 
 set_error_handler(function ($severity, $message, $file, $line) {
-    if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
+    if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
+        // Log deprecations but do not throw.
+        error_log('[DEPRECATED] ' . $message);
         return false;
     }
     if (!(error_reporting() & $severity)) {

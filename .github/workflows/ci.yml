@@ -19,11 +19,37 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
       - run: composer install --no-progress --no-interaction --ignore-platform-req=php
-      - run: composer qa
-      - run: composer test:security
-      - run: composer test
+      - run: composer lint | tee phpcs.log
+      - run: composer psalm | tee psalm.log
+      - run: composer test | tee phpunit.log
+      - run: |
+          curl -L https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o wp
+          chmod +x wp && sudo mv wp /usr/local/bin/wp
+      - run: ./bin/wp-plugin-check.sh
+      - run: php bin/collect-validation-report.php
       - if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: focused-tests-${{ matrix.php }}
           path: focused-tests.xml
+      - uses: actions/upload-artifact@v3
+        with:
+          name: validation-${{ matrix.php }}-${{ matrix.wp }}
+          path: |
+            plugin_check.txt
+            artifacts/validation_report.md
+
+  phpstan:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - run: composer install --no-progress --no-interaction
+      - run: composer stan | tee phpstan.log
+      - uses: actions/upload-artifact@v3
+        with:
+          name: phpstan
+          path: phpstan.log
