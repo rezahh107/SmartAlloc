@@ -1,0 +1,5 @@
+
+Fatal error: Uncaught Error: Class "SmartAlloc\Tests\AllocationServiceTest" not found in Standard input code:5
+Stack trace:
+#0 {main}
+  thrown in Standard input code on line 5
