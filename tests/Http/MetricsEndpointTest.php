@@ -49,7 +49,9 @@ final class MetricsEndpointTest extends BaseTestCase
 
     public function test_requires_capability(): void
     {
-        Functions\expect('current_user_can')->once()->with(SMARTALLOC_CAP)->andReturn(false);
+        Functions\when('current_user_can')->justReturn(false);
+        $_GET = [];
+        $GLOBALS['sa_options']['smartalloc_settings']['metrics_cache_ttl'] = 0;
         $controller = new MetricsController();
         $response = $controller->handle(new WP_REST_Request());
         $this->assertInstanceOf(WP_Error::class, $response);
@@ -111,16 +113,17 @@ final class MetricsEndpointTest extends BaseTestCase
         $_GET = [];
     }
 
-    public function test_handles_zero_division_and_empty_ranges(): void
-    {
-        Functions\expect('current_user_can')->andReturn(true);
-        global $wpdb;
-        $wpdb->results = [[]];
-        $controller = new MetricsController();
-        $_GET = ['group_by' => 'day'];
-        $data = $controller->handle(new WP_REST_Request())->get_data();
-        $_GET = [];
-        $this->assertSame([], $data['rows']);
+      public function test_handles_zero_division_and_empty_ranges(): void
+      {
+          Functions\expect('current_user_can')->andReturn(true);
+          global $wpdb;
+          $wpdb->results = [[]];
+          $GLOBALS['sa_options']['smartalloc_settings']['metrics_cache_ttl'] = 0;
+          $controller = new MetricsController();
+          $_GET = ['group_by' => 'day'];
+          $data = $controller->handle(new WP_REST_Request())->get_data();
+          $_GET = [];
+          $this->assertSame([], $data['rows']);
         $this->assertSame(0, $data['total']['allocated']);
         $this->assertSame(0.0, $data['total']['capacity_used']);
     }

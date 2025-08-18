@@ -33,6 +33,10 @@ final class SettingsTest extends BaseTestCase
         $this->assertSame('direct', Settings::getAllocationMode());
         $this->assertSame([], Settings::getPostalCodeAliases());
         $this->assertSame(0, Settings::getExportRetentionDays());
+        $this->assertSame(30, Settings::getLogRetentionDays());
+        $this->assertSame(60, Settings::getMetricsCacheTtl());
+        $this->assertSame('', Settings::getWebhookSecret());
+        $this->assertFalse(Settings::isIncomingWebhookEnabled());
     }
 
     public function test_validation_rejects_invalid_threshold_ranges(): void

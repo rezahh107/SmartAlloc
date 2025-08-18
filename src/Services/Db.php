@@ -170,14 +170,25 @@ class Db
             }
         }
 
-        $idx = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'reviewed_at'");
-        if (!$idx) {
-            $res = $wpdb->query("ALTER TABLE {$table} ADD KEY reviewed_at (reviewed_at)");
-            if ($res === false) {
-                error_log('SmartAlloc migration WARN: unable to add reviewed_at index: ' . $wpdb->last_error);
-            }
-        }
-    }
+          $idx = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'reviewed_at'");
+          if (!$idx) {
+              $res = $wpdb->query("ALTER TABLE {$table} ADD KEY reviewed_at (reviewed_at)");
+              if ($res === false) {
+                  error_log('SmartAlloc migration WARN: unable to add reviewed_at index: ' . $wpdb->last_error);
+              }
+          }
+
+          $needed = ['status', 'created_at', 'mentor_id'];
+          foreach ($needed as $col) {
+              $idx = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = '{$col}'");
+              if (!$idx) {
+                  $res = $wpdb->query("ALTER TABLE {$table} ADD KEY {$col} ({$col})");
+                  if ($res === false) {
+                      error_log('SmartAlloc migration WARN: unable to add ' . $col . ' index: ' . $wpdb->last_error);
+                  }
+              }
+          }
+      }
 
     /**
      * Start a database transaction

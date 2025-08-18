@@ -46,6 +46,7 @@ final class SettingsPageTest extends BaseTestCase
         Functions\when('admin_url')->justReturn('/options.php');
         Functions\when('submit_button')->alias(fn() => '');
         Functions\when('selected')->alias(fn($a, $b) => $a === $b ? 'selected' : '');
+        Functions\when('checked')->alias(fn($a, $b) => $a === $b ? 'checked' : '');
 
         $level = ob_get_level();
         ob_start();

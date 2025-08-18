@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Infra\Settings;
 
+use function sanitize_text_field;
+
 /**
  * Plugin settings helper and sanitizer.
  */
@@ -17,8 +19,12 @@ final class Settings
         'default_capacity'       => 60,
         'allocation_mode'        => 'direct',
         'postal_code_alias'      => '[]',
-        'export_retention_days'  => 0,
-    ];
+          'export_retention_days'  => 0,
+          'log_retention_days'     => 30,
+          'metrics_cache_ttl'      => 60,
+          'webhook_secret'         => '',
+          'enable_incoming_webhook' => 0,
+      ];
 
     /**
      * Sanitize settings array.
@@ -61,10 +67,19 @@ final class Settings
         $output['postal_code_alias'] = json_encode($valid, JSON_UNESCAPED_UNICODE);
 
         $days = self::absint($input['export_retention_days'] ?? self::DEFAULTS['export_retention_days']);
-        $output['export_retention_days'] = $days >= 0 ? $days : self::DEFAULTS['export_retention_days'];
+          $output['export_retention_days'] = $days >= 0 ? $days : self::DEFAULTS['export_retention_days'];
 
-        return $output;
-    }
+          $logDays = self::absint($input['log_retention_days'] ?? self::DEFAULTS['log_retention_days']);
+          $output['log_retention_days'] = $logDays >= 0 ? $logDays : self::DEFAULTS['log_retention_days'];
+
+          $ttl = self::absint($input['metrics_cache_ttl'] ?? self::DEFAULTS['metrics_cache_ttl']);
+          $output['metrics_cache_ttl'] = $ttl >= 0 ? $ttl : self::DEFAULTS['metrics_cache_ttl'];
+
+          $output['webhook_secret'] = sanitize_text_field($input['webhook_secret'] ?? self::DEFAULTS['webhook_secret']);
+          $output['enable_incoming_webhook'] = !empty($input['enable_incoming_webhook']) ? 1 : 0;
+
+          return $output;
+      }
 
     /**
      * Get allocation mode setting.
@@ -112,11 +127,33 @@ final class Settings
         return is_array($decoded) ? $decoded : [];
     }
 
-    public static function getExportRetentionDays(): int
-    {
-        $days = (int) self::get('export_retention_days');
-        return $days >= 0 ? $days : 0;
-    }
+      public static function getExportRetentionDays(): int
+      {
+          $days = (int) self::get('export_retention_days');
+          return $days >= 0 ? $days : 0;
+      }
+
+      public static function getLogRetentionDays(): int
+      {
+          $days = (int) self::get('log_retention_days');
+          return $days >= 0 ? $days : 0;
+      }
+
+      public static function getMetricsCacheTtl(): int
+      {
+          $ttl = (int) self::get('metrics_cache_ttl');
+          return $ttl >= 0 ? $ttl : (int) self::DEFAULTS['metrics_cache_ttl'];
+      }
+
+      public static function getWebhookSecret(): string
+      {
+          return (string) self::get('webhook_secret');
+      }
+
+      public static function isIncomingWebhookEnabled(): bool
+      {
+          return (bool) self::get('enable_incoming_webhook');
+      }
 
     /**
      * Retrieve a raw setting with default fallback.

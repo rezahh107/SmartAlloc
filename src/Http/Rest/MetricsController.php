@@ -52,7 +52,28 @@ final class MetricsController
             $params = $_GET;
         }
 
+        $from = $params['date_from'] ?? '';
+        $to   = $params['date_to'] ?? '';
+        if ($from && $to) {
+            $diff = strtotime((string)$to) - strtotime((string)$from);
+            if ($diff > 90 * 86400) {
+                return new WP_Error('range_too_large', 'Date range too large', array('status' => 400));
+            }
+        }
+
+        $ttl = \SmartAlloc\Infra\Settings\Settings::getMetricsCacheTtl();
+        $key = 'smartalloc_metrics_' . md5(wp_json_encode($params));
+        if ($ttl > 0) {
+            $cached = get_transient($key);
+            if ($cached !== false) {
+                return new WP_REST_Response($cached, 200);
+            }
+        }
+
         $data = self::query($params);
+        if ($ttl > 0) {
+            set_transient($key, $data, $ttl);
+        }
 
         return new WP_REST_Response($data, 200);
     }
@@ -128,33 +149,36 @@ final class MetricsController
             'capacity'          => 0,
         );
 
-        foreach ($rows as $row) {
-            $allocated = (int) ($row['auto_count'] ?? 0);
-            $manual    = (int) ($row['manual_count'] ?? 0);
-            $reject    = (int) ($row['reject_count'] ?? 0);
-            $fuzzy_auto   = (float) ($row['fuzzy_auto'] ?? 0);
-            $fuzzy_manual = (float) ($row['fuzzy_manual'] ?? 0);
-            $assigned = (float) ($row['assigned'] ?? 0);
-            $capacity = (float) ($row['capacity'] ?? 0);
+          foreach ($rows as $row) {
+              if (!isset($row['grp'])) {
+                  continue;
+              }
+              $allocated = (int) ($row['auto_count'] ?? 0);
+              $manual    = (int) ($row['manual_count'] ?? 0);
+              $reject    = (int) ($row['reject_count'] ?? 0);
+              $fuzzy_auto   = (float) ($row['fuzzy_auto'] ?? 0);
+              $fuzzy_manual = (float) ($row['fuzzy_manual'] ?? 0);
+              $assigned = (float) ($row['assigned'] ?? 0);
+              $capacity = (float) ($row['capacity'] ?? 0);
 
-            $result_rows[] = array(
-                $group_by === 'center' ? 'center' : 'date' => $row['grp'],
-                'allocated'         => $allocated,
-                'manual'            => $manual,
-                'reject'            => $reject,
-                'fuzzy_auto_rate'   => $allocated > 0 ? $fuzzy_auto / $allocated : 0.0,
-                'fuzzy_manual_rate' => $manual > 0 ? $fuzzy_manual / $manual : 0.0,
-                'capacity_used'     => $capacity > 0 ? $assigned / $capacity : 0.0,
-            );
+              $result_rows[] = array(
+                  $group_by === 'center' ? 'center' : 'date' => $row['grp'],
+                  'allocated'         => $allocated,
+                  'manual'            => $manual,
+                  'reject'            => $reject,
+                  'fuzzy_auto_rate'   => $allocated > 0 ? $fuzzy_auto / $allocated : 0.0,
+                  'fuzzy_manual_rate' => $manual > 0 ? $fuzzy_manual / $manual : 0.0,
+                  'capacity_used'     => $capacity > 0 ? $assigned / $capacity : 0.0,
+              );
 
-            $totals['allocated']    += $allocated;
-            $totals['manual']       += $manual;
-            $totals['reject']       += $reject;
-            $totals['fuzzy_auto']   += $fuzzy_auto;
-            $totals['fuzzy_manual'] += $fuzzy_manual;
-            $totals['assigned']     += $assigned;
-            $totals['capacity']     += $capacity;
-        }
+              $totals['allocated']    += $allocated;
+              $totals['manual']       += $manual;
+              $totals['reject']       += $reject;
+              $totals['fuzzy_auto']   += $fuzzy_auto;
+              $totals['fuzzy_manual'] += $fuzzy_manual;
+              $totals['assigned']     += $assigned;
+              $totals['capacity']     += $capacity;
+          }
 
         $total = array(
             'allocated'         => $totals['allocated'],
