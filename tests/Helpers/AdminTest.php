@@ -14,6 +14,16 @@ if (!function_exists('makeNonce')) {
             }
             return false;
         });
+        Functions\when('check_ajax_referer')->alias(function (string $expected, string $query_arg = 'nonce') use ($action) {
+            $nonce = $_REQUEST[$query_arg] ?? '';
+            if ($expected === $action && $nonce === 'sa-test-nonce') {
+                return true;
+            }
+            if (function_exists('wp_die')) {
+                wp_die('forbidden', '', ['response' => 403]);
+            }
+            return false;
+        });
         return 'sa-test-nonce';
     }
 }
@@ -47,6 +57,7 @@ if (!function_exists('runAdminPost')) {
             stub_wp_die(function ($message, $title, $args) use (&$status, &$body) {
                 $status = $args['response'] ?? 500;
                 $body   = is_string($message) ? $message : '';
+                throw new \RuntimeException('_sa_wp_die');
             });
         }
 
@@ -56,11 +67,24 @@ if (!function_exists('runAdminPost')) {
             });
         }
 
-        if (function_exists('do_action')) {
-            do_action('admin_post_' . $action);
+        ob_start();
+        try {
+            if (function_exists('do_action')) {
+                do_action('admin_post_' . $action);
+            }
+            if (function_exists($cb = 'admin_post_' . $action)) {
+                $cb();
+            }
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() !== '_sa_wp_die') {
+                throw $e;
+            }
         }
-        if (function_exists($cb = 'admin_post_' . $action)) {
-            $cb();
+        $output = ob_get_clean();
+        if ($body === '') {
+            $body = $output;
+        } else {
+            $body .= $output;
         }
 
         return ['status' => $status, 'body' => $body, 'headers' => $headers];
