@@ -91,6 +91,20 @@ class Db
             UNIQUE KEY uniq_id (id)
         ) $charset";
 
+        // Export registry
+        $dbVersion = $wpdb->get_var('SELECT VERSION()');
+        $filtersType = ($dbVersion && version_compare($dbVersion, '5.7', '>=')) ? 'JSON' : 'LONGTEXT';
+        $sql[] = "CREATE TABLE {$prefix}smartalloc_exports (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            filename VARCHAR(255) NOT NULL,
+            path TEXT NOT NULL,
+            filters {$filtersType} NULL,
+            size BIGINT NOT NULL DEFAULT 0,
+            checksum CHAR(64) NULL,
+            created_at DATETIME NOT NULL,
+            INDEX created_at (created_at)
+        ) $charset";
+
         // Allocation results table
         $sql[] = "CREATE TABLE {$prefix}smartalloc_allocations (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
