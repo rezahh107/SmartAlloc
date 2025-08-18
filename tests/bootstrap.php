@@ -268,4 +268,13 @@ if (!defined('SMARTALLOC_CAP')) {
 
 if (!defined('SMARTALLOC_UPLOAD_DIR')) {
     define('SMARTALLOC_UPLOAD_DIR', 'smart-alloc');
-} 
+}
+
+if (!function_exists('sa_bootstrap_reset')) {
+    function sa_bootstrap_reset(): void {
+        $ref  = new ReflectionClass(\SmartAlloc\Bootstrap::class);
+        $prop = $ref->getProperty('container');
+        $prop->setAccessible(true);
+        $prop->setValue(null);
+    }
+}
