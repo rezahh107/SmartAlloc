@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Admin;
 
 use SmartAlloc\Admin\Pages\ExportPage;
+use SmartAlloc\Admin\Pages\SettingsPage;
 
 final class Menu
 {
@@ -26,6 +27,15 @@ final class Menu
             SMARTALLOC_CAP,
             'smartalloc-manual-review',
             [\SmartAlloc\Admin\Pages\ManualReviewPage::class, 'render']
+        );
+
+        add_submenu_page(
+            'smartalloc-dashboard',
+            esc_html__('Settings', 'smartalloc'),
+            esc_html__('Settings', 'smartalloc'),
+            SMARTALLOC_CAP,
+            'smartalloc-settings',
+            [SettingsPage::class, 'render']
         );
     }
 }

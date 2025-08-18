@@ -12,10 +12,19 @@ use SmartAlloc\Services\AllocationService;
 
 final class SabtSubmissionHandlerTest extends \PHPUnit\Framework\TestCase
 {
+    private array $options;
+
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
+        $this->options = [
+            'allocation_mode' => 'direct',
+            'fuzzy_auto_threshold' => 0.90,
+            'fuzzy_manual_min' => 0.80,
+            'fuzzy_manual_max' => 0.89,
+        ];
+        $GLOBALS['sa_options'] = ['smartalloc_settings' => $this->options];
     }
 
     protected function tearDown(): void
@@ -113,18 +122,18 @@ final class SabtSubmissionHandlerTest extends \PHPUnit\Framework\TestCase
     public function test_handle_rest_mode_calls_allocate_endpoint_and_persists_result(): void
     {
         $wpdb = new WpdbStub();
-        $GLOBALS['smartalloc_allocation_mode'] = 'rest';
         Functions\expect('rest_url')->andReturn('http://example.com');
         Functions\expect('wp_remote_post')->andReturn([
             'body' => json_encode(['result' => ['committed' => true, 'mentor_id' => 7, 'school_match_score' => 0.93]])
         ]);
 
+        $this->options['allocation_mode'] = 'rest';
+        $GLOBALS['sa_options'] = ['smartalloc_settings' => $this->options];
         $handler = $this->makeHandler([], $wpdb);
         $handler->process(['id' => 6, '20'=>'09123456789', '76'=>'1234567890123456'], []);
 
         $this->assertSame('auto', $wpdb->rows[6]['status']);
         $this->assertSame(7, $wpdb->rows[6]['mentor_id']);
-        unset($GLOBALS['smartalloc_allocation_mode']);
     }
 }
 

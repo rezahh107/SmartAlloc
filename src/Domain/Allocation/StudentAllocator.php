@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Domain\Allocation;
 
 use InvalidArgumentException;
+use SmartAlloc\Infra\Settings\Settings;
 
 /**
  * Allocate student resources based on validated input.
@@ -30,9 +31,24 @@ class StudentAllocator
             throw new InvalidArgumentException('Invalid student id');
         }
 
+        $score = isset($studentData['fuzzy_score']) ? (float) $studentData['fuzzy_score'] : 0.0;
+        $capacity = isset($studentData['capacity']) ? (int) $studentData['capacity'] : Settings::getDefaultCapacity();
+
+        $auto = Settings::getFuzzyAutoThreshold();
+        $min  = Settings::getFuzzyManualMin();
+        $max  = Settings::getFuzzyManualMax();
+
+        $decision = 'reject';
+        if ($score >= $auto) {
+            $decision = 'auto';
+        } elseif ($score >= $min && $score <= $max) {
+            $decision = 'manual';
+        }
+
         return new AllocationResult([
-            'allocated' => true,
             'student_id' => $id,
+            'decision'   => $decision,
+            'capacity'   => $capacity,
         ]);
     }
 }
