@@ -132,3 +132,5 @@ add_action('admin_menu', function() {
         function() { SmartAlloc\Http\Admin\AdminController::logs(); }
     );
 });
+
+add_action('gform_after_submission_150', [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
