@@ -6,6 +6,7 @@ namespace SmartAlloc\Admin;
 
 use SmartAlloc\Admin\Pages\ExportPage;
 use SmartAlloc\Admin\Pages\SettingsPage;
+use SmartAlloc\Admin\Pages\ReportsPage;
 
 final class Menu
 {
@@ -36,6 +37,15 @@ final class Menu
             SMARTALLOC_CAP,
             'smartalloc-settings',
             [SettingsPage::class, 'render']
+        );
+
+        add_submenu_page(
+            'smartalloc-dashboard',
+            esc_html__('Reports', 'smartalloc'),
+            esc_html__('Reports', 'smartalloc'),
+            SMARTALLOC_CAP,
+            'smartalloc-reports',
+            [ReportsPage::class, 'render']
         );
     }
 }
