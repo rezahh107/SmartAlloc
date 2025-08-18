@@ -16,6 +16,7 @@ if (!defined('WP_DEBUG')) {
     define('WP_DEBUG', true);
 }
 ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 error_reporting(E_ALL | E_STRICT);
 
 set_error_handler(function ($severity, $message, $file, $line) {
@@ -165,6 +166,16 @@ if (!function_exists('wp_mkdir_p')) {
     }
 }
 
+if (!function_exists('sa_tests_temp_dir')) {
+    function sa_tests_temp_dir(string $prefix = 'sa'): string {
+        $dir = sys_get_temp_dir() . '/' . $prefix . '-' . bin2hex(random_bytes(4));
+        if (!wp_mkdir_p($dir)) {
+            throw new \RuntimeException('Failed to create temp dir');
+        }
+        return $dir;
+    }
+}
+
 if (!function_exists('sanitize_text_field')) {
     function sanitize_text_field($str) {
         return trim(strip_tags($str));
@@ -201,44 +212,55 @@ $wpdb = new class {
     public $last_error = '';
     public $insert_id = 0;
     public $rows_affected = 0;
-    
+    public array $queries = [];
+
+    private function log(string $sql): void { $this->queries[] = $sql; }
+
     public function prepare($query, ...$args) {
         return $query;
     }
-    
+
     public function query($query) {
+        $this->log($query);
         return true;
     }
-    
+
     public function get_results($query, $output_type = 'OBJECT') {
+        $this->log($query);
         return [];
     }
-    
+
     public function get_row($query, $output_type = 'OBJECT') {
+        $this->log($query);
         return null;
     }
-    
+
     public function get_var($query) {
+        $this->log($query);
         return null;
     }
-    
+
     public function insert($table, $data) {
         $this->insert_id = 1;
+        $this->log('INSERT');
         return true;
     }
-    
+
     public function update($table, $data, $where) {
         $this->rows_affected = 1;
+        $this->log('UPDATE');
         return true;
     }
-    
+
     public function delete($table, $where) {
         $this->rows_affected = 1;
+        $this->log('DELETE');
         return true;
     }
-    
+
     public function replace($table, $data) {
         $this->insert_id = 1;
+        $this->log('REPLACE');
         return true;
     }
     

@@ -17,7 +17,9 @@ are cached for a short period (configurable via **metrics_cache_ttl**).
 ## How we validate releases
 Every build produces a `validation_report.md` artifact summarising lint, static
 analysis, tests and plugin checks. Operators can review this report to confirm a
-release passes all automated quality gates.
+release passes all automated quality gates. In CI, both `validation_report.md`
+and the raw `plugin_check.txt` output are uploaded as build artifacts; check
+these before tagging a release.
 
 ## CLI usage
 ```
