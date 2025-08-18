@@ -7,8 +7,9 @@ namespace SmartAlloc\Infra\Export;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use PhpOffice\PhpSpreadsheet\Settings;
+use PhpOffice\PhpSpreadsheet\Settings as SpreadsheetSettings;
 use PhpOffice\PhpSpreadsheet\CachedObjectStorageFactory;
+use SmartAlloc\Infra\Settings\Settings;
 
 /**
  * Excel exporter aligned with SmartAlloc spec.
@@ -80,7 +81,7 @@ class ExcelExporter
     private function buildSpreadsheet(array $rows): array
     {
         if (count($rows) > 1000) {
-            Settings::setCacheStorageMethod(CachedObjectStorageFactory::cache_to_discISAM, [
+            SpreadsheetSettings::setCacheStorageMethod(CachedObjectStorageFactory::cache_to_discISAM, [
                 'dir' => sys_get_temp_dir(),
             ]);
         }
@@ -108,6 +109,15 @@ class ExcelExporter
         $writer   = new Xlsx($spreadsheet);
         $writer->setPreCalculateFormulas(false);
         $writer->save($path);
+
+        $retention = Settings::getExportRetentionDays();
+        if ($retention > 0) {
+            try {
+                $this->purgeOldExports($retention);
+            } catch (\Throwable $e) {
+                // ignore cleanup failures
+            }
+        }
 
         return ['path' => $path, 'spreadsheet' => $spreadsheet];
     }
@@ -197,6 +207,20 @@ class ExcelExporter
         $batchS = str_pad((string) $batch, 3, '0', STR_PAD_LEFT);
 
         return sprintf('SabtExport-ALLOCATED-%s-%s-B%s.xlsx', $date, $dailyS, $batchS);
+    }
+
+    private function purgeOldExports(int $days): void
+    {
+        $files = glob($this->exportDir . DIRECTORY_SEPARATOR . '*.xlsx');
+        if ($files === false) {
+            return;
+        }
+        $threshold = time() - ($days * 86400);
+        foreach ($files as $file) {
+            if (is_file($file) && @filemtime($file) < $threshold) {
+                @unlink($file);
+            }
+        }
     }
 }
 

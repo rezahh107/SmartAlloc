@@ -33,12 +33,13 @@ if (!function_exists('do_action')) {
 
 if (!function_exists('get_option')) {
     function get_option($key, $default = false) {
-        return $default;
+        return $GLOBALS['sa_options'][$key] ?? $default;
     }
 }
 
 if (!function_exists('update_option')) {
     function update_option($key, $value) {
+        $GLOBALS['sa_options'][$key] = $value;
         return true;
     }
 }

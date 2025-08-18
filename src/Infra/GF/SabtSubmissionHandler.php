@@ -116,9 +116,13 @@ final class SabtSubmissionHandler
         $candidates = null;
         $reason = null;
 
-        if (($result['committed'] ?? false) && $score >= 0.90) {
+        $auto = Settings::getFuzzyAutoThreshold();
+        $min  = Settings::getFuzzyManualMin();
+        $max  = Settings::getFuzzyManualMax();
+
+        if (($result['committed'] ?? false) && $score >= $auto) {
             $status = AllocationStatus::AUTO;
-        } elseif ($score >= 0.80 && $score < 0.90) {
+        } elseif ($score >= $min && $score <= $max) {
             $status = AllocationStatus::MANUAL;
             if (!empty($result['candidates']) && is_array($result['candidates'])) {
                 $candidates = array_slice($result['candidates'], 0, 5);

@@ -134,6 +134,7 @@ add_action('admin_menu', function() {
 });
 
 add_action('admin_menu', ['SmartAlloc\\Admin\\Menu', 'register']);
+add_action('admin_init', ['SmartAlloc\\Admin\\Pages\\SettingsPage', 'register']);
 add_action('admin_post_smartalloc_export_generate', ['SmartAlloc\\Admin\\Actions\\ExportGenerateAction', 'handle']);
 add_action('admin_post_smartalloc_export_download', ['SmartAlloc\\Admin\\Actions\\ExportDownloadAction', 'handle']);
 add_action('wp_ajax_smartalloc_manual_approve', ['SmartAlloc\\Admin\\Actions\\ManualApproveAction', 'handle']);
