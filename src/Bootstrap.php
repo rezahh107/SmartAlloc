@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SmartAlloc;
 
 use SmartAlloc\Services\{
-    Db, Cache, Logging, CircuitBreaker, Metrics, CounterService, 
-    AllocationService, CrosswalkService, ExportService, NotificationService, 
+    Db, Cache, Logging, CircuitBreaker, Metrics, CounterService,
+    AllocationService, CrosswalkService, ExportService, NotificationService,
     StatsService, HealthService, EventStoreWp
 };
+use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\{LoggerInterface, EventStoreInterface};
 use SmartAlloc\Http\RestController;
@@ -166,6 +167,11 @@ final class Bootstrap
         $c->set(HealthService::class, fn() => new HealthService(
             $c->get(Db::class),
             $c->get(Cache::class)
+        ));
+
+        $c->set(AllocationsRepository::class, fn() => new AllocationsRepository(
+            $c->get(LoggerInterface::class),
+            $GLOBALS['wpdb']
         ));
     }
 

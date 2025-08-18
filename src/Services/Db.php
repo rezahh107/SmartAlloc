@@ -25,6 +25,10 @@ class Db
      */
     public static function migrate(): void
     {
+        if (function_exists('current_user_can') && !current_user_can('manage_options')) {
+            return;
+        }
+
         global $wpdb;
         $charset = $wpdb->get_charset_collate();
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -83,17 +87,41 @@ class Db
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             entry_id BIGINT UNSIGNED NOT NULL,
             student_hash VARBINARY(32) NOT NULL,
-            status ENUM('auto','manual','reject') NOT NULL,
+            status VARCHAR(16) NOT NULL,
             mentor_id BIGINT UNSIGNED NULL,
-            candidates JSON NULL,
+            candidates LONGTEXT NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
-            UNIQUE KEY uniq_entry (entry_id)
-        ) $charset";
+            UNIQUE KEY entry_id (entry_id),
+            KEY mentor_id (mentor_id),
+            KEY status (status),
+            KEY created_at (created_at)
+        ) ENGINE=InnoDB $charset";
 
         // Execute migrations
         foreach ($sql as $query) {
             dbDelta($query);
+        }
+
+        $table = $prefix . 'smartalloc_allocations';
+
+        $col = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'status'");
+        if ($col && isset($col[0]->Type) && str_contains(strtolower((string) $col[0]->Type), 'enum')) {
+            $res = $wpdb->query("ALTER TABLE {$table} MODIFY status VARCHAR(16) NOT NULL");
+            if ($res === false) {
+                error_log('SmartAlloc migration WARN: unable to alter status column: ' . $wpdb->last_error);
+            }
+        }
+
+        $col = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'candidates'");
+        if ($col && isset($col[0]->Type)) {
+            $type = strtolower((string) $col[0]->Type);
+            if ($type !== 'longtext') {
+                $res = $wpdb->query("ALTER TABLE {$table} MODIFY candidates LONGTEXT NULL");
+                if ($res === false) {
+                    error_log('SmartAlloc migration WARN: unable to alter candidates column: ' . $wpdb->last_error);
+                }
+            }
         }
     }
 

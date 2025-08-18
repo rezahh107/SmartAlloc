@@ -75,6 +75,10 @@ if (!function_exists('current_time')) {
     }
 }
 
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
+}
+
 if (!function_exists('wp_upload_dir')) {
     function wp_upload_dir() {
         return [

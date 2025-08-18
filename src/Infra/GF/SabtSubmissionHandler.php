@@ -6,6 +6,8 @@ namespace SmartAlloc\Infra\GF;
 
 use SmartAlloc\Bootstrap;
 use SmartAlloc\Contracts\LoggerInterface;
+use SmartAlloc\Domain\Allocation\AllocationStatus;
+use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Infra\Settings\Settings;
 use SmartAlloc\Services\AllocationService;
 
@@ -18,7 +20,7 @@ final class SabtSubmissionHandler
         private SabtEntryMapper $mapper,
         private AllocationService $allocator,
         private LoggerInterface $logger,
-        private \wpdb $wpdb
+        private AllocationsRepository $repository
     ) {
     }
 
@@ -35,7 +37,7 @@ final class SabtSubmissionHandler
             new SabtEntryMapper(),
             $c->get(AllocationService::class),
             $c->get(LoggerInterface::class),
-            $GLOBALS['wpdb']
+            $c->get(AllocationsRepository::class)
         );
         $handler->process($entry, $form);
     }
@@ -53,38 +55,25 @@ final class SabtSubmissionHandler
             return;
         }
 
-        $table = $this->wpdb->prefix . 'smartalloc_allocations';
-
         // Idempotency check
-        $existing = $this->wpdb->get_row(
-            $this->wpdb->prepare("SELECT status, mentor_id FROM {$table} WHERE entry_id = %d", $entryId),
-            'ARRAY_A'
-        );
+        $existing = $this->repository->findByEntryId($entryId);
         if ($existing) {
             do_action('smartalloc/event', 'AllocationProcessed', [
                 'entry_id' => $entryId,
                 'status' => $existing['status'],
-                'mentor_id' => $existing['mentor_id'] ? (int) $existing['mentor_id'] : null,
+                'mentor_id' => $existing['mentor_id'],
             ]);
             return;
         }
 
         $map = $this->mapper->mapEntry($entry);
         if (!($map['ok'] ?? false)) {
-            $this->wpdb->insert($table, [
-                'entry_id' => $entryId,
-                'student_hash' => hash('sha256', wp_json_encode($entry), true),
-                'status' => 'reject',
-                'mentor_id' => null,
-                'candidates' => wp_json_encode(['reason' => $map['code'] ?? 'unknown']),
-                'created_at' => current_time('mysql'),
-                'updated_at' => current_time('mysql'),
-            ]);
+            $this->repository->save($entryId, AllocationStatus::REJECT, null, null, $map['code'] ?? 'unknown');
 
             $this->logger->warning('sabt.reject', ['entry_id' => $entryId]);
             do_action('smartalloc/event', 'AllocationProcessed', [
                 'entry_id' => $entryId,
-                'status' => 'reject',
+                'status' => AllocationStatus::REJECT,
                 'mentor_id' => null,
             ]);
             return;
@@ -92,7 +81,6 @@ final class SabtSubmissionHandler
 
         $student = $map['student'];
         $student['id'] = $entryId;
-        $studentHash = hash('sha256', wp_json_encode($student), true);
 
         $mode = Settings::getAllocationMode();
         $result = [];
@@ -124,34 +112,27 @@ final class SabtSubmissionHandler
 
         $score = (float) ($result['school_match_score'] ?? 0);
         $mentorId = isset($result['mentor_id']) ? (int) $result['mentor_id'] : null;
-        $status = 'reject';
-        $candidatesJson = null;
+        $status = AllocationStatus::REJECT;
+        $candidates = null;
+        $reason = null;
 
         if (($result['committed'] ?? false) && $score >= 0.90) {
-            $status = 'auto';
+            $status = AllocationStatus::AUTO;
         } elseif ($score >= 0.80 && $score < 0.90) {
-            $status = 'manual';
+            $status = AllocationStatus::MANUAL;
             if (!empty($result['candidates']) && is_array($result['candidates'])) {
-                $candidatesJson = wp_json_encode(array_slice($result['candidates'], 0, 5));
+                $candidates = array_slice($result['candidates'], 0, 5);
             }
             $mentorId = null;
         } else {
-            $status = 'reject';
+            $status = AllocationStatus::REJECT;
             if (!empty($result['reason'])) {
-                $candidatesJson = wp_json_encode(['reason' => $result['reason']]);
+                $reason = (string) $result['reason'];
             }
             $mentorId = null;
         }
 
-        $this->wpdb->insert($table, [
-            'entry_id' => $entryId,
-            'student_hash' => $studentHash,
-            'status' => $status,
-            'mentor_id' => $mentorId,
-            'candidates' => $candidatesJson,
-            'created_at' => current_time('mysql'),
-            'updated_at' => current_time('mysql'),
-        ]);
+        $this->repository->save($entryId, $status, $mentorId, $candidates, $reason);
 
         $this->logger->info('sabt.processed', [
             'entry_id' => $entryId,
