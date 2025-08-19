@@ -21,6 +21,7 @@ final class DebugBundleSecurityTest extends BaseTestCase
         $GLOBALS['wp_upload_dir_basedir'] = sys_get_temp_dir();
         Functions\when('get_bloginfo')->alias(fn() => '6.0');
         Functions\when('wp_parse_url')->alias(fn($v) => parse_url($v));
+        $GLOBALS['sa_transients'] = [];
         $entry = [
             'message' => 'oops',
             'file' => 'file.php',
@@ -52,7 +53,8 @@ final class DebugBundleSecurityTest extends BaseTestCase
             $name = $zipObj->getNameIndex($i);
             $data = (string) $zipObj->getFromIndex($i);
             $this->assertDoesNotMatchRegularExpression('/[A-Z0-9._%+-]+@[A-Z0-9.-]+/i', $data, $name);
-            $this->assertDoesNotMatchRegularExpression('/\b\d{9,}\b/', $data, $name);
+            $this->assertDoesNotMatchRegularExpression('/\b(?:\d[\s-]?){9,}\d\b/', $data, $name);
+            $this->assertDoesNotMatchRegularExpression('/\b[A-F0-9]{32}\b/i', $data, $name);
         }
         $zipObj->close();
     }
