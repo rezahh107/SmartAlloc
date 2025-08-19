@@ -100,7 +100,9 @@ class Db
             path TEXT NOT NULL,
             filters {$filtersType} NULL,
             size BIGINT NOT NULL DEFAULT 0,
+            rows INT UNSIGNED NOT NULL DEFAULT 0,
             checksum CHAR(64) NULL,
+            status VARCHAR(16) NOT NULL DEFAULT 'Valid',
             created_at DATETIME NOT NULL,
             INDEX created_at (created_at)
         ) $charset";

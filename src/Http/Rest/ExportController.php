@@ -65,11 +65,32 @@ final class ExportController
             return new WP_Error( 'invalid_payload', 'Invalid batch', array( 'status' => 400 ) );
         }
 
+        // Per-user rate limiting: default 3 exports per 10 minutes.
+        $user_id   = get_current_user_id();
+        $limit     = (int) get_option( 'export_rate_limit', 3 );
+        $rate_key  = 'smartalloc_export_rate_' . $user_id;
+        $rate_cnt  = (int) get_transient( $rate_key );
+        if ( $rate_cnt >= $limit ) {
+            // Retry-After header in seconds.
+            header( 'Retry-After: 600' );
+            return new WP_Error( 'rate_limited', 'Rate limit exceeded', array( 'status' => 429 ) );
+        }
+        set_transient( $rate_key, $rate_cnt + 1, 10 * MINUTE_IN_SECONDS );
+
+        $lock_key = sprintf( 'export:%s:%s:%s', $from, $to, $batch ?? 'none' );
+        if ( get_transient( $lock_key ) ) {
+            return new WP_Error( 'conflict', 'Export in progress', array( 'status' => 409 ) );
+        }
+        set_transient( $lock_key, 1, 10 * MINUTE_IN_SECONDS );
+
         try {
             $result = $this->service->generate( $from, $to, $batch );
         } catch ( \Throwable $e ) {
+            delete_transient( $lock_key );
             return new WP_Error( 'export_failed', 'Export failed', array( 'status' => 500 ) );
         }
+
+        delete_transient( $lock_key );
 
         return new WP_REST_Response( $result, 200 );
     }

@@ -20,27 +20,7 @@ final class RetentionTasks
 
     public static function run(): void
     {
-        self::purgeExports(Settings::getExportRetentionDays());
         self::purgeLogs(Settings::getLogRetentionDays());
-    }
-
-    private static function purgeExports(int $days): void
-    {
-        global $wpdb;
-        $table = $wpdb->prefix . 'smartalloc_exports';
-        $upload = wp_upload_dir();
-        $threshold = time() - ($days * 86400);
-        $rows = $wpdb->get_results("SELECT id, path, created_at FROM {$table}", ARRAY_A) ?: [];
-        foreach ($rows as $row) {
-            $file = $row['path'];
-            $created = strtotime($row['created_at'] ?? '') ?: 0;
-            if (($days > 0 && $created < $threshold) || !file_exists($file)) {
-                if (file_exists($file)) {
-                    @unlink($file);
-                }
-                $wpdb->query($wpdb->prepare("DELETE FROM {$table} WHERE id=%d", (int) $row['id']));
-            }
-        }
     }
 
     private static function purgeLogs(int $days): void
