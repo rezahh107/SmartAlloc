@@ -11,13 +11,17 @@ Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 | E. Security Regression | Composer `test:security` suite and Psalm taint analysis run in CI. |
 | F. Performance & Rate Limiting | `export-load.js` k6 script drives 50 concurrent requests; checks success or HTTP 429. |
 | G. User Experience / Accessibility | Playwright `approve flow shows success` validates admin notices and interactions. |
-| 3.x Gravity Forms | PHPUnit scaffolds `ComplexFormTest` and `FlowPerksIntegrationTest` (marked SKIP with TODO) cover nested conditionals, uploads, multipage sessions and Flow/Perks routing. |
-| 8.x Persian/RTL | `PersianRtlTest` and Playwright `@e2e-i18n` placeholders ensure RTL rendering, character handling and Jalali round-trip (SKIP with TODO). |
+| 3.x Gravity Forms | `MultiPageUploadTest`, `NestedConditionalsTest`, `FlowRoutingTest`, `PerksComboTest` (SKIP if Brain Monkey/vfsStream/GF stubs missing) cover uploads, nested logic, routing and perks combos. |
+| 8.x PHP 8.3 | `OverrideAttributeTest`, `TypedClassConstantsTest`, `JsonValidateTest`, `ReadonlyClassTest`, `DynamicConstFetchTest` verify new language features (SKIP on PHP <8.3 or missing functions). |
+| 8.x Persian/RTL | `JalaliBypassTest` and `RTLLayoutTest` assert Jalali filter bypass and RTL data integrity (SKIP if PhpSpreadsheet/helper unavailable). |
 | Third-Party Compatibility | `JalaliFilterBypassTest` and Playwright `@e2e-compat` protect against Jalali date filters and Persian GF admin styles. |
+| Prod-Risk A/B/C/D/E/G | `EnvLimitsTest`, `UnicodeAndCorruptionTest`, `ConcurrencyLiteTest` simulate env caps, unicode/corruption handling and idempotent locks (SKIP if env unknown or handlers absent). |
 | Debug Kit | `ErrorCollectorTest` verifies redaction, breadcrumbs and SAVEQUERIES behaviour; `DebugIntegrationTest` covers nonce/capability checks and prompt context; `DebugKitTest` guards against PII leakage and ensures only sanitized prepared SQL is surfaced. `ReproBuilderTest` scaffolds repros, `DebugBundleIntegrationTest` downloads bundles and `DebugBundleSecurityTest` scans for PII (requires `SAVEQUERIES` for SQL samples). |
 | Chaos/Resilience | `ReproBuilderTest` and `DebugBundleIntegrationTest` validate reproducible scaffolds and admin/CLI flows. |
 | GF/i18n | Repro blueprints and tests remain locale-neutral and RTL-safe. |
 | Repro Hardening | Bundles stay under 1MB and PII-free; blueprint schema, nonce and capability checks are validated. |
+
+These tests do not modify runtime code. If a prerequisite such as Brain Monkey, vfsStream or PhpSpreadsheet is missing, the affected tests call `markTestSkipped()` with a clear TODO instead of failing.
 
 ## Quality Gates 2024
 
