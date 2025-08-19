@@ -54,13 +54,19 @@ final class HealthController
         $version        = (string) get_option('smartalloc_version');
         $last_migration = get_option('smartalloc_last_migration');
 
+        $notes = array();
+        if (class_exists('SmartAlloc\\Infra\\Logging\\Logger')) {
+            $req = \SmartAlloc\Infra\Logging\Logger::requestId();
+            $notes['request'] = substr(hash('sha256', $req), 0, 8);
+        }
+
         $response = array(
             'ok'             => $db_ok && $cache_ok,
             'version'        => $version ?: 'unknown',
             'db'             => $db_ok,
             'cache'          => $cache_ok,
             'last_migration' => $last_migration ?: null,
-            'notes'          => array(),
+            'notes'          => $notes,
         );
 
         return new WP_REST_Response($response, 200);

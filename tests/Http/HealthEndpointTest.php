@@ -63,5 +63,7 @@ final class HealthEndpointTest extends BaseTestCase
         $this->assertTrue($data['cache']);
         $this->assertSame('1.2.3', $data['version']);
         $this->assertSame('2025-08-18T09:00:00Z', $data['last_migration']);
+        $this->assertArrayHasKey('request', $data['notes']);
+        $this->assertSame(8, strlen($data['notes']['request']));
     }
 }
