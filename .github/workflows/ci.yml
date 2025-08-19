@@ -80,3 +80,50 @@ jobs:
         with:
           name: playwright-results
           path: test-results
+
+  security-sast:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - run: composer install --no-interaction
+      - run: composer sec:semgrep
+      - name: Upload Semgrep report
+        if: hashFiles('semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+
+  security-sca:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci || true
+      - run: npm i -g snyk
+      - run: npm run sec:snyk
+      - name: Upload Snyk results
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-results
+          path: ./.snyk*
+          if-no-files-found: ignore
+
+  security-wp:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - run: composer install --no-interaction
+      - run: composer sec:wp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: patchstack-report
+          path: build/patchstack.json
+          if-no-files-found: ignore

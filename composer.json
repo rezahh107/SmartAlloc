@@ -28,7 +28,8 @@
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
         "phpcompatibility/php-compatibility": "^9.3",
         "wp-phpunit/wp-phpunit": "^5.7",
-        "mikey179/vfsstream": "^1.6"
+        "mikey179/vfsstream": "^1.6",
+        "patchstack/security-scanner": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -48,7 +49,9 @@
         "qa": "composer cs && composer psalm && composer test",
         "ci": "composer cs && composer test:security && composer coverage",
         "build": "rm -rf dist && mkdir dist && VERSION=$(php -r \"include 'smart-alloc.php'; echo SMARTALLOC_VERSION;\") && rsync -a . dist/smartalloc --exclude 'tests' --exclude 'stubs' --exclude 'docs' --exclude 'node_modules' --exclude '.github' --exclude 'dist' && cd dist && zip -r smartalloc-v$VERSION.zip smartalloc && rm -rf smartalloc",
-        "dist": "composer cs && composer test:security && composer test && composer build"
+        "dist": "composer cs && composer test:security && composer test && composer build",
+        "sec:semgrep": "docker run --rm -v $PWD:/src returntocorp/semgrep --config=auto --timeout 120 /src",
+        "sec:wp": "vendor/bin/patchstack scan --format=json --output build/patchstack.json || exit 0"
     },
     "config": {
         "allow-plugins": {
