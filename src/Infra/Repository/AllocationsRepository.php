@@ -48,6 +48,10 @@ final class AllocationsRepository
             'created_at' => current_time('mysql'),
             'updated_at' => current_time('mysql'),
         ]);
+
+        if ($this->wpdb->last_error && str_contains(strtolower($this->wpdb->last_error), 'duplicate')) {
+            throw new \RuntimeException('duplicate_allocation');
+        }
     }
 
     /**
@@ -125,6 +129,12 @@ final class AllocationsRepository
             AllocationStatus::MANUAL
         );
         $this->wpdb->query($sql);
+
+        if ($this->wpdb->last_error && str_contains(strtolower($this->wpdb->last_error), 'duplicate')) {
+            $this->wpdb->query('ROLLBACK');
+            $this->logger->warning('allocations.manual_approve_duplicate', ['entry_id' => $entryId]);
+            return new AllocationResult(['committed' => false, 'reason' => 'duplicate']);
+        }
 
         if ($this->wpdb->rows_affected !== 1) {
             $this->wpdb->query('ROLLBACK');

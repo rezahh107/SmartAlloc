@@ -79,19 +79,19 @@ final class ManualReviewPage
             }
             echo '</td>';
             echo '<td>';
-            $approveAttrs = 'class="button smartalloc-approve" data-entry="' . esc_attr((string)$id) . '" data-mentor="' . esc_attr((string)$mentor) . '"';
+            $approveAttrs = 'class="button smartalloc-approve" aria-label="Approve entry ' . esc_attr((string)$id) . '" data-entry="' . esc_attr((string)$id) . '" data-mentor="' . esc_attr((string)$mentor) . '"';
             if ($full) { $approveAttrs .= ' disabled data-full="1"'; }
             echo '<button ' . $approveAttrs . '>' . esc_html__('Approve', 'smartalloc') . '</button> ';
-            echo '<button class="button smartalloc-reject" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Reject', 'smartalloc') . '</button> ';
-            echo '<button class="button smartalloc-defer" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Defer', 'smartalloc') . '</button>';
+            echo '<button class="button smartalloc-reject" aria-label="Reject entry ' . esc_attr((string)$id) . '" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Reject', 'smartalloc') . '</button> ';
+            echo '<button class="button smartalloc-defer" aria-label="Defer entry ' . esc_attr((string)$id) . '" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Defer', 'smartalloc') . '</button>';
             echo '</td>';
             echo '</tr>';
         }
         echo '</tbody></table>';
         echo '<p>';
-        echo '<button class="button" id="smartalloc-bulk-approve">' . esc_html__('Approve Selected', 'smartalloc') . '</button> ';
-        echo '<button class="button" id="smartalloc-bulk-reject">' . esc_html__('Reject Selected', 'smartalloc') . '</button> ';
-        echo '<button class="button" id="smartalloc-bulk-defer">' . esc_html__('Defer Selected', 'smartalloc') . '</button>';
+        echo '<button class="button" id="smartalloc-bulk-approve" aria-label="Approve selected entries">' . esc_html__('Approve Selected', 'smartalloc') . '</button> ';
+        echo '<button class="button" id="smartalloc-bulk-reject" aria-label="Reject selected entries">' . esc_html__('Reject Selected', 'smartalloc') . '</button> ';
+        echo '<button class="button" id="smartalloc-bulk-defer" aria-label="Defer selected entries">' . esc_html__('Defer Selected', 'smartalloc') . '</button>';
         echo '</p>';
         echo '</form>';
         echo '</div>';
