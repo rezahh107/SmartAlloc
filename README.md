@@ -187,33 +187,33 @@ vendor/bin/phpunit tests/DigitsNormalizerTest.php
 
 ## End-to-End Testing
 
-Run E2E tests using one of three paths:
+Run a11y and editor smoke tests via Playwright using one of three paths:
 
-### A) Docker Compose
+### A) Playground CLI (default)
 
 ```bash
 npm run e2e:install && npm run e2e:all
 ```
 
-### B) wp-env (Docker-based)
+### B) Docker Compose
+
+```bash
+npm run e2e:install && npm run e2e:all:docker
+```
+
+### C) wp-env (Docker-based)
 
 ```bash
 npm run e2e:install && npm run e2e:all:wpenv
 ```
 
-### C) Docker-free (Playground CLI)
-
-```bash
-npm run e2e:install && npm run e2e:all:playground
-```
-
-The Playground CLI mounts the current plugin automatically via `--auto-mount` and serves on port 9400 (configurable via `--port`).
+The Playground CLI mounts the current plugin automatically via `--auto-mount` and serves on port 9400 (override with `WP_BASE_URL`).
 
 ### Troubleshooting
 
-Common errors:
-
-- ECONNREFUSED → ensure the chosen path is running and `WP_BASE_URL` matches (9400 for Playground)
+- Offline? Playground download may fail → use Docker or wp-env paths
+- Port in use → set `WP_BASE_URL` accordingly (defaults to 9400)
+- ECONNREFUSED → ensure the chosen path is running and `WP_BASE_URL` matches
 - Node < 20 → upgrade Node for Playground CLI
 
 CI E2E is optional and won’t block merges.

@@ -1,5 +1,5 @@
 const http = require('http');
-const url = process.env.WP_BASE_URL || 'http://localhost:8080';
+const url = process.env.WP_BASE_URL || 'http://localhost:9400';
 const deadline = Date.now() + 120000;
 
 function ping() {

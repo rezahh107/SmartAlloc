@@ -7,22 +7,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with:
+          node-version: 20
       - name: Install deps
         run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Doctor
-        run: node e2e/scripts/doctor.js || (echo "Hint: Docker not available" && exit 1)
-        env: { WP_BASE_URL: http://localhost:8080 }
-      - name: Start stack
-        run: docker compose up -d
-      - name: Wait for WP
-        run: node e2e/scripts/wait-for-wp.js || (echo "Hint: WP healthcheck failed" && exit 1)
-        env: { WP_BASE_URL: http://localhost:8080 }
-      - name: Seed data
-        run: bash e2e/scripts/seed.sh
-        env: { WP_BASE_URL: http://localhost:8080 }
-      - name: Run E2E tests
-        run: npm run test:e2e
-        env: { WP_BASE_URL: http://localhost:8080 }
+      - name: Run E2E tests (Playground)
+        run: npm run e2e:all
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results
