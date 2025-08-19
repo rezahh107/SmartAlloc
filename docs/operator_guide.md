@@ -21,6 +21,10 @@ release passes all automated quality gates. In CI, both `validation_report.md`
 and the raw `plugin_check.txt` output are uploaded as build artifacts; check
 these before tagging a release.
 
+## PHP compatibility
+The development toolchain is validated up to PHP 8.3. Runtime compatibility
+follows the versions listed in the plugin readme.
+
 ## CLI usage
 ```
 wp smartalloc export --from=2024-01-01 --to=2024-01-31 --format=json

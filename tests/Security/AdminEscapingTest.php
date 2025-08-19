@@ -1,22 +1,14 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
 if (!class_exists('wpdb')) {
-    class wpdb {
-        public $prefix = 'wp_';
-        public function prepare($q, ...$a) { return $q; }
-        public function get_results($q, $o = 'OBJECT') { return []; }
-        public function get_var($q) { return null; }
-        public function insert($t, $d) { return true; }
-        public function query($q) { return true; }
-    }
+    class wpdb {}
 }
 
-final class AdminEscapingTest extends TestCase
+final class AdminEscapingTest extends \HttpTest
 {
     private $origWpdb;
 
@@ -45,7 +37,14 @@ final class AdminEscapingTest extends TestCase
         Functions\when('wp_die')->alias(fn() => '');
 
         global $wpdb;
-        $wpdb = new wpdb();
+        $wpdb = new class extends \wpdb {
+            public $prefix = 'wp_';
+            public function prepare($q, ...$a) { return $q; }
+            public function get_results($q, $o = 'OBJECT') { return []; }
+            public function get_var($q) { return null; }
+            public function insert($t, $d) { return true; }
+            public function query($q) { return true; }
+        };
     }
 
     protected function tearDown(): void
@@ -61,11 +60,7 @@ final class AdminEscapingTest extends TestCase
     public function test_page_outputs_are_escaped(callable $renderer): void
     {
         $payload = '<img src=x onerror=alert(1)><script>alert(1)</script>';
-        $level = ob_get_level();
-        $html = renderPage($renderer, ['q' => $payload], ['q' => $payload]);
-        while (ob_get_level() > $level) {
-            ob_end_clean();
-        }
+        $html = $this->withBufferedOutput(fn() => renderPage($renderer, ['q' => $payload], ['q' => $payload]));
 
         $this->assertStringNotContainsString('<script', $html);
         $this->assertStringNotContainsString('onerror=', $html);
