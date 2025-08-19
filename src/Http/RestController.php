@@ -6,6 +6,9 @@ namespace SmartAlloc\Http;
 
 use SmartAlloc\Container;
 use SmartAlloc\Services\{HealthService, ExportService, Metrics};
+use SmartAlloc\Infra\Repository\AllocationsRepository;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * REST API controller
@@ -58,6 +61,28 @@ final class RestController
                         }
                     ]
                 ]
+            ]);
+
+            // Manual review approve endpoint
+            register_rest_route('smartalloc/v1', '/review/(?P<entry>\d+)/approve', [
+                'methods' => 'POST',
+                'permission_callback' => function() {
+                    return current_user_can(SMARTALLOC_CAP);
+                },
+                'callback' => function(WP_REST_Request $request) {
+                    return $this->approveManual($request);
+                },
+            ]);
+
+            // Manual review reject endpoint
+            register_rest_route('smartalloc/v1', '/review/(?P<entry>\d+)/reject', [
+                'methods' => 'POST',
+                'permission_callback' => function() {
+                    return current_user_can(SMARTALLOC_CAP);
+                },
+                'callback' => function(WP_REST_Request $request) {
+                    return $this->rejectManual($request);
+                },
             ]);
         });
     }
@@ -157,7 +182,71 @@ final class RestController
     {
         $metrics = $this->container->get(Metrics::class);
         $data = $metrics->getAggregated($key, 'sum', 24);
-        
+
         return (float) ($data[0]['value'] ?? 0);
     }
-} 
+
+    /**
+     * Handle manual approval via REST.
+     */
+    private function approveManual(WP_REST_Request $request): WP_REST_Response
+    {
+        $nonce = $request->get_header('X-WP-Nonce');
+        if (!$nonce || !wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_REST_Response(['error' => 'invalid_nonce'], 403);
+        }
+
+        $entryId  = absint($request->get_param('entry'));
+        $mentorId = absint($request->get_param('mentor_id'));
+        if ($entryId <= 0 || $mentorId <= 0) {
+            return new WP_REST_Response(['error' => 'invalid_params'], 400);
+        }
+
+        $lockKey   = 'smartalloc_review_lock_' . $entryId;
+        $lockOwner = get_transient($lockKey);
+        $current   = (string) get_current_user_id();
+        if ($lockOwner && $lockOwner !== $current) {
+            return new WP_REST_Response(['error' => 'locked'], 409);
+        }
+        set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
+
+        $repo   = $this->container->get(AllocationsRepository::class);
+        $result = $repo->approveManual($entryId, $mentorId, (int) $current, null);
+
+        delete_transient($lockKey);
+
+        return new WP_REST_Response(['ok' => true, 'result' => $result->to_array()]);
+    }
+
+    /**
+     * Handle manual rejection via REST.
+     */
+    private function rejectManual(WP_REST_Request $request): WP_REST_Response
+    {
+        $nonce = $request->get_header('X-WP-Nonce');
+        if (!$nonce || !wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_REST_Response(['error' => 'invalid_nonce'], 403);
+        }
+
+        $entryId = absint($request->get_param('entry'));
+        $reason  = sanitize_key((string) $request->get_param('reason'));
+        if ($entryId <= 0 || $reason === '') {
+            return new WP_REST_Response(['error' => 'invalid_params'], 400);
+        }
+
+        $lockKey   = 'smartalloc_review_lock_' . $entryId;
+        $lockOwner = get_transient($lockKey);
+        $current   = (string) get_current_user_id();
+        if ($lockOwner && $lockOwner !== $current) {
+            return new WP_REST_Response(['error' => 'locked'], 409);
+        }
+        set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
+
+        $repo = $this->container->get(AllocationsRepository::class);
+        $repo->rejectManual($entryId, (int) $current, $reason, null);
+
+        delete_transient($lockKey);
+
+        return new WP_REST_Response(['ok' => true]);
+    }
+}

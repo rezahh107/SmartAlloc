@@ -16,7 +16,7 @@ final class ManualReviewPage
         }
 
         $pluginFile = dirname(__DIR__, 3) . '/smart-alloc.php';
-        wp_enqueue_script('smartalloc-manual-review', plugins_url('assets/admin/manual-review.js', $pluginFile), ['jquery'], SMARTALLOC_VERSION, true);
+        wp_enqueue_script('smartalloc-manual-review', plugins_url('assets/admin/manual-review.js', $pluginFile), ['jquery', 'wp-api-fetch'], SMARTALLOC_VERSION, true);
         wp_enqueue_style('smartalloc-manual-review', plugins_url('assets/admin/manual-review.css', $pluginFile), [], SMARTALLOC_VERSION);
 
         $page    = isset($_GET['paged']) ? max(1, absint($_GET['paged'])) : 1;
@@ -61,17 +61,22 @@ final class ManualReviewPage
 
         foreach ($data['rows'] as $row) {
             $id = (int) $row['entry_id'];
-            echo '<tr>'; 
+            $mentor = (int) ($row['candidates'][0]['mentor_id'] ?? 0);
+            echo '<tr>';
             echo '<th scope="row" class="check-column"><input type="checkbox" name="entry_ids[]" value="' . esc_attr((string)$id) . '" /></th>';
             echo '<td>' . esc_html((string)$id) . '</td>';
             echo '<td>' . esc_html((string)$row['status']) . '</td>';
-            echo '<td>'; 
-            echo '<button class="button smartalloc-approve" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Approve', 'smartalloc') . '</button> ';
+            echo '<td>';
+            echo '<button class="button smartalloc-approve" data-entry="' . esc_attr((string)$id) . '" data-mentor="' . esc_attr((string)$mentor) . '">' . esc_html__('Approve', 'smartalloc') . '</button> ';
             echo '<button class="button smartalloc-reject" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Reject', 'smartalloc') . '</button>';
             echo '</td>';
             echo '</tr>';
         }
         echo '</tbody></table>';
+        echo '<p>';
+        echo '<button class="button" id="smartalloc-bulk-approve">' . esc_html__('Approve Selected', 'smartalloc') . '</button> ';
+        echo '<button class="button" id="smartalloc-bulk-reject">' . esc_html__('Reject Selected', 'smartalloc') . '</button>';
+        echo '</p>';
         echo '</form>';
         echo '</div>';
     }
