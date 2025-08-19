@@ -9,6 +9,7 @@
     "e2e:up": "docker compose up -d",
     "e2e:seed": "bash e2e/scripts/seed.sh",
     "e2e:wait": "node e2e/scripts/wait-for-wp.js",
-    "test:e2e": "playwright test -c e2e/playwright.config.ts"
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "e2e:all": "npm run e2e:up && npm run e2e:wait && npm run e2e:seed && npm run test:e2e"
   }
 }
