@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Debug;
 
 use SmartAlloc\Infra\Logging\Logger;
+use SmartAlloc\Infra\Metrics\MetricsCollector;
 use Throwable;
 
 /**
@@ -14,13 +15,15 @@ final class ErrorCollector
 {
     private RedactionAdapter $redactor;
     private Logger $logger;
+    private MetricsCollector $metrics;
     /** @var array<string,int> */
     private static array $throttle = [];
 
-    public function __construct(?RedactionAdapter $redactor = null, ?Logger $logger = null)
+    public function __construct(?RedactionAdapter $redactor = null, ?Logger $logger = null, ?MetricsCollector $metrics = null)
     {
         $this->redactor = $redactor ?? new RedactionAdapter();
         $this->logger = $logger ?? new Logger();
+        $this->metrics = $metrics ?? new MetricsCollector();
     }
 
     /** Register handlers when debugging enabled. */
@@ -78,6 +81,7 @@ final class ErrorCollector
             'method' => $_SERVER['REQUEST_METHOD'] ?? '',
             'user_hash' => md5((string) (function_exists('get_current_user_id') ? get_current_user_id() : '0')),
             'correlation_id' => Logger::requestId(),
+            'timestamp' => gmdate('c'),
         ];
         $env = [
             'php' => PHP_VERSION,
@@ -96,11 +100,12 @@ final class ErrorCollector
             'stack' => $stack,
             'context' => $ctx,
             'env' => $env,
-            'logs' => $logs,
+            'breadcrumbs' => $logs,
             'queries' => $queries,
         ];
         $entry = $this->redactor->redact($entry);
         ErrorStore::add($entry);
+        $this->metrics->inc('debug_error_captured_total');
     }
 
     /**
@@ -114,13 +119,30 @@ final class ErrorCollector
         global $wpdb;
         $out = [];
         if (isset($wpdb->queries) && is_array($wpdb->queries)) {
-            foreach (array_slice($wpdb->queries, -5) as $q) {
-                $sql = is_array($q) ? $q[0] : (string) $q;
-                if (preg_match('/%s|%d|\?|:\w+/', $sql)) {
-                    $out[] = $sql;
+            $tail = array_slice($wpdb->queries, -20);
+            foreach (array_reverse($tail) as $q) {
+                if (!is_array($q)) {
+                    continue;
+                }
+                [$sql, , $trace] = $q + [null, null, null];
+                if (!is_string($sql)) {
+                    continue;
+                }
+                if (is_string($trace) && strpos($trace, 'wpdb->prepare') !== false) {
+                    $out[] = $this->stripArgs($sql);
+                    if (count($out) >= 5) {
+                        break;
+                    }
                 }
             }
         }
         return $out;
+    }
+
+    private function stripArgs(string $sql): string
+    {
+        $sql = (string) preg_replace("/'[^']*'/", '?', $sql);
+        $sql = (string) preg_replace('/\b\d+\b/', '?', $sql);
+        return $sql;
     }
 }

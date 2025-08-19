@@ -47,7 +47,7 @@ final class ErrorCollectorTest extends BaseTestCase
     public function test_stores_redacted_entry_and_clamp(): void
     {
         $logger = new Logger();
-        $logger->info('note', ['mobile' => '1234567', 'email' => 'a@b.com']);
+        $logger->info('note', ['mobile' => '1234567', 'email' => 'a@b.com', 'national_id' => '111-22-3333']);
         $collector = new ErrorCollector(new RedactionAdapter(), $logger);
         $collector->register();
         $collector->handleException(new \Exception('Boom'));
@@ -56,10 +56,34 @@ final class ErrorCollectorTest extends BaseTestCase
         $this->assertCount(1, $entries);
         $entry = $entries[0];
         $this->assertSame('Boom', $entry['message'] ?? null);
-        $this->assertStringNotContainsString('a@b.com', json_encode($entry));
+        $payload = json_encode($entry);
+        $this->assertStringNotContainsString('a@b.com', $payload);
+        $this->assertStringNotContainsString('111-22-3333', $payload);
+        $this->assertEmpty($entry['queries'] ?? []);
+        $this->assertNotEmpty($entry['breadcrumbs'] ?? []);
+        $this->assertMatchesRegularExpression('/T/', (string) ($entry['context']['timestamp'] ?? ''));
 
         ErrorStore::add(['message' => str_repeat('x', 200000)]);
         $entries = $GLOBALS['sa_options']['smartalloc_debug_errors'] ?? [];
         $this->assertSame('Entry exceeded size limit', $entries[0]['message']);
+    }
+
+    public function test_includes_queries_when_savequeries(): void
+    {
+        if (!defined('SAVEQUERIES')) {
+            define('SAVEQUERIES', true);
+        }
+        global $wpdb;
+        $wpdb = (object) ['queries' => [["SELECT * FROM t WHERE id = 5", 0, 'wpdb->prepare']]];
+        $logger = new Logger();
+        $logger->info('note');
+        $collector = new ErrorCollector(null, $logger);
+        $collector->register();
+        $collector->handleError(E_USER_ERROR, 'oops', __FILE__, __LINE__);
+        $entry = ($GLOBALS['sa_options']['smartalloc_debug_errors'] ?? [])[0] ?? [];
+        $this->assertSame(['SELECT * FROM t WHERE id = ?'], $entry['queries'] ?? []);
+        $this->assertNotEmpty($entry['breadcrumbs'] ?? []);
+        $crumb = $entry['breadcrumbs'][0];
+        $this->assertArrayHasKey('correlation_id', $crumb);
     }
 }

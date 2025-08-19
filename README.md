@@ -312,6 +312,8 @@ An optional admin-only utility captures recent PHP errors and builds ready-to-co
 - Access the collected entries from the SmartAlloc Debug admin screen (requires `manage_smartalloc`).
 - Data is stored locally and redacted; no automatic outbound requests are made.
 - Stores up to 25 entries and throttles duplicates for five minutes.
+- Captures up to 10 recent logger breadcrumbs and, when `SAVEQUERIES` is enabled, up to 5 prepared SQL queries with arguments stripped.
+- Timestamps are normalised to UTC ISO-8601. Queries and breadcrumbs never include raw arguments or PII.
 
 ## Uninstall
 

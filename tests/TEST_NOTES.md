@@ -14,7 +14,7 @@ Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 | 3.x Gravity Forms | PHPUnit scaffolds `ComplexFormTest` and `FlowPerksIntegrationTest` (marked SKIP with TODO) cover nested conditionals, uploads, multipage sessions and Flow/Perks routing. |
 | 8.x Persian/RTL | `PersianRtlTest` and Playwright `@e2e-i18n` placeholders ensure RTL rendering, character handling and Jalali round-trip (SKIP with TODO). |
 | Third-Party Compatibility | `JalaliFilterBypassTest` and Playwright `@e2e-compat` protect against Jalali date filters and Persian GF admin styles. |
-| Debug Kit | `DebugIntegrationTest` exercises prompt building, throttling and redaction; `DebugKitTest` guards against PII leakage and unprepared SQL capture. |
+| Debug Kit | `ErrorCollectorTest` verifies redaction, breadcrumbs and SAVEQUERIES behaviour; `DebugIntegrationTest` covers nonce/capability checks and prompt context; `DebugKitTest` guards against PII leakage and ensures only sanitized prepared SQL is surfaced. |
 
 ## Quality Gates 2024
 

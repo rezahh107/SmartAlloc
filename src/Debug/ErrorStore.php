@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Debug;
 
+use SmartAlloc\Infra\Metrics\MetricsCollector;
+
 /**
  * Ring buffer store for captured errors.
  */
@@ -33,6 +35,10 @@ final class ErrorStore
         $data = array_slice($data, 0, self::MAX_ENTRIES);
         /** @phpstan-ignore-next-line */
         update_option(self::OPTION, $data, false);
+
+        $metrics = new MetricsCollector();
+        $current = $metrics->all()['gauges']['debug_error_store_size'] ?? 0;
+        $metrics->gauge('debug_error_store_size', count($data) - (int) $current);
     }
 
     /**
