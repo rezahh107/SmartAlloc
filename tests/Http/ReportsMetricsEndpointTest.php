@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use SmartAlloc\Tests\BaseTestCase;
-use SmartAlloc\Http\Rest\MetricsController;
+use SmartAlloc\Http\Rest\ReportsMetricsController;
 
 if (!class_exists('WP_Error')) {
     class WP_Error {
@@ -26,7 +26,7 @@ if (!class_exists('WP_REST_Response')) {
     }
 }
 
-final class MetricsEndpointTest extends BaseTestCase
+final class ReportsMetricsEndpointTest extends BaseTestCase
 {
     protected function setUp(): void
     {
@@ -52,7 +52,7 @@ final class MetricsEndpointTest extends BaseTestCase
         Functions\when('current_user_can')->justReturn(false);
         $_GET = [];
         $GLOBALS['sa_options']['smartalloc_settings']['metrics_cache_ttl'] = 0;
-        $controller = new MetricsController();
+        $controller = new ReportsMetricsController();
         $response = $controller->handle(new WP_REST_Request());
         $this->assertInstanceOf(WP_Error::class, $response);
         $this->assertSame(403, $response->get_error_data()['status']);
@@ -73,7 +73,7 @@ final class MetricsEndpointTest extends BaseTestCase
             'capacity' => 0,
         ]]];
 
-        $controller = new MetricsController();
+        $controller = new ReportsMetricsController();
         $_GET = ['date_from' => '2025-01-01', 'date_to' => '2025-01-31'];
         $response = $controller->handle(new WP_REST_Request());
         $_GET = [];
@@ -99,7 +99,7 @@ final class MetricsEndpointTest extends BaseTestCase
                  'fuzzy_auto' => 0, 'fuzzy_manual' => 0, 'assigned' => 0, 'capacity' => 0]
             ],
         ];
-        $controller = new MetricsController();
+        $controller = new ReportsMetricsController();
 
         $_GET = ['group_by' => 'center'];
         $resp1 = $controller->handle(new WP_REST_Request());
@@ -119,7 +119,7 @@ final class MetricsEndpointTest extends BaseTestCase
           global $wpdb;
           $wpdb->results = [[]];
           $GLOBALS['sa_options']['smartalloc_settings']['metrics_cache_ttl'] = 0;
-          $controller = new MetricsController();
+          $controller = new ReportsMetricsController();
           $_GET = ['group_by' => 'day'];
           $data = $controller->handle(new WP_REST_Request())->get_data();
           $_GET = [];

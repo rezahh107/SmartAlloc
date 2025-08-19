@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SmartAlloc\Http\Rest;
 
 use SmartAlloc\Infra\Export\ExporterService;
+use SmartAlloc\Infra\Metrics\MetricsCollector;
+use SmartAlloc\Domain\Export\CircuitBreaker;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -14,8 +16,11 @@ use WP_REST_Response;
  */
 final class ExportController
 {
-    public function __construct(private ExporterService $service)
-    {
+    public function __construct(
+        private ExporterService $service,
+        private MetricsCollector $metrics = new MetricsCollector(),
+        private CircuitBreaker $breaker = new CircuitBreaker(new MetricsCollector())
+    ) {
     }
 
     /**
@@ -65,6 +70,11 @@ final class ExportController
             return new WP_Error( 'invalid_payload', 'Invalid batch', array( 'status' => 400 ) );
         }
 
+        if ( ! $this->breaker->allow() ) {
+            header( 'Retry-After: ' . $this->breaker->getRetryAfter() );
+            return new WP_Error( 'service_unavailable', 'Circuit open', array( 'status' => 503 ) );
+        }
+
         // Per-user rate limiting: default 3 exports per 10 minutes.
         $user_id   = get_current_user_id();
         $limit     = (int) get_option( 'export_rate_limit', 3 );
@@ -73,12 +83,14 @@ final class ExportController
         if ( $rate_cnt >= $limit ) {
             // Retry-After header in seconds.
             header( 'Retry-After: 600' );
+            $this->metrics->inc( 'rate_limit_hit' );
             return new WP_Error( 'rate_limited', 'Rate limit exceeded', array( 'status' => 429 ) );
         }
         set_transient( $rate_key, $rate_cnt + 1, 10 * MINUTE_IN_SECONDS );
 
         $lock_key = sprintf( 'export:%s:%s:%s', $from, $to, $batch ?? 'none' );
         if ( get_transient( $lock_key ) ) {
+            $this->metrics->inc( 'locks_hit' );
             return new WP_Error( 'conflict', 'Export in progress', array( 'status' => 409 ) );
         }
         set_transient( $lock_key, 1, 10 * MINUTE_IN_SECONDS );
@@ -87,11 +99,13 @@ final class ExportController
             $result = $this->service->generate( $from, $to, $batch );
         } catch ( \Throwable $e ) {
             delete_transient( $lock_key );
+            $this->breaker->recordFailure();
+            $this->metrics->inc( 'exports_failed' );
             return new WP_Error( 'export_failed', 'Export failed', array( 'status' => 500 ) );
         }
 
         delete_transient( $lock_key );
-
+        $this->breaker->recordSuccess();
         return new WP_REST_Response( $result, 200 );
     }
 

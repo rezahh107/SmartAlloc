@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
-use SmartAlloc\Http\Rest\MetricsController;
+use SmartAlloc\Http\Rest\ReportsMetricsController;
 use SmartAlloc\Infra\Export\ExcelExporter;
 use SmartAlloc\Tests\Helpers\WpdbSpy as Spy;
 use SmartAlloc\Tests\Helpers\EnvReset as Env;
@@ -39,14 +39,14 @@ final class BudgetTest extends TestCase
             'group_by'  => 'day',
         ];
         $q1 = Spy::count(function () use ($params) {
-            MetricsController::query($params);
+            ReportsMetricsController::query($params);
         });
         $this->assertLessThanOrEqual(100, $q1, 'metrics queries should be ≤100 for small ranges');
     }
 
     public function test_metrics_cache_hit_reduces_queries(): void
     {
-        $controller = new MetricsController();
+        $controller = new ReportsMetricsController();
         $params = ['date_from' => '2025-01-01', 'date_to' => '2025-01-03'];
         $miss = Spy::count(function () use ($controller, $params) {
             $_GET = $params;

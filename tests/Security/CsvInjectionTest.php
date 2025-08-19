@@ -29,7 +29,7 @@ final class CsvInjectionTest extends TestCase
             'fuzzy_manual_rate' => 0,
             'capacity_used' => 0,
         ];
-        $hQuery = \Patchwork\replace('SmartAlloc\\Http\\Rest\\MetricsController::query', function (array $filters) use ($row) {
+        $hQuery = \Patchwork\replace('SmartAlloc\\Http\\Rest\\ReportsMetricsController::query', function (array $filters) use ($row) {
             return ['rows' => [$row], 'total' => []];
         });
         $hHeader = \Patchwork\replace('header', function ($header) {

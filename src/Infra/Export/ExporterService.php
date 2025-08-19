@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SmartAlloc\Infra\Export;
 
 use InvalidArgumentException;
+use SmartAlloc\Infra\Metrics\MetricsCollector;
+use SmartAlloc\Domain\Export\CircuitBreaker;
 
 /**
  * Exporter service bridging database and Excel exporter.
@@ -15,8 +17,12 @@ class ExporterService
 {
     private ExcelExporter $excelExporter;
 
-    public function __construct(private $wpdb = null, ?ExcelExporter $excelExporter = null)
-    {
+    public function __construct(
+        private $wpdb = null,
+        ?ExcelExporter $excelExporter = null,
+        private MetricsCollector $metrics = new MetricsCollector(),
+        private CircuitBreaker $breaker = new CircuitBreaker(new MetricsCollector())
+    ) {
         $this->wpdb          = $wpdb ?? $GLOBALS['wpdb'];
         $this->excelExporter = $excelExporter ?? new ExcelExporter($this->wpdb);
     }
@@ -48,6 +54,9 @@ class ExporterService
      */
     public function generate(string $from, string $to, ?int $batch = null): array
     {
+        $start = microtime(true);
+        $this->metrics->gauge('exports_in_progress', 1);
+
         $upload = wp_upload_dir();
         $dir    = trailingslashit($upload['basedir']) . 'smartalloc/exports/' . gmdate('Y/m/');
         wp_mkdir_p($dir);
@@ -65,36 +74,47 @@ class ExporterService
         /** @var list<array<string,mixed>> $rows */
         $rows     = $this->wpdb->get_results($sql, ARRAY_A) ?: [];
         $exporter = new ExcelExporter($this->wpdb, null, $dir);
-        $result   = $exporter->exportFromRows($rows);
-        $path     = $result['path'];
-        $filename = basename($path);
-        $size     = is_file($path) ? (int) filesize($path) : 0;
-        $checksum = is_file($path) ? hash_file('sha256', $path) : '';
-        $rowCount = count($rows);
 
-        $filters = $batch !== null
-            ? array('mode' => 'batch', 'batch' => $batch)
-            : array('mode' => 'date-range', 'from' => $from, 'to' => $to);
+        try {
+            $result   = $exporter->exportFromRows($rows);
+            $path     = $result['path'];
+            $filename = basename($path);
+            $size     = is_file($path) ? (int) filesize($path) : 0;
+            $checksum = is_file($path) ? hash_file('sha256', $path) : '';
+            $rowCount = count($rows);
 
-        $registry = $this->wpdb->prefix . 'smartalloc_exports';
-        $this->wpdb->insert($registry, array(
-            'filename'   => $filename,
-            'path'       => $path,
-            'filters'    => wp_json_encode($filters),
-            'size'       => $size,
-            'rows'       => $rowCount,
-            'checksum'   => $checksum ?: null,
-            'status'     => 'Valid',
-            'created_at' => current_time('mysql'),
-        ));
+            $filters = $batch !== null
+                ? array('mode' => 'batch', 'batch' => $batch)
+                : array('mode' => 'date-range', 'from' => $from, 'to' => $to);
 
-        $url = str_replace(trailingslashit($upload['basedir']), trailingslashit($upload['baseurl']), $path);
+            $registry = $this->wpdb->prefix . 'smartalloc_exports';
+            $this->wpdb->insert($registry, array(
+                'filename'   => $filename,
+                'path'       => $path,
+                'filters'    => wp_json_encode($filters),
+                'size'       => $size,
+                'rows'       => $rowCount,
+                'checksum'   => $checksum ?: null,
+                'status'     => 'Valid',
+                'created_at' => current_time('mysql'),
+            ));
 
-        return array(
-            'file'          => $path,
-            'url'           => $url,
-            'rows_exported' => $rowCount,
-        );
+            $url = str_replace(trailingslashit($upload['basedir']), trailingslashit($upload['baseurl']), $path);
+            $this->metrics->inc('exports_total');
+            return array(
+                'file'          => $path,
+                'url'           => $url,
+                'rows_exported' => $rowCount,
+            );
+        } catch (\Throwable $e) {
+            $this->metrics->inc('exports_failed');
+            $this->breaker->recordFailure();
+            throw $e;
+        } finally {
+            $this->metrics->gauge('exports_in_progress', -1);
+            $duration = (int) round((microtime(true) - $start) * 1000);
+            $this->metrics->observeDuration('export_duration_ms', $duration);
+        }
     }
 
     /**
