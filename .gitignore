@@ -60,3 +60,8 @@ critical-issues.json
 critical_issues.csv
 exporter-security-check.json
 diagnostic-report.json
+
+# Playwright artifacts
+playwright-report/
+test-results/
+e2e/downloads/
