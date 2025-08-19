@@ -185,28 +185,36 @@ composer test
 vendor/bin/phpunit tests/DigitsNormalizerTest.php
 ```
 
-## Docker or wp-env
+## End-to-End Testing
 
-Run E2E tests via Docker or wp-env.
+Run E2E tests using one of three paths:
 
-### Quick start (Docker)
+### A) Docker Compose
 
 ```bash
 npm run e2e:install && npm run e2e:all
 ```
 
-### Quick start (wp-env)
+### B) wp-env (Docker-based)
 
 ```bash
 npm run e2e:install && npm run e2e:all:wpenv
 ```
 
+### C) Docker-free (Playground CLI)
+
+```bash
+npm run e2e:install && npm run e2e:all:playground
+```
+
+The Playground CLI mounts the current plugin automatically via `--auto-mount` and serves on port 9400 (configurable via `--port`).
+
 ### Troubleshooting
 
 Common errors:
 
-- docker not found → install Docker or run via wp-env
-- ECONNREFUSED → run up→wait→seed or fix WP_BASE_URL
+- ECONNREFUSED → ensure the chosen path is running and `WP_BASE_URL` matches (9400 for Playground)
+- Node < 20 → upgrade Node for Playground CLI
 
 CI E2E is optional and won’t block merges.
 

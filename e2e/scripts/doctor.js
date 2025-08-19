@@ -11,12 +11,23 @@ function has(cmd) {
 
 if (!has('docker version')) {
   if (has('wp-env --version')) {
-    console.error(`Docker not found. wp-env detected. Run:
-npm run e2e:install && npm run e2e:all:wpenv`);
-  } else {
-    console.error(`Docker not found. Install Docker Desktop or wp-env. Then run:
-npm run e2e:install && npm run e2e:up && npm run e2e:wait && npm run e2e:seed && npm run test:e2e`);
+    console.error('wp-env still needs Docker; use Playground path instead.');
   }
+
+  const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
+  if (nodeMajor < 20) {
+    console.error('Node 20+ required for Playground CLI. Please upgrade Node.');
+  }
+
+  if (process.env.E2E_AUTO_INSTALL === '1' && !has('npx start-server-and-test --version')) {
+    try {
+      execSync('npm i -D start-server-and-test', { stdio: 'inherit' });
+    } catch (err) {
+      console.error('Failed to install start-server-and-test:', err.message);
+    }
+  }
+
+  console.error('Docker not found. Run:\n npm run e2e:all:playground');
   process.exit(1);
 }
 
@@ -31,3 +42,4 @@ if (!process.env.WP_BASE_URL) {
 } else {
   console.log(`WP_BASE_URL=${url}`);
 }
+
