@@ -234,11 +234,22 @@ composer cs:fix
 composer phpstan
 composer psalm
 
-# Run tests with coverage
-composer coverage
-
 # Allow deprecations locally
 SA_FAIL_ON_DEPRECATION=0 composer test
+```
+
+## Coverage
+
+Local runs skip coverage if no driver is available:
+
+```bash
+SA_COVERAGE_OPTIONAL=1 composer coverage
+```
+
+In CI the pcov extension is installed automatically and coverage for critical namespaces must stay above 85%. The generated `build/coverage.xml` is uploaded as a workflow artifact. Download it or generate an HTML report locally:
+
+```bash
+vendor/bin/phpunit --coverage-html build/coverage-html
 ```
 
 ## Architecture
