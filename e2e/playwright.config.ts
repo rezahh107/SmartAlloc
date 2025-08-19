@@ -1,10 +1,3 @@
 import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './tests',
-  retries: 0,
-  use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:8080',
-    trace: 'on-first-retry'
-  }
-});
+const baseURL = process.env.WP_BASE_URL || 'http://localhost:8080';
+export default defineConfig({ use: { baseURL }, timeout: 60000 });
