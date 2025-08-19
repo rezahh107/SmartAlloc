@@ -1,7 +1,11 @@
 # Security Policy
 
-## Supported Versions
-- 1.0.x
+Supported versions follow [semantic versioning](https://semver.org/).
 
-## Reporting a Vulnerability
-Send reports to security@smartalloc.com.
+| Version | Supported |
+| ------- | --------- |
+| 1.x     | ✅ |
+
+### Reporting a Vulnerability
+
+Please email `security@smartalloc.com` with a clear description of the issue and steps to reproduce. We aim to respond within two business days.

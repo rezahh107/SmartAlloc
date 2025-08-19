@@ -2,11 +2,12 @@
 /*
 Plugin Name: SmartAlloc
 Description: Event-driven student support allocation with Gravity Forms + Exporter.
-Version: 1.0.0
+Version: 1.0.0-rc.1
 Author: رضا هاشمی حسینی
 Text Domain: smartalloc
 Domain Path: /languages
 Requires at least: 6.3
+Tested up to: 6.4
 Requires PHP: 8.1
 Update URI: false
 */
@@ -22,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Constants
-define('SMARTALLOC_VERSION', '1.0.0');
+define('SMARTALLOC_VERSION', '1.0.0-rc.1');
 define('SMARTALLOC_DB_VERSION', '1.0.0');
 define('SMARTALLOC_CAP', 'manage_smartalloc');
 define('SMARTALLOC_UPLOAD_DIR', 'smart-alloc');

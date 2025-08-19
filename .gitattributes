@@ -1,0 +1,9 @@
+/tests export-ignore
+/docs export-ignore
+/build export-ignore
+/node_modules export-ignore
+/.github export-ignore
+/tools export-ignore
+/OBSERVABILITY.md export-ignore
+/ADMIN_GUIDE.md export-ignore
+/MIGRATION.md export-ignore
