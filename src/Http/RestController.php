@@ -253,6 +253,7 @@ final class RestController
                     'message' => 'Mentor capacity exceeded'
                 ], 409);
             }
+            $metrics->inc('review_duplicate_blocked');
             delete_transient('smartalloc_metrics_cache');
             return new WP_REST_Response([
                 'ok' => false,
@@ -366,6 +367,8 @@ final class RestController
         delete_transient($lockKey);
 
         if (!$ok) {
+            $metrics = $this->container->get(Metrics::class);
+            $metrics->inc('review_duplicate_blocked');
             delete_transient('smartalloc_metrics_cache');
             return new WP_REST_Response([
                 'ok' => false,

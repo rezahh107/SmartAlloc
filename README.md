@@ -185,6 +185,15 @@ composer test
 vendor/bin/phpunit tests/DigitsNormalizerTest.php
 ```
 
+### End-to-End Tests
+
+Playwright tests are optional in CI. To run them locally:
+
+```bash
+npm run e2e:install
+npm run test:e2e
+```
+
 ### Code Quality
 
 ```bash
