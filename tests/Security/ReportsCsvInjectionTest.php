@@ -12,7 +12,7 @@ final class ReportsCsvInjectionTest extends TestCase
     protected function setUp(): void
     {
         Monkey\setUp();
-        $this->hMetrics = \Patchwork\replace('SmartAlloc\\Http\\Rest\\MetricsController::query', function (array $filters) {
+        $this->hMetrics = \Patchwork\replace('SmartAlloc\\Http\\Rest\\ReportsMetricsController::query', function (array $filters) {
             return [
                 'rows' => [
                     ['date' => '=cmd', 'allocated' => 0, 'manual' => 0, 'reject' => 0, 'fuzzy_auto_rate' => 0, 'fuzzy_manual_rate' => 0, 'capacity_used' => 0],

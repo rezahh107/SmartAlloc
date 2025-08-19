@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Brain\Monkey\Functions;
-use SmartAlloc\Http\Rest\MetricsController;
+use SmartAlloc\Http\Rest\ReportsMetricsController;
 use SmartAlloc\Tests\BaseTestCase;
 
 if (!class_exists('WP_Error')) {
@@ -29,7 +29,7 @@ final class MetricsCacheTest extends BaseTestCase
 
     public function test_caches_results(): void
     {
-        $c = new MetricsController();
+        $c = new ReportsMetricsController();
         $_GET = ['date_from'=>'2025-01-01','date_to'=>'2025-01-02'];
         $c->handle(new WP_REST_Request());
         $c->handle(new WP_REST_Request());
@@ -38,7 +38,7 @@ final class MetricsCacheTest extends BaseTestCase
 
     public function test_range_guard(): void
     {
-        $c = new MetricsController();
+        $c = new ReportsMetricsController();
         $_GET = ['date_from'=>'2025-01-01','date_to'=>'2025-12-31'];
         $res = $c->handle(new WP_REST_Request());
         $this->assertInstanceOf(WP_Error::class, $res);

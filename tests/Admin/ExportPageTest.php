@@ -35,6 +35,7 @@ final class ExportPageTest extends BaseTestCase
         Functions\expect('current_user_can')->once()->with(SMARTALLOC_CAP)->andReturn(false);
         Functions\when('esc_html__')->alias(fn($v) => $v);
         Functions\when('esc_url')->alias(fn($v) => $v);
+        Functions\when('esc_attr')->alias(fn($v) => $v);
         Functions\expect('wp_die')->once()->andThrow(new \RuntimeException('die'));
 
         $this->expectException(\RuntimeException::class);
@@ -50,7 +51,9 @@ final class ExportPageTest extends BaseTestCase
         Functions\when('plugins_url')->alias(fn($p, $f) => $p);
         Functions\when('admin_url')->justReturn('/admin-post.php');
         Functions\when('esc_url')->alias(fn($v) => $v);
+        Functions\when('esc_attr')->alias(fn($v) => $v);
         Functions\when('esc_html__')->alias(fn($v) => $v);
+        Functions\when('__')->alias(fn($v) => $v);
         Functions\when('esc_html')->alias(fn($v) => $v);
         Functions\when('size_format')->alias(fn($v) => (string) $v);
         Functions\when('wp_nonce_url')->alias(fn($v) => $v);
@@ -64,5 +67,32 @@ final class ExportPageTest extends BaseTestCase
         $this->assertStringContainsString('name="date_from"', $html);
         $this->assertStringContainsString('name="date_to"', $html);
         $this->assertStringContainsString('name="batch_id"', $html);
+    }
+
+    public function test_warning_banner_shown_when_breaker_open(): void
+    {
+        Functions\expect('current_user_can')->andReturn(true);
+        Functions\expect('wp_nonce_field')->once()->with('smartalloc_export_generate', 'smartalloc_export_nonce')->andReturn('');
+        Functions\expect('wp_enqueue_script')->once()->with('smartalloc-export', Mockery::type('string'), Mockery::type('array'), SMARTALLOC_VERSION, true);
+        Functions\expect('wp_enqueue_style')->once()->with('smartalloc-export', Mockery::type('string'), Mockery::type('array'), SMARTALLOC_VERSION);
+        Functions\when('plugins_url')->alias(fn($p, $f) => $p);
+        Functions\when('admin_url')->justReturn('/admin-post.php');
+        Functions\when('esc_url')->alias(fn($v) => $v);
+        Functions\when('esc_attr')->alias(fn($v) => $v);
+        Functions\when('esc_html__')->alias(fn($v) => $v);
+        Functions\when('__')->alias(fn($v) => $v);
+        Functions\when('esc_html')->alias(fn($v) => $v);
+        Functions\when('size_format')->alias(fn($v) => (string) $v);
+        Functions\when('wp_nonce_url')->alias(fn($v) => $v);
+        Functions\when('submit_button')->alias(fn($v) => $v);
+
+        $h = \Patchwork\replace('SmartAlloc\\Domain\\Export\\CircuitBreaker::allow', fn() => false);
+
+        ob_start();
+        ExportPage::render();
+        $html = ob_get_clean();
+        \Patchwork\restore($h);
+
+        $this->assertStringContainsString('notice-warning', $html);
     }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Admin\Pages;
 
+use SmartAlloc\Domain\Export\CircuitBreaker;
+use SmartAlloc\Infra\Metrics\MetricsCollector;
+
 final class ExportPage
 {
     public static function render(): void
@@ -11,6 +14,9 @@ final class ExportPage
         if (!current_user_can(SMARTALLOC_CAP)) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
+
+        $collector = new MetricsCollector();
+        $breaker   = new CircuitBreaker($collector);
 
         $pluginFile = dirname(__DIR__, 3) . '/smart-alloc.php';
         wp_enqueue_script('smartalloc-export', plugins_url('assets/admin/export.js', $pluginFile), ['jquery'], SMARTALLOC_VERSION, true);
@@ -26,9 +32,21 @@ final class ExportPage
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Export', 'smartalloc') . '</h1>';
 
+        if (!$breaker->allow()) {
+            echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__('Exports temporarily disabled. Please retry later.', 'smartalloc') . '</p></div>';
+        }
+
         if (isset($_GET['smartalloc_export_success'])) {
             echo '<div class="notice notice-success"><p>' . esc_html__('Export generated.', 'smartalloc') . '</p></div>';
         }
+
+        $snap = $collector->all();
+        $total = $snap['counters']['exports_total'] ?? 0;
+        $stale = $snap['counters']['stale_files'] ?? 0;
+        echo '<div class="sa-export-metrics" aria-label="' . esc_attr(__( 'Export metrics', 'smartalloc' )) . '">';
+        echo '<span>' . esc_html__('Exports total:', 'smartalloc') . ' ' . esc_html((string) $total) . '</span> ';
+        echo '<span>' . esc_html__('Stale files:', 'smartalloc') . ' ' . esc_html((string) $stale) . '</span>';
+        echo '</div>';
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         echo '<input type="hidden" name="action" value="smartalloc_export_generate" />';

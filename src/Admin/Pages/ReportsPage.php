@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Admin\Pages;
 
-use SmartAlloc\Http\Rest\MetricsController;
+use SmartAlloc\Http\Rest\ReportsMetricsController;
 
 /**
  * Admin reports page.
@@ -31,7 +31,7 @@ final class ReportsPage
 
         $metrics = apply_filters('smartalloc_reports_metrics', null, $filters);
         if ($metrics === null) {
-            $metrics = MetricsController::query($filters);
+            $metrics = ReportsMetricsController::query($filters);
         }
 
         $csv_url = wp_nonce_url(
@@ -125,7 +125,7 @@ final class ReportsPage
         );
         $metrics = apply_filters('smartalloc_reports_metrics', null, $filters);
         if ($metrics === null) {
-            $metrics = MetricsController::query($filters);
+            $metrics = ReportsMetricsController::query($filters);
         }
 
         header('Content-Type: text/csv');
