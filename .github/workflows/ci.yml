@@ -17,20 +17,29 @@ jobs:
     env:
       WP_VERSION: ${{ matrix.wp }}
       SA_FAIL_ON_DEPRECATION: 1
+      SA_COVERAGE_OPTIONAL: 0
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: mbstring, json, dom, zip
           coverage: pcov
+          ini-values: pcov.enabled=1, pcov.directory=src
       - run: composer config platform.php ${{ matrix.php }}
       - run: composer update --no-interaction --prefer-dist --no-progress
       - run: composer cs
       - run: composer phpstan
       - run: composer psalm
-      - run: composer test
+      - run: vendor/bin/phpunit --coverage-clover build/coverage.xml
+      - run: php tools/coverage-check.php build/coverage.xml
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.php }}
+          path: build/coverage.xml
       - run: composer test:security
-      - run: composer coverage
       - run: |
           curl -L https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o wp
           chmod +x wp && sudo mv wp /usr/local/bin/wp
