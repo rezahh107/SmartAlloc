@@ -32,6 +32,7 @@ final class DebugIntegrationTest extends BaseTestCase
         Functions\when('wp_parse_url')->alias(fn($v) => parse_url($v));
         Functions\when('get_current_user_id')->alias(fn() => 1);
         Functions\when('wp_verify_nonce')->alias(fn($n,$a) => $n === 'good' && $a === 'smartalloc_debug');
+        Functions\when('wp_create_nonce')->alias(fn($a) => 'good');
         Functions\when('current_user_can')->alias(fn($c) => $c === 'manage_smartalloc');
         Functions\when('esc_html__')->alias(fn($v) => $v);
         Functions\when('esc_html')->alias(fn($v) => $v);

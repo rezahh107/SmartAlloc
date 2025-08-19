@@ -92,10 +92,12 @@ if (defined('WP_CLI') && WP_CLI) {
     require_once __DIR__ . '/src/Cli/AllocateCommand.php';
     require_once __DIR__ . '/src/Cli/ReviewCommand.php';
     require_once __DIR__ . '/src/Cli/DoctorCommand.php';
+    require_once __DIR__ . '/src/Cli/DebugCommand.php';
     WP_CLI::add_command('smartalloc export', \SmartAlloc\Cli\ExportCommand::class);
     WP_CLI::add_command('smartalloc allocate', \SmartAlloc\Cli\AllocateCommand::class);
     WP_CLI::add_command('smartalloc review', \SmartAlloc\Cli\ReviewCommand::class);
     WP_CLI::add_command('smartalloc doctor', \SmartAlloc\Cli\DoctorCommand::class);
+    WP_CLI::add_command('smartalloc debug pack', \SmartAlloc\Cli\DebugCommand::class);
 }
 
 // Persian Admin Menu

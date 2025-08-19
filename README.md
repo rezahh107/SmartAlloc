@@ -315,6 +315,17 @@ An optional admin-only utility captures recent PHP errors and builds ready-to-co
 - Captures up to 10 recent logger breadcrumbs and, when `SAVEQUERIES` is enabled, up to 5 prepared SQL queries with arguments stripped.
 - Timestamps are normalised to UTC ISO-8601. Queries and breadcrumbs never include raw arguments or PII.
 
+### Reproducibility helpers
+
+- From the Debug admin page each entry exposes a **Download Debug Bundle (.zip)** link. The bundle contains:
+  - `prompt.md` – the redacted prompt.
+  - a PHPUnit test scaffold under `tests/Debug/Repro/`.
+  - a WordPress Playground blueprint (`e2e/blueprints/error-<fingerprint>.json`).
+  - `env.json` with version information and recent breadcrumbs (`logs.json`).
+- The same bundle can be generated via CLI: `wp smartalloc debug pack --id=<fingerprint>`.
+- To run the scaffold, copy the generated test into your test suite and fill in the TODOs; it is marked `@group repro` and skipped by default.
+- Blueprints can be loaded in [WordPress Playground](https://developer.wordpress.org/playground/). When offline, fall back to Docker/wp-env and activate SmartAlloc and required plugins manually.
+
 ## Uninstall
 
 Set the `purge_on_uninstall` option to true to remove SmartAlloc options and caches. By default only transient caches are cleared and allocation data remains.

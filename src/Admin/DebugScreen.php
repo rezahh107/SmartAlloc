@@ -6,6 +6,9 @@ namespace SmartAlloc\Admin;
 
 use SmartAlloc\Debug\ErrorStore;
 use SmartAlloc\Debug\PromptBuilder;
+use SmartAlloc\Debug\ReproBuilder;
+use function sanitize_text_field;
+use function wp_create_nonce;
 
 /**
  * Admin debug page to copy prompts.
@@ -17,9 +20,18 @@ final class DebugScreen
         if (!current_user_can('manage_smartalloc')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
+        $bundle = isset($_GET['bundle']) ? sanitize_text_field((string) $_GET['bundle']) : '';
         $nonce = $_REQUEST['_wpnonce'] ?? '';
-        if (!wp_verify_nonce((string) $nonce, 'smartalloc_debug')) {
+        $action = $bundle ? 'smartalloc_debug_bundle' : 'smartalloc_debug';
+        if (!wp_verify_nonce((string) $nonce, $action)) {
             wp_die(esc_html__('Invalid nonce', 'smartalloc'));
+        }
+        if ($bundle !== '') {
+            $path = (new ReproBuilder())->buildBundle($bundle);
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename=' . basename($path));
+            readfile($path);
+            return;
         }
         $enabled = (bool) get_option('smartalloc_debug_enabled') && defined('WP_DEBUG') && WP_DEBUG;
         $entries = ErrorStore::all();
@@ -49,7 +61,10 @@ final class DebugScreen
                 echo '<button class="show-more">' . esc_html__('Show more', 'smartalloc') . '</button> ';
             }
             echo '<button class="copy-prompt" data-clip="' . esc_attr($prompt) . '">' . esc_html__('Copy Prompt', 'smartalloc') . '</button> ';
-            echo '<button class="copy-issue" data-clip="' . esc_attr($issue) . '">' . esc_html__('Copy as GitHub Issue', 'smartalloc') . '</button>';
+            echo '<button class="copy-issue" data-clip="' . esc_attr($issue) . '">' . esc_html__('Copy as GitHub Issue', 'smartalloc') . '</button> ';
+            $bundleNonce = wp_create_nonce('smartalloc_debug_bundle');
+            $url = '?page=smartalloc-debug&bundle=' . rawurlencode($hash) . '&_wpnonce=' . $bundleNonce;
+            echo '<a class="button" href="' . esc_attr($url) . '">' . esc_html__('Download Debug Bundle (.zip)', 'smartalloc') . '</a>';
             echo '</td>';
             echo '</tr>';
         }
