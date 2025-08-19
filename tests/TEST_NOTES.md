@@ -13,5 +13,6 @@ Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 | G. User Experience / Accessibility | Playwright `approve flow shows success` validates admin notices and interactions. |
 | 3.x Gravity Forms | PHPUnit scaffolds `ComplexFormTest` and `FlowPerksIntegrationTest` (marked SKIP with TODO) cover nested conditionals, uploads, multipage sessions and Flow/Perks routing. |
 | 8.x Persian/RTL | `PersianRtlTest` and Playwright `@e2e-i18n` placeholders ensure RTL rendering, character handling and Jalali round-trip (SKIP with TODO). |
+| Third-Party Compatibility | `JalaliFilterBypassTest` and Playwright `@e2e-compat` protect against Jalali date filters and Persian GF admin styles. |
 
 

@@ -29,7 +29,7 @@ final class ExportPage
             ARRAY_A
         );
 
-        echo '<div class="wrap">';
+        echo '<div class="smartalloc-admin"><div class="wrap">';
         echo '<h1>' . esc_html__('Export', 'smartalloc') . '</h1>';
 
         if (!$breaker->allow()) {
@@ -103,7 +103,7 @@ final class ExportPage
         }
 
         echo '</tbody></table>';
-        echo '</div>';
+        echo '</div></div>';
     }
 
     private static function summary(array $filters): string
