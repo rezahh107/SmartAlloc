@@ -5,7 +5,10 @@
     "@playwright/test": "^1.41.2"
   },
   "scripts": {
-    "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "e2e:install": "npx playwright install --with-deps"
+    "e2e:install": "npx playwright install --with-deps",
+    "e2e:up": "docker compose up -d",
+    "e2e:seed": "bash e2e/scripts/seed.sh",
+    "e2e:wait": "node e2e/scripts/wait-for-wp.js",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts"
   }
 }

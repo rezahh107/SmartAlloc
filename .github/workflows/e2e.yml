@@ -1,0 +1,25 @@
+name: E2E (optional)
+on: [workflow_dispatch, push, pull_request]
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Install deps
+        run: npm ci
+      - name: Start Docker stack
+        run: docker compose up -d
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Wait for WordPress
+        run: node e2e/scripts/wait-for-wp.js
+        env: { WP_BASE_URL: http://localhost:8080 }
+      - name: Seed data
+        run: bash e2e/scripts/seed.sh
+        env: { WP_BASE_URL: http://localhost:8080 }
+      - name: Run E2E (optional)
+        run: npm run test:e2e
+        env: { WP_BASE_URL: http://localhost:8080 }
