@@ -185,12 +185,20 @@ composer test
 vendor/bin/phpunit tests/DigitsNormalizerTest.php
 ```
 
-## E2E quick start
+## Docker or wp-env
 
-One-shot:
+Run E2E tests via Docker or wp-env.
+
+### Quick start (Docker)
 
 ```bash
 npm run e2e:install && npm run e2e:all
+```
+
+### Quick start (wp-env)
+
+```bash
+npm run e2e:install && npm run e2e:all:wpenv
 ```
 
 ### Troubleshooting
