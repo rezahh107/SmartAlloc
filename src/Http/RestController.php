@@ -206,13 +206,21 @@ final class RestController
     {
         $nonce = $request->get_header('X-WP-Nonce');
         if (!$nonce || !wp_verify_nonce($nonce, 'wp_rest')) {
-            return new WP_REST_Response(['error' => 'invalid_nonce'], 403);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'invalid_nonce',
+                'message' => 'Invalid nonce'
+            ], 403);
         }
 
         $entryId  = absint($request->get_param('entry'));
         $mentorId = absint($request->get_param('mentor_id'));
         if ($entryId <= 0 || $mentorId <= 0) {
-            return new WP_REST_Response(['error' => 'invalid_params'], 400);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'invalid_params',
+                'message' => 'Invalid parameters'
+            ], 400);
         }
 
         $lockKey   = 'smartalloc_review_lock_' . $entryId;
@@ -220,7 +228,11 @@ final class RestController
         $current   = (string) get_current_user_id();
         if ($lockOwner && $lockOwner !== $current) {
             $this->container->get(Metrics::class)->inc('review_lock_hit');
-            return new WP_REST_Response(['error' => 'entry_locked'], 409);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'entry_locked',
+                'message' => 'Entry locked'
+            ], 409);
         }
         set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
 
@@ -235,14 +247,27 @@ final class RestController
             if (($data['reason'] ?? '') === 'capacity') {
                 $metrics->inc('review_capacity_blocked');
                 delete_transient('smartalloc_metrics_cache');
-                return new WP_REST_Response(['error' => 'capacity_exceeded'], 409);
+                return new WP_REST_Response([
+                    'ok' => false,
+                    'code' => 'capacity_exceeded',
+                    'message' => 'Mentor capacity exceeded'
+                ], 409);
             }
             delete_transient('smartalloc_metrics_cache');
-            return new WP_REST_Response(['error' => 'idempotent_conflict'], 409);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'duplicate_allocation',
+                'message' => 'Allocation already processed'
+            ], 409);
         }
         $metrics->inc('review_approve_total');
         delete_transient('smartalloc_metrics_cache');
-        return new WP_REST_Response(['ok' => true, 'result' => $data]);
+        return new WP_REST_Response([
+            'ok' => true,
+            'code' => 'approved',
+            'message' => 'Approved',
+            'result' => $data
+        ]);
     }
 
     /**
@@ -252,13 +277,21 @@ final class RestController
     {
         $nonce = $request->get_header('X-WP-Nonce');
         if (!$nonce || !wp_verify_nonce($nonce, 'wp_rest')) {
-            return new WP_REST_Response(['error' => 'invalid_nonce'], 403);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'invalid_nonce',
+                'message' => 'Invalid nonce'
+            ], 403);
         }
 
         $entryId = absint($request->get_param('entry'));
         $reason  = sanitize_key((string) $request->get_param('reason'));
         if ($entryId <= 0 || $reason === '' || !in_array($reason, $this->reasonAllowlist, true)) {
-            return new WP_REST_Response(['error' => 'invalid_params'], 400);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'invalid_params',
+                'message' => 'Invalid parameters'
+            ], 400);
         }
 
         $lockKey   = 'smartalloc_review_lock_' . $entryId;
@@ -266,7 +299,11 @@ final class RestController
         $current   = (string) get_current_user_id();
         if ($lockOwner && $lockOwner !== $current) {
             $this->container->get(Metrics::class)->inc('review_lock_hit');
-            return new WP_REST_Response(['error' => 'entry_locked'], 409);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'entry_locked',
+                'message' => 'Entry locked'
+            ], 409);
         }
         set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
 
@@ -279,7 +316,11 @@ final class RestController
         $metrics->inc('review_reject_total');
         delete_transient('smartalloc_metrics_cache');
 
-        return new WP_REST_Response(['ok' => true]);
+        return new WP_REST_Response([
+            'ok' => true,
+            'code' => 'rejected',
+            'message' => 'Rejected'
+        ]);
     }
 
     /**
@@ -289,13 +330,21 @@ final class RestController
     {
         $nonce = $request->get_header('X-WP-Nonce');
         if (!$nonce || !wp_verify_nonce($nonce, 'wp_rest')) {
-            return new WP_REST_Response(['error' => 'invalid_nonce'], 403);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'invalid_nonce',
+                'message' => 'Invalid nonce'
+            ], 403);
         }
 
         $entryId = absint($request->get_param('entry'));
         $note    = sanitize_text_field((string) $request->get_param('note'));
         if ($entryId <= 0) {
-            return new WP_REST_Response(['error' => 'invalid_params'], 400);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'invalid_params',
+                'message' => 'Invalid parameters'
+            ], 400);
         }
 
         $lockKey   = 'smartalloc_review_lock_' . $entryId;
@@ -303,7 +352,11 @@ final class RestController
         $current   = (string) get_current_user_id();
         if ($lockOwner && $lockOwner !== $current) {
             $this->container->get(Metrics::class)->inc('review_lock_hit');
-            return new WP_REST_Response(['error' => 'entry_locked'], 409);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'entry_locked',
+                'message' => 'Entry locked'
+            ], 409);
         }
         set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
 
@@ -314,14 +367,22 @@ final class RestController
 
         if (!$ok) {
             delete_transient('smartalloc_metrics_cache');
-            return new WP_REST_Response(['error' => 'idempotent_conflict'], 409);
+            return new WP_REST_Response([
+                'ok' => false,
+                'code' => 'duplicate_allocation',
+                'message' => 'Allocation already processed'
+            ], 409);
         }
 
         $metrics = $this->container->get(Metrics::class);
         $metrics->inc('review_defer_total');
         delete_transient('smartalloc_metrics_cache');
 
-        return new WP_REST_Response(['ok' => true]);
+        return new WP_REST_Response([
+            'ok' => true,
+            'code' => 'deferred',
+            'message' => 'Deferred'
+        ]);
     }
 }
 

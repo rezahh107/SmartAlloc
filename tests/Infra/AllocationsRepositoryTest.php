@@ -93,6 +93,16 @@ final class AllocationsRepositoryTest extends TestCase
         $this->assertSame(AllocationStatus::REJECT, $wpdb->rows[2]['status']);
         $this->assertSame('duplicate', $wpdb->rows[2]['reason_code']);
     }
+
+    public function test_save_duplicate_throws(): void
+    {
+        $wpdb = new WpdbStub();
+        $logger = new LoggerStub();
+        $repo = $this->makeRepo($wpdb, $logger);
+        $repo->save(1, AllocationStatus::MANUAL);
+        $this->expectException(RuntimeException::class);
+        $repo->save(1, AllocationStatus::MANUAL);
+    }
 }
 
 class LoggerStub implements LoggerInterface

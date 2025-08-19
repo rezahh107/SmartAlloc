@@ -188,9 +188,18 @@ class Db
                   if ($res === false) {
                       error_log('SmartAlloc migration WARN: unable to add ' . $col . ' index: ' . $wpdb->last_error);
                   }
-              }
-          }
-      }
+            }
+        }
+
+        // Ensure base allocations table has unique constraint on entry_id
+        $allocTable = $prefix . 'allocations';
+        $sql = sprintf('SHOW INDEX FROM %s WHERE Key_name = %%s', $allocTable);
+        $idx = $wpdb->get_var($wpdb->prepare($sql, 'entry_id'));
+        if (!$idx) {
+            // Table name built from trusted prefix; column name is fixed
+            $wpdb->query("ALTER TABLE {$allocTable} ADD UNIQUE KEY entry_id (entry_id)");
+        }
+    }
 
     /**
      * Start a database transaction

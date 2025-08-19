@@ -19,13 +19,14 @@
         path: '/smartalloc/v1/review/' + entry + '/approve',
         method: 'POST',
         data: { mentor_id: mentor }
-      }).then(() => {
-        notice('Approved', 'notice-success');
+      }).then(res => {
+        notice(res?.message || 'Approved', 'notice-success');
       }).catch(err => {
         let msg = 'Error';
-        if (err?.data?.error === 'capacity_exceeded') msg = 'Capacity exceeded';
-        else if (err?.data?.error === 'entry_locked') msg = 'Entry locked';
-        else if (err?.data?.error === 'idempotent_conflict') msg = 'Already processed';
+        const code = err?.data?.code;
+        if (code === 'capacity_exceeded') msg = 'Capacity exceeded';
+        else if (code === 'entry_locked') msg = 'Entry locked';
+        else if (code === 'duplicate_allocation') msg = 'Already processed';
         notice(msg, 'notice-error');
       });
     });
@@ -39,11 +40,13 @@
         path: '/smartalloc/v1/review/' + entry + '/reject',
         method: 'POST',
         data: { reason: reason }
-      }).then(() => {
-        notice('Rejected', 'notice-success');
+      }).then(res => {
+        notice(res?.message || 'Rejected', 'notice-success');
       }).catch(err => {
         let msg = 'Error';
-        if (err?.data?.error === 'entry_locked') msg = 'Entry locked';
+        const code = err?.data?.code;
+        if (code === 'entry_locked') msg = 'Entry locked';
+        else if (code === 'duplicate_allocation') msg = 'Already processed';
         notice(msg, 'notice-error');
       });
     });
@@ -57,18 +60,20 @@
         path: '/smartalloc/v1/review/' + entry + '/defer',
         method: 'POST',
         data: { note: note }
-      }).then(() => {
-        notice('Deferred', 'notice-success');
+      }).then(res => {
+        notice(res?.message || 'Deferred', 'notice-success');
       }).catch(err => {
         let msg = 'Error';
-        if (err?.data?.error === 'entry_locked') msg = 'Entry locked';
-        else if (err?.data?.error === 'idempotent_conflict') msg = 'Already processed';
+        const code = err?.data?.code;
+        if (code === 'entry_locked') msg = 'Entry locked';
+        else if (code === 'duplicate_allocation') msg = 'Already processed';
         notice(msg, 'notice-error');
       });
     });
 
     $('#smartalloc-bulk-approve').on('click', function(e){
       e.preventDefault();
+      if (!confirm('Approve selected entries?')) { return; }
       const ids = $('tbody .check-column input:checked').map(function(){ return $(this).val(); }).get();
       ids.forEach(function(id){
         const btn = $('.smartalloc-approve[data-entry="' + id + '"]');
@@ -80,6 +85,7 @@
       e.preventDefault();
       const reason = prompt('Reason code?');
       if (!reason) { return; }
+      if (!confirm('Reject selected entries?')) { return; }
       const ids = $('tbody .check-column input:checked').map(function(){ return $(this).val(); }).get();
       ids.forEach(function(id){
         wp.apiFetch({

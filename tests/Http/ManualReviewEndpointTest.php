@@ -54,6 +54,7 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $res = $m->invoke($controller, $req);
         $this->assertInstanceOf(WP_REST_Response::class, $res);
         $this->assertSame(200, $res->get_status());
+        $this->assertTrue($res->get_data()['ok']);
         $this->assertSame(['review_approve_total'], $metrics->inc);
     }
 
@@ -72,7 +73,9 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $m = $ref->getMethod('approveManual'); $m->setAccessible(true);
         $res = $m->invoke($controller,$req);
         $this->assertSame(409, $res->get_status());
-        $this->assertSame('capacity_exceeded', $res->get_data()['error']);
+        $data = $res->get_data();
+        $this->assertFalse($data['ok']);
+        $this->assertSame('capacity_exceeded', $data['code']);
         $this->assertSame(['review_capacity_blocked'], $metrics->inc);
     }
 
@@ -91,6 +94,7 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $m = $ref->getMethod('rejectManual'); $m->setAccessible(true);
         $res = $m->invoke($controller,$req);
         $this->assertSame(200, $res->get_status());
+        $this->assertTrue($res->get_data()['ok']);
         $this->assertSame(['review_reject_total'], $metrics->inc);
 
         $reqBad = new WP_REST_Request(['entry'=>1,'reason'=>'bad']);
@@ -114,6 +118,7 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $this->assertSame(200,$res1->get_status());
         $res2 = $m->invoke($controller,$req);
         $this->assertSame(409,$res2->get_status());
+        $this->assertSame('duplicate_allocation', $res2->get_data()['code']);
         $this->assertSame(['review_defer_total'], $metrics->inc);
     }
 
@@ -131,8 +136,26 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $ref = new ReflectionClass($controller); $m = $ref->getMethod('approveManual'); $m->setAccessible(true);
         $res = $m->invoke($controller,$req);
         $this->assertSame(409,$res->get_status());
-        $this->assertSame('entry_locked',$res->get_data()['error']);
+        $this->assertSame('entry_locked',$res->get_data()['code']);
         $this->assertSame(['review_lock_hit'], $metrics->inc);
+
+    }
+
+    public function test_approve_duplicate_returns_409(): void
+    {
+        Functions\when('wp_verify_nonce')->justReturn(true);
+
+        $repo = new class {
+            public function approveManual($e,$m,$r,$n){ return new AllocationResult(['committed'=>false,'reason'=>'duplicate']); }
+        };
+        $metrics = new class { public array $inc=[]; public function inc($k){ $this->inc[]=$k; } };
+        $controller = $this->makeController($repo, $metrics);
+        $req = new WP_REST_Request(['entry'=>1,'mentor_id'=>2]);
+        $req->set_header('X-WP-Nonce','a');
+        $ref = new ReflectionClass($controller); $m = $ref->getMethod('approveManual'); $m->setAccessible(true);
+        $res = $m->invoke($controller,$req);
+        $this->assertSame(409,$res->get_status());
+        $this->assertSame('duplicate_allocation',$res->get_data()['code']);
     }
 }
 
