@@ -14,17 +14,21 @@ use function json_encode;
 use function mkdir;
 use function sys_get_temp_dir;
 use function time;
-use function update_option;
+// WordPress functions are available at runtime.
 
 final class ReproBuilder
 {
     private RedactionAdapter $redactor;
     private MetricsCollector $metrics;
+    private string $testDir;
+    private string $bpDir;
 
-    public function __construct(?RedactionAdapter $redactor = null, ?MetricsCollector $metrics = null)
+    public function __construct(?RedactionAdapter $redactor = null, ?MetricsCollector $metrics = null, ?string $testDir = null, ?string $bpDir = null)
     {
         $this->redactor = $redactor ?? new RedactionAdapter();
         $this->metrics  = $metrics ?? new MetricsCollector();
+        $this->testDir  = $testDir ?? dirname(__DIR__, 1) . '/../tests/Debug/Repro';
+        $this->bpDir    = $bpDir   ?? dirname(__DIR__, 1) . '/../e2e/blueprints';
     }
 
     /**
@@ -40,16 +44,14 @@ final class ReproBuilder
         }
         $entry = $this->redactor->redact($entry);
 
-        $testDir = dirname(__DIR__, 1) . '/../tests/Debug/Repro';
-        $bpDir   = dirname(__DIR__, 1) . '/../e2e/blueprints';
-        if (!is_dir($testDir)) {
-            mkdir($testDir, 0777, true);
+        if (!is_dir($this->testDir)) {
+            mkdir($this->testDir, 0777, true);
         }
-        if (!is_dir($bpDir)) {
-            mkdir($bpDir, 0777, true);
+        if (!is_dir($this->bpDir)) {
+            mkdir($this->bpDir, 0777, true);
         }
-        $testPath = $testDir . '/' . $fingerprint . 'Test.php';
-        $bpPath   = $bpDir . '/error-' . $fingerprint . '.json';
+        $testPath = $this->testDir . '/' . $fingerprint . 'Test.php';
+        $bpPath   = $this->bpDir . '/error-' . $fingerprint . '.json';
         $class = 'Repro' . $fingerprint . 'Test';
 
         $ctx = is_array($entry['context'] ?? null) ? $entry['context'] : [];
@@ -87,10 +89,13 @@ PHP;
         file_put_contents($testPath, $test);
 
         $blueprint = [
-            'steps' => [
-                ['plugin' => 'smartalloc/smart-alloc.php'],
-                ['php' => "define('WP_DEBUG', true);"]
+            'wp' => [
+                'plugins' => [
+                    ['slug' => 'smartalloc', 'version' => defined('SMARTALLOC_VERSION') ? SMARTALLOC_VERSION : '0.0.0'],
+                ],
+                'options' => [],
             ],
+            'smartalloc' => ['debug' => true],
         ];
         file_put_contents($bpPath, json_encode($blueprint, JSON_PRETTY_PRINT) . "\n");
 
@@ -107,12 +112,11 @@ PHP;
         if (!$entry) {
             throw new \RuntimeException('Entry not found');
         }
-        $lockKey = 'smartalloc_debug_bundle_ts_' . $fingerprint;
-        $last = (int) get_option($lockKey, 0);
-        if ($last && (time() - $last) < 3600) {
-            throw new \RuntimeException('Rate limited');
+        $lockKey = 'smartalloc_debug_bundle_' . $fingerprint;
+        if (get_transient($lockKey)) { // @phpstan-ignore-line
+            throw new \DomainException('Rate limited');
         }
-        update_option($lockKey, time());
+        set_transient($lockKey, 1, 3600); // @phpstan-ignore-line
         $entry = $this->redactor->redact($entry);
         $paths = $this->buildScaffold($fingerprint);
 
@@ -154,14 +158,18 @@ PHP;
             $zip->addFile($tmp . '/' . $file, $file);
         }
         $zip->close();
+        clearstatcache(true, $zipPath);
         $size = filesize($zipPath) ?: 0;
         if ($size > 1024 * 1024) {
             file_put_contents($tmp . '/logs.json', '[]');
+            file_put_contents($tmp . '/prompt.md', (new PromptBuilder())->build(array_merge($entry, ['breadcrumbs' => []])));
+            @unlink($zipPath);
             $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
             foreach (['prompt.md', 'logs.json', 'env.json', 'blueprint.json', basename($paths['test'])] as $file) {
                 $zip->addFile($tmp . '/' . $file, $file);
             }
             $zip->close();
+            clearstatcache(true, $zipPath);
             $size = filesize($zipPath) ?: 0;
         }
         $this->metrics->inc('debug_bundle_created_total');
