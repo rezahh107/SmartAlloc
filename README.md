@@ -187,11 +187,21 @@ vendor/bin/phpunit tests/DigitsNormalizerTest.php
 
 ### End-to-End Tests
 
-Playwright tests are optional in CI. To run them locally:
+Playwright tests run in an optional CI job (`continue-on-error: true`). To exercise them locally:
+
+1. Start a WordPress test stack and seed data:
 
 ```bash
-npm run e2e:install
-npm run test:e2e
+cd e2e
+docker compose up -d
+docker compose run --rm wordpress bash e2e/setup.sh
+```
+
+2. Install browsers and execute tests (override `BASE_URL` if needed):
+
+```bash
+BASE_URL=http://localhost:8080 npm run e2e:install
+BASE_URL=http://localhost:8080 npm run test:e2e
 ```
 
 ### Code Quality
