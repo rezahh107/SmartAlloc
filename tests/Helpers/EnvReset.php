@@ -6,20 +6,28 @@ namespace {
     if (!function_exists('sa_test_freeze_time')) {
         function sa_test_freeze_time(int $ts): void {
             Functions\when('time')->justReturn($ts);
-            Functions\when('current_time')->alias(function (string $type = 'mysql') use ($ts) {
-                if ($type === 'timestamp') {
-                    return $ts;
-                }
-                $format = $type === 'mysql' ? 'Y-m-d H:i:s' : $type;
-                return gmdate($format, $ts);
-            });
+            try {
+                Functions\when('current_time')->alias(function (string $type = 'mysql') use ($ts) {
+                    if ($type === 'timestamp') {
+                        return $ts;
+                    }
+                    $format = $type === 'mysql' ? 'Y-m-d H:i:s' : $type;
+                    return gmdate($format, $ts);
+                });
+            } catch (\Throwable $e) {
+                // current_time() may be defined before Patchwork; ignore if not redefinable
+            }
         }
     }
 
     if (!function_exists('sa_test_unfreeze_time')) {
         function sa_test_unfreeze_time(): void {
-            Functions\when('time')->passThrough();
-            Functions\when('current_time')->passThrough();
+            Functions\when('time')->alias('time');
+            try {
+                Functions\when('current_time')->alias('current_time');
+            } catch (\Throwable $e) {
+                // ignore if current_time() wasn't redefined
+            }
         }
     }
 
