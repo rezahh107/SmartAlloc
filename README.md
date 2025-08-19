@@ -312,13 +312,13 @@ The plugin creates several tables with the prefix `wp_salloc_`:
 
 ## Security Scans (Optional)
 
-Run additional security checks locally:
+Run optional security checks when the tools are available:
 
 - `composer sec:semgrep`
-- `npm run sec:snyk` (requires Snyk CLI)
-- `composer sec:wp`
+- `npm run sec:snyk`
+- `composer sec:wp` (run `composer update` when you have access to the Patchstack repo to enable local scanning)
 
-These jobs currently run in CI as non-blocking steps; enforcement may be added later.
+Scans require Docker, a Snyk token, and access to the Patchstack scanner. These jobs run in CI as optional, non-blocking steps.
 
 ## Support
 

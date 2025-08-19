@@ -87,7 +87,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: composer install --no-interaction
-      - run: composer sec:semgrep
+      - run: |
+          if command -v docker >/dev/null; then
+            composer sec:semgrep
+          else
+            echo "Docker not installed, skipping Semgrep"
+          fi
       - name: Upload Semgrep report
         if: hashFiles('semgrep.sarif') != ''
         uses: github/codeql-action/upload-sarif@v2
@@ -97,15 +102,24 @@ jobs:
   security-sca:
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - run: npm ci || true
-      - run: npm i -g snyk
-      - run: npm run sec:snyk
+      - name: Run Snyk scan
+        run: |
+          if [ -n "$SNYK_TOKEN" ]; then
+            npm i -g snyk
+            npm run sec:snyk
+          else
+            echo "SNYK_TOKEN not set, skipping"
+          fi
       - name: Upload Snyk results
+        if: hashFiles('.snyk*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: snyk-results

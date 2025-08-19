@@ -28,8 +28,10 @@
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
         "phpcompatibility/php-compatibility": "^9.3",
         "wp-phpunit/wp-phpunit": "^5.7",
-        "mikey179/vfsstream": "^1.6",
-        "patchstack/security-scanner": "^1.0"
+        "mikey179/vfsstream": "^1.6"
+    },
+    "suggest": {
+        "patchstack/security-scanner": "Run composer update when you have access to Patchstack repo to enable local scanning"
     },
     "autoload": {
         "psr-4": {
@@ -50,8 +52,11 @@
         "ci": "composer cs && composer test:security && composer coverage",
         "build": "rm -rf dist && mkdir dist && VERSION=$(php -r \"include 'smart-alloc.php'; echo SMARTALLOC_VERSION;\") && rsync -a . dist/smartalloc --exclude 'tests' --exclude 'stubs' --exclude 'docs' --exclude 'node_modules' --exclude '.github' --exclude 'dist' && cd dist && zip -r smartalloc-v$VERSION.zip smartalloc && rm -rf smartalloc",
         "dist": "composer cs && composer test:security && composer test && composer build",
-        "sec:semgrep": "docker run --rm -v $PWD:/src returntocorp/semgrep --config=auto --timeout 120 /src",
-        "sec:wp": "vendor/bin/patchstack scan --format=json --output build/patchstack.json || exit 0"
+        "sec:semgrep": "if command -v docker >/dev/null; then docker run --rm -v $PWD:/src returntocorp/semgrep --config=auto --timeout 120 --sarif --output semgrep.sarif /src; else echo 'Docker not installed, skipping Semgrep'; fi",
+        "sec:wp": "if [ -x vendor/bin/patchstack ]; then vendor/bin/patchstack scan --format=json --output build/patchstack.json || true; else echo 'Patchstack unavailable'; fi",
+        "post-install-cmd": [
+            "echo 'post-install-cmd: no-op'"
+        ]
     },
     "config": {
         "allow-plugins": {
