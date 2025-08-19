@@ -38,7 +38,13 @@ final class Logger implements LoggerInterface
     {
         $context = $this->redactor->redact($context);
         $level = strtoupper((string) $level);
-        $record = ['level' => $level, 'message' => $message, 'context' => $context];
+        $record = [
+            'timestamp' => gmdate('c'),
+            'correlation_id' => self::requestId(),
+            'level' => $level,
+            'message' => $message,
+            'context' => $context,
+        ];
         $this->records[] = $record;
         ($this->writer)(sprintf('[SmartAlloc][%s] %s %s', $level, $message, wp_json_encode($context)));
     }

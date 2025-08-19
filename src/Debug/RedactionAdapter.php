@@ -25,10 +25,29 @@ final class RedactionAdapter
     public function redact(array $context): array
     {
         if (isset($context['context']) && is_array($context['context'])) {
-            $context['context'] = $this->redactor->redact($context['context']);
-            if (isset($context['context']['route']) && is_string($context['context']['route'])) {
-                $context['context']['route'] = $this->stripQuery($context['context']['route']);
+            $ctx = $context['context'];
+            $route = $ctx['route'] ?? null;
+            $method = $ctx['method'] ?? null;
+            $userHash = $ctx['user_hash'] ?? null;
+            $correlation = $ctx['correlation_id'] ?? null;
+            $timestamp = $ctx['timestamp'] ?? null;
+            $ctx = $this->redactor->redact($ctx);
+            if ($route !== null && is_string($route)) {
+                $ctx['route'] = $this->stripQuery((string) $route);
             }
+            if ($method !== null) {
+                $ctx['method'] = $method;
+            }
+            if ($userHash !== null) {
+                $ctx['user_hash'] = $userHash;
+            }
+            if ($correlation !== null) {
+                $ctx['correlation_id'] = $correlation;
+            }
+            if ($timestamp !== null) {
+                $ctx['timestamp'] = $timestamp;
+            }
+            $context['context'] = $ctx;
         }
         if (isset($context['file']) && is_string($context['file'])) {
             $context['file'] = $this->shortenPath($context['file']);

@@ -6,17 +6,26 @@ namespace SmartAlloc\Debug;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use SmartAlloc\Infra\Metrics\MetricsCollector;
 
 /**
  * Build copyable markdown prompt from stored error data.
  */
 final class PromptBuilder
 {
+    private MetricsCollector $metrics;
+
+    public function __construct(?MetricsCollector $metrics = null)
+    {
+        $this->metrics = $metrics ?? new MetricsCollector();
+    }
+
     /**
      * @param array<string,mixed> $entry
      */
     public function build(array $entry): string
     {
+        $this->metrics->inc('debug_prompt_built_total');
         $lines = [];
         $lines[] = '# Summary';
         $lines[] = $entry['message'] ?? 'Unknown error';
@@ -44,7 +53,7 @@ final class PromptBuilder
             $lines[] = sprintf('%s: %s', (string) $k, is_scalar($v) ? (string) $v : wp_json_encode($v));
         }
         $lines[] = '';
-        $logs = is_array($entry['logs'] ?? null) ? $entry['logs'] : [];
+        $logs = is_array($entry['breadcrumbs'] ?? null) ? $entry['breadcrumbs'] : [];
         if (!empty($logs)) {
             $lines[] = '## Recent Logs';
             foreach ($logs as $log) {
@@ -76,6 +85,14 @@ final class PromptBuilder
         $tz = new DateTimeZone('UTC');
         $lines[] = (new DateTimeImmutable('now', $tz))->format(DateTimeImmutable::ATOM);
         return implode("\n", $lines);
+    }
+
+    /**
+     * @param array<string,mixed> $entry
+     */
+    public function buildIssue(array $entry): string
+    {
+        return "### Bug Report\n\n" . $this->build($entry);
     }
 
     private function snippet(string $file, int $line): string

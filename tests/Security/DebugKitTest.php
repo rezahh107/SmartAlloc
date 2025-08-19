@@ -35,8 +35,8 @@ final class DebugKitTest extends BaseTestCase
         $GLOBALS['sa_options']['smartalloc_debug_enabled'] = true;
         global $wpdb;
         $wpdb = (object) ['queries' => [
-            ['SELECT * FROM t WHERE id = %d', 1],
-            ['SELECT * FROM bad']
+            ['SELECT * FROM t WHERE id = 5', 0, 'wpdb->prepare'],
+            ['SELECT * FROM bad', 0, '']
         ]];
     }
 
@@ -64,6 +64,7 @@ final class DebugKitTest extends BaseTestCase
         $this->assertStringNotContainsString('user@example.com', $prompt);
         $this->assertStringNotContainsString('123456789', $prompt);
         $queries = $entry['queries'] ?? [];
+        $this->assertSame(['SELECT * FROM t WHERE id = ?'], $queries);
         $this->assertNotContains('SELECT * FROM bad', $queries);
         unlink($tmp);
     }
