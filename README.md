@@ -222,6 +222,16 @@ The Playground CLI mounts the current plugin automatically via `--auto-mount` an
 
 CI E2E is optional and won’t block merges.
 
+### Debug Bundle E2E (@e2e-debug)
+
+Run the optional debug bundle test once a Playground or wp-env instance is running:
+
+```bash
+npx playwright test -c e2e/playwright.config.ts -g "@e2e-debug"
+```
+
+Downloads are stored under `e2e/downloads/`. Set `WP_BASE_URL` if your environment uses a different port (defaults to 9400).
+
 ### Code Quality
 
 ```bash
