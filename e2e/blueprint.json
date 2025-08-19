@@ -1,0 +1,12 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "login": true,
+  "preferredVersions": { "wp": "latest", "php": "8.2" },
+  "landingPage": "/wp-admin/",
+  "steps": [
+    { "step": "setSiteOptions", "options": { "blogname": "SmartAlloc E2E", "blogdescription": "Playground" } },
+    { "step": "wp-cli", "command": "wp user create reviewer reviewer@example.com --role=administrator --user_pass=reviewer123 || true" },
+    { "step": "wp-cli", "command": "wp user create editor1 editor1@example.com --role=editor --user_pass=editor123 || true" },
+    { "step": "wp-cli", "command": "wp plugin activate smartalloc || true" }
+  ]
+}
