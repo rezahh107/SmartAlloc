@@ -56,8 +56,8 @@ final class CsvInjectionTest extends TestCase
         $fh = fopen('php://memory', 'r+');
         fwrite($fh, $res['body']);
         rewind($fh);
-        fgetcsv($fh); // header
-        $data = fgetcsv($fh) ?: [];
+        fgetcsv($fh, 0, ',', '"', '\\'); // header
+        $data = fgetcsv($fh, 0, ',', '"', '\\') ?: [];
         fclose($fh);
         $cell = $data[0] ?? '';
         $trimmed = ltrim($cell, " \t\r\n");
@@ -94,8 +94,8 @@ final class CsvInjectionTest extends TestCase
         $fh = fopen('php://memory', 'r+');
         fwrite($fh, $res['body']);
         rewind($fh);
-        fgetcsv($fh); // header
-        $data = fgetcsv($fh) ?: [];
+        fgetcsv($fh, 0, ',', '"', '\\'); // header
+        $data = fgetcsv($fh, 0, ',', '"', '\\') ?: [];
         fclose($fh);
         $cell = $data[0] ?? '';
         $this->assertSame($input, $cell);
@@ -118,9 +118,9 @@ final class CsvInjectionTest extends TestCase
         $fh = fopen('php://memory', 'r+');
         fwrite($fh, $res['body']);
         rewind($fh);
-        fgetcsv($fh); // header
-        $data = fgetcsv($fh);
-        $extra = fgetcsv($fh);
+        fgetcsv($fh, 0, ',', '"', '\\'); // header
+        $data = fgetcsv($fh, 0, ',', '"', '\\');
+        $extra = fgetcsv($fh, 0, ',', '"', '\\');
         fclose($fh);
         if ($extra !== false) {
             $this->markTestSkipped('CSV formula-escaping not implemented yet — TODO: quote fields with embedded newlines/tabs');
@@ -152,8 +152,8 @@ final class CsvInjectionTest extends TestCase
         $fh = fopen('php://memory', 'r+');
         fwrite($fh, $res['body']);
         rewind($fh);
-        fgetcsv($fh); // header
-        $data = fgetcsv($fh) ?: [];
+        fgetcsv($fh, 0, ',', '"', '\\'); // header
+        $data = fgetcsv($fh, 0, ',', '"', '\\') ?: [];
         fclose($fh);
         $cell = $data[0] ?? '';
         $this->assertSame($input, $cell);

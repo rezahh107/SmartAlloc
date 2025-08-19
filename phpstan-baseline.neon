@@ -46,6 +46,26 @@ parameters:
 			path: src/Admin/Actions/ExportDownloadAction.php
 
 		-
+			message: "#^Parameter \\#1 \\$filename of function filesize expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportDownloadAction.php
+
+		-
+			message: "#^Parameter \\#1 \\$filename of function is_file expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportDownloadAction.php
+
+		-
+			message: "#^Parameter \\#1 \\$filename of function is_readable expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportDownloadAction.php
+
+		-
+			message: "#^Parameter \\#1 \\$filename of function readfile expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportDownloadAction.php
+
+		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ExportGenerateAction.php
@@ -121,6 +141,16 @@ parameters:
 			path: src/Admin/Actions/ExportGenerateAction.php
 
 		-
+			message: "#^Call to an undefined method object\\:\\:approveManual\\(\\)\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualApproveAction.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:findByEntryId\\(\\)\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualApproveAction.php
+
+		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualApproveAction.php
@@ -159,6 +189,11 @@ parameters:
 			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, 'absint' given\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualApproveAction.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:approveManual\\(\\)\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualAssignAction.php
 
 		-
 			message: "#^Constant ARRAY_A not found\\.$#"
@@ -209,6 +244,11 @@ parameters:
 			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, 'absint' given\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualAssignAction.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:rejectManual\\(\\)\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualRejectAction.php
 
 		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
@@ -276,6 +316,16 @@ parameters:
 			path: src/Admin/Pages/ExportPage.php
 
 		-
+			message: "#^Constant SMARTALLOC_VERSION not found\\.$#"
+			count: 2
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Function __ not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
 			message: "#^Function absint not found\\.$#"
 			count: 2
 			path: src/Admin/Pages/ExportPage.php
@@ -292,7 +342,12 @@ parameters:
 
 		-
 			message: "#^Function esc_html not found\\.$#"
-			count: 5
+			count: 8
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Function plugins_url not found\\.$#"
+			count: 2
 			path: src/Admin/Pages/ExportPage.php
 
 		-
@@ -311,9 +366,59 @@ parameters:
 			path: src/Admin/Pages/ExportPage.php
 
 		-
+			message: "#^Function wp_enqueue_script not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Function wp_enqueue_style not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
 			message: "#^Function wp_nonce_url not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Admin\\\\Pages\\\\ExportPage\\:\\:summary\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Parameter \\#1 \\$filters of static method SmartAlloc\\\\Admin\\\\Pages\\\\ExportPage\\:\\:summary\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:findManualPage\\(\\)\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Cannot access offset 'capacity' on mixed\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Cannot access offset 'mentor_id' on mixed\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Cannot access offset 'used' on mixed\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Cannot access offset 0 on mixed\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 3
+			path: src/Admin/Pages/ManualReviewPage.php
 
 		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
@@ -342,7 +447,7 @@ parameters:
 
 		-
 			message: "#^Function esc_html not found\\.$#"
-			count: 2
+			count: 4
 			path: src/Admin/Pages/ManualReviewPage.php
 
 		-
@@ -374,6 +479,71 @@ parameters:
 			message: "#^Function wp_enqueue_style not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'allocated' on mixed\\.$#"
+			count: 3
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'capacity_used' on mixed\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'center' on mixed\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'date' on mixed\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'fuzzy_auto_rate' on mixed\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'fuzzy_manual_rate' on mixed\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'manual' on mixed\\.$#"
+			count: 3
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'reject' on mixed\\.$#"
+			count: 3
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'rows' on mixed\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot access offset 'total' on mixed\\.$#"
+			count: 1
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 3
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 7
+			path: src/Admin/Pages/ReportsPage.php
 
 		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
@@ -419,6 +589,26 @@ parameters:
 			message: "#^Function wp_nonce_url not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, 'strval' given\\.$#"
+			count: 1
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Parameter \\#1 \\$stream of function fclose expects resource, resource\\|false given\\.$#"
+			count: 1
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Parameter \\#1 \\$stream of function fputcsv expects resource, resource\\|false given\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Admin/Pages/SettingsPage.php
 
 		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
@@ -476,6 +666,21 @@ parameters:
 			path: src/Admin/Pages/SettingsPage.php
 
 		-
+			message: "#^Cannot call method get\\(\\) on SmartAlloc\\\\Container\\|null\\.$#"
+			count: 27
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Cannot call method on\\(\\) on mixed\\.$#"
+			count: 4
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Cannot call method set\\(\\) on SmartAlloc\\\\Container\\|null\\.$#"
+			count: 16
+			path: src/Bootstrap.php
+
+		-
 			message: "#^Constant SMARTALLOC_UPLOAD_DIR not found\\.$#"
 			count: 1
 			path: src/Bootstrap.php
@@ -517,6 +722,156 @@ parameters:
 
 		-
 			message: "#^Function wp_upload_dir not found\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$circuitBreaker of class SmartAlloc\\\\Services\\\\NotificationService constructor expects SmartAlloc\\\\Services\\\\CircuitBreaker, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$container of class SmartAlloc\\\\Integration\\\\GravityForms constructor expects SmartAlloc\\\\Container, SmartAlloc\\\\Container\\|null given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$container of class SmartAlloc\\\\Listeners\\\\AutoAssignListener constructor expects SmartAlloc\\\\Container, SmartAlloc\\\\Container\\|null given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$container of class SmartAlloc\\\\Listeners\\\\ExportListener constructor expects SmartAlloc\\\\Container, SmartAlloc\\\\Container\\|null given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$container of class SmartAlloc\\\\Listeners\\\\LogActivityListener constructor expects SmartAlloc\\\\Container, SmartAlloc\\\\Container\\|null given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$container of class SmartAlloc\\\\Listeners\\\\NotifyListener constructor expects SmartAlloc\\\\Container, SmartAlloc\\\\Container\\|null given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$db of class SmartAlloc\\\\Services\\\\AllocationService constructor expects SmartAlloc\\\\Services\\\\Db, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$db of class SmartAlloc\\\\Services\\\\CounterService constructor expects SmartAlloc\\\\Services\\\\Db, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$db of class SmartAlloc\\\\Services\\\\CrosswalkService constructor expects SmartAlloc\\\\Services\\\\Db, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$db of class SmartAlloc\\\\Services\\\\HealthService constructor expects SmartAlloc\\\\Services\\\\Db, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$db of class SmartAlloc\\\\Services\\\\StatsService constructor expects SmartAlloc\\\\Services\\\\Db, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$eventBus of class SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter constructor expects SmartAlloc\\\\Event\\\\EventBus, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$logger of class SmartAlloc\\\\Event\\\\EventBus constructor expects SmartAlloc\\\\Contracts\\\\LoggerInterface, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$logger of class SmartAlloc\\\\Infra\\\\Repository\\\\AllocationsRepository constructor expects SmartAlloc\\\\Contracts\\\\LoggerInterface, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$logger of class SmartAlloc\\\\Services\\\\ExportService constructor expects SmartAlloc\\\\Services\\\\Logging, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$cache of class SmartAlloc\\\\Services\\\\CrosswalkService constructor expects SmartAlloc\\\\Services\\\\Cache, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$cache of class SmartAlloc\\\\Services\\\\HealthService constructor expects SmartAlloc\\\\Services\\\\Cache, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$crosswalk of class SmartAlloc\\\\Services\\\\AllocationService constructor expects SmartAlloc\\\\Services\\\\CrosswalkService, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$eventBus of class SmartAlloc\\\\Integration\\\\GravityForms constructor expects SmartAlloc\\\\Event\\\\EventBus, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$eventStore of class SmartAlloc\\\\Event\\\\EventBus constructor expects SmartAlloc\\\\Contracts\\\\EventStoreInterface, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$logger of class SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter constructor expects SmartAlloc\\\\Contracts\\\\LoggerInterface, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$logger of class SmartAlloc\\\\Services\\\\CounterService constructor expects SmartAlloc\\\\Services\\\\Logging, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$logger of class SmartAlloc\\\\Services\\\\NotificationService constructor expects SmartAlloc\\\\Services\\\\Logging, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$logger of class SmartAlloc\\\\Services\\\\StatsService constructor expects SmartAlloc\\\\Services\\\\Logging, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#2 \\$metrics of class SmartAlloc\\\\Services\\\\ExportService constructor expects SmartAlloc\\\\Services\\\\Metrics, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#3 \\$logger of class SmartAlloc\\\\Integration\\\\GravityForms constructor expects SmartAlloc\\\\Contracts\\\\LoggerInterface, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#3 \\$logger of class SmartAlloc\\\\Services\\\\AllocationService constructor expects SmartAlloc\\\\Services\\\\Logging, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#3 \\$logger of class SmartAlloc\\\\Services\\\\CrosswalkService constructor expects SmartAlloc\\\\Services\\\\Logging, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#4 \\$metrics of class SmartAlloc\\\\Services\\\\AllocationService constructor expects SmartAlloc\\\\Services\\\\Metrics, mixed given\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Parameter \\#5 \\$eventBus of class SmartAlloc\\\\Services\\\\AllocationService constructor expects SmartAlloc\\\\Event\\\\EventBus, mixed given\\.$#"
 			count: 1
 			path: src/Bootstrap.php
 
@@ -671,7 +1026,62 @@ parameters:
 			path: src/Cli/ReviewCommand.php
 
 		-
+			message: "#^Function remove_filter not found\\.$#"
+			count: 1
+			path: src/Compat/DateFilters.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Contracts\\\\EventStoreInterface\\:\\:insertEventIfNotExists\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/EventStoreInterface.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Contracts\\\\ListenerInterface\\:\\:handle\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/ListenerInterface.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Contracts\\\\LoggerInterface\\:\\:debug\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/LoggerInterface.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Contracts\\\\LoggerInterface\\:\\:error\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/LoggerInterface.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Contracts\\\\LoggerInterface\\:\\:info\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/LoggerInterface.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Contracts\\\\LoggerInterface\\:\\:warning\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/LoggerInterface.php
+
+		-
 			message: "#^Constant ARRAY_A not found\\.$#"
+			count: 1
+			path: src/Cron/ExportRetention.php
+
+		-
+			message: "#^Constant DAY_IN_SECONDS not found\\.$#"
+			count: 1
+			path: src/Cron/ExportRetention.php
+
+		-
+			message: "#^Function wp_next_scheduled not found\\.$#"
+			count: 1
+			path: src/Cron/ExportRetention.php
+
+		-
+			message: "#^Function wp_schedule_event not found\\.$#"
+			count: 1
+			path: src/Cron/ExportRetention.php
+
+		-
+			message: "#^Argument of an invalid type array\\<int, string\\>\\|false supplied for foreach, only iterables are supported\\.$#"
 			count: 1
 			path: src/Cron/RetentionTasks.php
 
@@ -692,13 +1102,113 @@ parameters:
 
 		-
 			message: "#^Function wp_upload_dir not found\\.$#"
-			count: 2
+			count: 1
 			path: src/Cron/RetentionTasks.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 1
+			path: src/Domain/Allocation/StudentAllocator.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Domain/Allocation/StudentAllocator.php
 
 		-
 			message: "#^Property SmartAlloc\\\\Domain\\\\Allocation\\\\StudentAllocator\\:\\:\\$config is never read, only written\\.$#"
 			count: 1
 			path: src/Domain/Allocation/StudentAllocator.php
+
+		-
+			message: "#^Function update_option invoked with 3 parameters, 2 required\\.$#"
+			count: 1
+			path: src/Domain/Export/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Domain\\\\Export\\\\CircuitBreaker\\:\\:getRetryAfter\\(\\) should return int but returns float\\|int\\<0, max\\>\\.$#"
+			count: 1
+			path: src/Domain/Export/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Domain\\\\Export\\\\CircuitBreaker\\:\\:read\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Domain/Export/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Domain\\\\Export\\\\CircuitBreaker\\:\\:write\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Domain/Export/CircuitBreaker.php
+
+		-
+			message: "#^Cannot call method getMessage\\(\\) on Throwable\\|null\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Event\\\\EventBus\\:\\:dispatch\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Event\\\\EventBus\\:\\:executeListenerWithRetry\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Event\\\\EventBus\\:\\:getBridges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Event\\\\EventBus\\:\\:getSortedListeners\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Event\\\\EventBus\\:\\:getStats\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Parameter \\#2 \\$listener of method SmartAlloc\\\\Contracts\\\\EventStoreInterface\\:\\:startListenerRun\\(\\) expects string, class\\-string\\|false given\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Event\\\\EventBus\\:\\:\\$bridges \\(array\\<string, callable\\(\\)\\: mixed\\>\\) does not accept non\\-empty\\-array\\<string, \\(callable\\(\\)\\: mixed\\)\\|string\\>\\.$#"
+			count: 1
+			path: src/Event/EventBus.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Event\\\\EventKey\\:\\:make\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Event/EventKey.php
+
+		-
+			message: "#^Cannot call method getAll\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/Admin/AdminController.php
+
+		-
+			message: "#^Cannot call method getExportErrors\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/Admin/AdminController.php
+
+		-
+			message: "#^Cannot call method getLogContents\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/Admin/AdminController.php
+
+		-
+			message: "#^Cannot call method getLogInfo\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/Admin/AdminController.php
+
+		-
+			message: "#^Cannot call method getStats\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/Admin/AdminController.php
 
 		-
 			message: "#^Function absint not found\\.$#"
@@ -821,6 +1331,131 @@ parameters:
 			path: src/Http/Rest/AllocationController.php
 
 		-
+			message: "#^Call to method get_json_params\\(\\) on an unknown class WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Constant MINUTE_IN_SECONDS not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function absint not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function current_user_can not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function delete_transient not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function get_current_user_id not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function get_transient not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function register_rest_route not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function sanitize_text_field not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Function set_transient not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Instantiated class WP_Error not found\\.$#"
+			count: 7
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Instantiated class WP_REST_Response not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\Rest\\\\ExportController\\:\\:handle\\(\\) has invalid return type WP_Error\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\Rest\\\\ExportController\\:\\:handle\\(\\) has invalid return type WP_REST_Response\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\Rest\\\\ExportController\\:\\:handle\\(\\) has invalid type WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportController.php
+
+		-
+			message: "#^Call to method get_param\\(\\) on an unknown class WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Function current_user_can not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Function register_rest_route not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Instantiated class WP_Error not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Instantiated class WP_REST_Response not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\Rest\\\\ExportsListController\\:\\:handle\\(\\) has invalid return type WP_Error\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\Rest\\\\ExportsListController\\:\\:handle\\(\\) has invalid return type WP_REST_Response\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportsListController.php
+
+		-
+			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\Rest\\\\ExportsListController\\:\\:handle\\(\\) has invalid type WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/Rest/ExportsListController.php
+
+		-
 			message: "#^Function register_rest_route not found\\.$#"
 			count: 1
 			path: src/Http/Rest/HealthController.php
@@ -856,16 +1491,6 @@ parameters:
 			path: src/Http/Rest/HealthController.php
 
 		-
-			message: "#^Call to method get_params\\(\\) on an unknown class WP_REST_Request\\.$#"
-			count: 1
-			path: src/Http/Rest/MetricsController.php
-
-		-
-			message: "#^Constant ARRAY_A not found\\.$#"
-			count: 1
-			path: src/Http/Rest/MetricsController.php
-
-		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
 			count: 2
 			path: src/Http/Rest/MetricsController.php
@@ -886,28 +1511,18 @@ parameters:
 			path: src/Http/Rest/MetricsController.php
 
 		-
-			message: "#^Function sanitize_text_field not found\\.$#"
-			count: 3
-			path: src/Http/Rest/MetricsController.php
-
-		-
 			message: "#^Function set_transient not found\\.$#"
 			count: 1
 			path: src/Http/Rest/MetricsController.php
 
 		-
-			message: "#^Function wp_json_encode not found\\.$#"
+			message: "#^Instantiated class WP_Error not found\\.$#"
 			count: 1
 			path: src/Http/Rest/MetricsController.php
 
 		-
-			message: "#^Instantiated class WP_Error not found\\.$#"
-			count: 2
-			path: src/Http/Rest/MetricsController.php
-
-		-
 			message: "#^Instantiated class WP_REST_Response not found\\.$#"
-			count: 2
+			count: 1
 			path: src/Http/Rest/MetricsController.php
 
 		-
@@ -924,6 +1539,76 @@ parameters:
 			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\Rest\\\\MetricsController\\:\\:handle\\(\\) has invalid type WP_REST_Request\\.$#"
 			count: 1
 			path: src/Http/Rest/MetricsController.php
+
+		-
+			message: "#^Call to method get_params\\(\\) on an unknown class WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Constant ARRAY_A not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Function current_user_can not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Function get_transient not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Function register_rest_route not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Function sanitize_text_field not found\\.$#"
+			count: 3
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Function set_transient not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Instantiated class WP_Error not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Instantiated class WP_REST_Response not found\\.$#"
+			count: 2
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\Rest\\\\ReportsMetricsController\\:\\:handle\\(\\) has invalid return type WP_Error\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\Rest\\\\ReportsMetricsController\\:\\:handle\\(\\) has invalid return type WP_REST_Response\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
+
+		-
+			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\Rest\\\\ReportsMetricsController\\:\\:handle\\(\\) has invalid type WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/Rest/ReportsMetricsController.php
 
 		-
 			message: "#^Call to method get_body\\(\\) on an unknown class WP_REST_Request\\.$#"
@@ -986,22 +1671,172 @@ parameters:
 			path: src/Http/Rest/WebhookController.php
 
 		-
-			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
-			count: 2
-			path: src/Http/RestController.php
-
-		-
-			message: "#^Function current_user_can not found\\.$#"
-			count: 2
-			path: src/Http/RestController.php
-
-		-
-			message: "#^Function register_rest_route not found\\.$#"
+			message: "#^Call to method get_header\\(\\) on an unknown class WP_REST_Request\\.$#"
 			count: 3
 			path: src/Http/RestController.php
 
 		-
+			message: "#^Call to method get_param\\(\\) on an unknown class WP_REST_Request\\.$#"
+			count: 6
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method approveManual\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method deferManual\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method exportSabt\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method get\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method getAggregated\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method inc\\(\\) on mixed\\.$#"
+			count: 9
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method rejectManual\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Cannot call method status\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Constant MINUTE_IN_SECONDS not found\\.$#"
+			count: 3
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
+			count: 5
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function absint not found\\.$#"
+			count: 4
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function current_user_can not found\\.$#"
+			count: 5
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function delete_transient not found\\.$#"
+			count: 9
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function get_current_user_id not found\\.$#"
+			count: 3
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function get_transient not found\\.$#"
+			count: 3
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function register_rest_route not found\\.$#"
+			count: 6
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function sanitize_key not found\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
 			message: "#^Function sanitize_text_field not found\\.$#"
+			count: 2
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Function set_transient not found\\.$#"
+			count: 3
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Instantiated class WP_REST_Response not found\\.$#"
+			count: 15
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:approveManual\\(\\) has invalid return type WP_REST_Response\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:deferManual\\(\\) has invalid return type WP_REST_Response\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:export\\(\\) has parameter \\$request with no type specified\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:export\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:getMetrics\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:rejectManual\\(\\) has invalid return type WP_REST_Response\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Http\\\\RestController\\:\\:validateRowsStructure\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Parameter \\$request of anonymous function has invalid type WP_REST_Request\\.$#"
+			count: 3
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\RestController\\:\\:approveManual\\(\\) has invalid type WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\RestController\\:\\:deferManual\\(\\) has invalid type WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Parameter \\$request of method SmartAlloc\\\\Http\\\\RestController\\:\\:rejectManual\\(\\) has invalid type WP_REST_Request\\.$#"
+			count: 1
+			path: src/Http/RestController.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Http\\\\RestController\\:\\:\\$reasonAllowlist type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Http/RestController.php
 
@@ -1026,12 +1861,42 @@ parameters:
 			path: src/Infra/CLI/Commands.php
 
 		-
+			message: "#^Cannot call method exportSabt\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Infra/CLI/Commands.php
+
+		-
+			message: "#^Cannot call method rebuildDaily\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Infra/CLI/Commands.php
+
+		-
+			message: "#^Cannot call method status\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Infra/CLI/Commands.php
+
+		-
 			message: "#^Function current_time not found\\.$#"
 			count: 1
 			path: src/Infra/CLI/Commands.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\CLI\\\\Commands\\:\\:set_form\\(\\) has parameter \\$args with no type specified\\.$#"
+			count: 1
+			path: src/Infra/CLI/Commands.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\CLI\\\\Commands\\:\\:set_form\\(\\) has parameter \\$assoc_args with no type specified\\.$#"
+			count: 1
+			path: src/Infra/CLI/Commands.php
+
+		-
 			message: "#^Constant ARRAY_A not found\\.$#"
+			count: 1
+			path: src/Infra/Export/CountersRepository.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Export\\\\CountersRepository\\:\\:__construct\\(\\) has parameter \\$wpdb with no type specified\\.$#"
 			count: 1
 			path: src/Infra/Export/CountersRepository.php
 
@@ -1046,14 +1911,104 @@ parameters:
 			path: src/Infra/Export/ExcelExporter.php
 
 		-
-			message: "#^Function absint not found\\.$#"
+			message: "#^Cannot cast mixed to string\\.$#"
 			count: 1
 			path: src/Infra/Export/ExcelExporter.php
 
 		-
 			message: "#^Function absint not found\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Export\\\\ExcelExporter\\:\\:__construct\\(\\) has parameter \\$wpdb with no type specified\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Export\\\\ExcelExporter\\:\\:buildErrorsSheet\\(\\) has parameter \\$sheet with no type specified\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Export\\\\ExcelExporter\\:\\:buildSummarySheet\\(\\) has parameter \\$sheet with no type specified\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Export\\\\ExcelExporter\\:\\:getNextCounters\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Infra\\\\Export\\\\ExcelExporter\\:\\:\\$config \\(array\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Infra\\\\Export\\\\ExcelExporter\\:\\:\\$config type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Export/ExcelExporter.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
 			count: 2
 			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Constant ARRAY_A not found\\.$#"
+			count: 3
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Function absint not found\\.$#"
+			count: 2
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Function current_time not found\\.$#"
+			count: 1
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Function trailingslashit not found\\.$#"
+			count: 3
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Function wp_mkdir_p not found\\.$#"
+			count: 1
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
+			count: 1
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Export\\\\ExporterService\\:\\:__construct\\(\\) has parameter \\$wpdb with no type specified\\.$#"
+			count: 1
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Infra\\\\Export\\\\ExporterService\\:\\:\\$excelExporter is never read, only written\\.$#"
+			count: 1
+			path: src/Infra/Export/ExporterService.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Infra/GF/SabtEntryMapper.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\GF\\\\SabtEntryMapper\\:\\:normalizeDigits\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtEntryMapper.php
 
 		-
 			message: "#^Offset '20' on array\\<string, mixed\\> on left side of \\?\\? does not exist\\.$#"
@@ -1096,6 +2051,56 @@ parameters:
 			path: src/Infra/GF/SabtEntryMapper.php
 
 		-
+			message: "#^Cannot access offset 'candidates' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot access offset 'committed' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot access offset 'id' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot access offset 'mentor_id' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot access offset 'reason' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot access offset 'result' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot access offset 'school_match_score' on mixed\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
 			message: "#^Function absint not found\\.$#"
 			count: 1
 			path: src/Infra/GF/SabtSubmissionHandler.php
@@ -1121,6 +2126,36 @@ parameters:
 			path: src/Infra/GF/SabtSubmissionHandler.php
 
 		-
+			message: "#^Parameter \\#1 \\$student of method SmartAlloc\\\\Services\\\\AllocationService\\:\\:assign\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Parameter \\#2 \\$allocator of class SmartAlloc\\\\Infra\\\\GF\\\\SabtSubmissionHandler constructor expects SmartAlloc\\\\Services\\\\AllocationService, mixed given\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Parameter \\#3 \\$logger of class SmartAlloc\\\\Infra\\\\GF\\\\SabtSubmissionHandler constructor expects SmartAlloc\\\\Contracts\\\\LoggerInterface, mixed given\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Parameter \\#4 \\$repository of class SmartAlloc\\\\Infra\\\\GF\\\\SabtSubmissionHandler constructor expects SmartAlloc\\\\Infra\\\\Repository\\\\AllocationsRepository, mixed given\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Parameter \\#5 \\$reason of method SmartAlloc\\\\Infra\\\\Repository\\\\AllocationsRepository\\:\\:save\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Infra/Log/LoggerWp.php
+
+		-
 			message: "#^Function wp_json_encode not found\\.$#"
 			count: 1
 			path: src/Infra/Log/LoggerWp.php
@@ -1136,13 +2171,68 @@ parameters:
 			path: src/Infra/Log/LoggerWp.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Logger\\\\NullLogger\\:\\:debug\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Logger/NullLogger.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Logger\\\\NullLogger\\:\\:error\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Logger/NullLogger.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Logger\\\\NullLogger\\:\\:info\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Logger/NullLogger.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Logger\\\\NullLogger\\:\\:warning\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Logger/NullLogger.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Infra/Logging/Logger.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Infra/Logging/Logger.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Infra/Logging/Redactor.php
+
+		-
+			message: "#^Function update_option invoked with 3 parameters, 2 required\\.$#"
+			count: 1
+			path: src/Infra/Metrics/MetricsCollector.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Metrics\\\\MetricsCollector\\:\\:read\\(\\) should return array\\{counters\\: array\\<string, int\\>, gauges\\: array\\<string, int\\>, timings\\: array\\<string, array\\<int, int\\>\\>\\} but returns non\\-empty\\-array\\.$#"
+			count: 1
+			path: src/Infra/Metrics/MetricsCollector.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Infra\\\\Metrics\\\\MetricsCollector\\:\\:write\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Infra/Metrics/MetricsCollector.php
+
+		-
+			message: "#^Access to property \\$last_error on an unknown class wpdb\\.$#"
+			count: 4
+			path: src/Infra/Repository/AllocationsRepository.php
+
+		-
 			message: "#^Access to property \\$prefix on an unknown class wpdb\\.$#"
-			count: 6
+			count: 7
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
 			message: "#^Access to property \\$rows_affected on an unknown class wpdb\\.$#"
-			count: 3
+			count: 4
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
@@ -1167,12 +2257,12 @@ parameters:
 
 		-
 			message: "#^Call to method prepare\\(\\) on an unknown class wpdb\\.$#"
-			count: 6
+			count: 7
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
 			message: "#^Call to method query\\(\\) on an unknown class wpdb\\.$#"
-			count: 7
+			count: 9
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
@@ -1182,7 +2272,7 @@ parameters:
 
 		-
 			message: "#^Function absint not found\\.$#"
-			count: 5
+			count: 7
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
@@ -1209,6 +2299,21 @@ parameters:
 			message: "#^Strict comparison using \\!\\=\\= between 1 and 1 will always evaluate to false\\.$#"
 			count: 1
 			path: src/Infra/Repository/AllocationsRepository.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 3
+			path: src/Infra/Settings/Settings.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 5
+			path: src/Infra/Settings/Settings.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 4
+			path: src/Infra/Settings/Settings.php
 
 		-
 			message: "#^Function sanitize_text_field not found\\.$#"
@@ -1251,6 +2356,56 @@ parameters:
 			path: src/Integration/ActionSchedulerAdapter.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:getStatus\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:getWpCronEvents\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:handleRetry\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:processAsyncEvent\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:schedule\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:scheduleWithActionScheduler\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\ActionSchedulerAdapter\\:\\:scheduleWithWpCron\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Parameter \\#1 \\$seconds of function set_time_limit expects int, mixed given\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Cannot call method findEligibleMentors\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Cannot call method rankCandidates\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
 			message: "#^Function __ not found\\.$#"
 			count: 4
 			path: src/Integration/GravityForms.php
@@ -1266,6 +2421,181 @@ parameters:
 			path: src/Integration/GravityForms.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:checkLiaisonPhoneInequality\\(\\) has parameter \\$field with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:checkLiaisonPhoneInequality\\(\\) has parameter \\$form with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:checkLiaisonPhoneInequality\\(\\) has parameter \\$result with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:checkLiaisonPhoneInequality\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:extractStudentData\\(\\) has parameter \\$entry with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:extractStudentData\\(\\) has parameter \\$form with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:extractStudentData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:getCurrentStudentData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:getFieldById\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:getFieldById\\(\\) has parameter \\$fieldId with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:getFieldById\\(\\) has parameter \\$form with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:handleFormSubmission\\(\\) has parameter \\$entry with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:handleFormSubmission\\(\\) has parameter \\$form with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:normalizeDigits\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processMentorSuggestion\\(\\) has parameter \\$input30 with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processMentorSuggestion\\(\\) has parameter \\$input75 with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processMentorSuggestion\\(\\) has parameter \\$input92 with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processMentorSuggestion\\(\\) has parameter \\$input94 with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processPopulateAnythingFilter\\(\\) has parameter \\$entry with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processPopulateAnythingFilter\\(\\) has parameter \\$field with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processPopulateAnythingFilter\\(\\) has parameter \\$form with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:processPopulateAnythingFilter\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:validateFields\\(\\) has parameter \\$field with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:validateFields\\(\\) has parameter \\$form with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:validateFields\\(\\) has parameter \\$result with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:validateFields\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Integration\\\\GravityForms\\:\\:validateFields\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Integration/GravityForms.php
+
+		-
+			message: "#^Cannot call method assign\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Listeners/AutoAssignListener.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Listeners\\\\AutoAssignListener\\:\\:handle\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Listeners/AutoAssignListener.php
+
+		-
+			message: "#^Cannot call method exportSabt\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Listeners/ExportListener.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Listeners\\\\ExportListener\\:\\:handle\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Listeners/ExportListener.php
+
+		-
+			message: "#^Cannot call method info\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Listeners/LogActivityListener.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Listeners\\\\LogActivityListener\\:\\:handle\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Listeners/LogActivityListener.php
+
+		-
+			message: "#^Cannot call method send\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Listeners/NotifyListener.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Listeners\\\\NotifyListener\\:\\:handle\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Listeners/NotifyListener.php
+
+		-
 			message: "#^Constant SmartAlloc\\\\Services\\\\AllocationService\\:\\:DEFAULT_CAPACITY is unused\\.$#"
 			count: 1
 			path: src/Services/AllocationService.php
@@ -1273,6 +2603,91 @@ parameters:
 		-
 			message: "#^Function current_time not found\\.$#"
 			count: 4
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:addToErrors\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:addToManualReview\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:assign\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:assign\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:calculateSchoolMatchScore\\(\\) has parameter \\$schoolCode with no type specified\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:findEligibleMentors\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:findEligibleMentors\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:getMentorDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:getStats\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:rankCandidates\\(\\) has parameter \\$candidates with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:rankCandidates\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:rankCandidates\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:recordAllocationHistory\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:tryAllocation\\(\\) has parameter \\$mentor with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:tryAllocation\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:tryAllocation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/AllocationService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\AllocationService\\:\\:validateStudent\\(\\) has parameter \\$student with no value type specified in iterable type array\\.$#"
+			count: 1
 			path: src/Services/AllocationService.php
 
 		-
@@ -1316,12 +2731,47 @@ parameters:
 			path: src/Services/Cache.php
 
 		-
+			message: "#^Parameter \\#1 \\$haystack of function str_starts_with expects string, int\\|string given\\.$#"
+			count: 1
+			path: src/Services/Cache.php
+
+		-
 			message: "#^Function current_time not found\\.$#"
 			count: 1
 			path: src/Services/CircuitBreaker.php
 
 		-
 			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CircuitBreaker\\:\\:getConfig\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CircuitBreaker\\:\\:getState\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CircuitBreaker\\:\\:getStatus\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CircuitBreaker\\:\\:getStatusReport\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CircuitBreaker\\:\\:updateConfig\\(\\) has parameter \\$halfOpenCallback with no type specified\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\CircuitBreaker\\:\\:\\$halfOpenCallback has no type specified\\.$#"
 			count: 1
 			path: src/Services/CircuitBreaker.php
 
@@ -1336,13 +2786,48 @@ parameters:
 			path: src/Services/CrosswalkService.php
 
 		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 2
+			path: src/Services/CrosswalkService.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Services/CrosswalkService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CrosswalkService\\:\\:getCityByCenterId\\(\\) should return string\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Services/CrosswalkService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CrosswalkService\\:\\:getNearbyCenters\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/CrosswalkService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CrosswalkService\\:\\:getNearbyCenters\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Services/CrosswalkService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CrosswalkService\\:\\:getSchoolInfo\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/CrosswalkService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\CrosswalkService\\:\\:getSchoolInfo\\(\\) should return array\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Services/CrosswalkService.php
+
+		-
 			message: "#^Access to property \\$insert_id on an unknown class wpdb\\.$#"
 			count: 2
 			path: src/Services/Db.php
 
 		-
 			message: "#^Access to property \\$last_error on an unknown class wpdb\\.$#"
-			count: 8
+			count: 9
 			path: src/Services/Db.php
 
 		-
@@ -1357,7 +2842,7 @@ parameters:
 
 		-
 			message: "#^Call to method get_var\\(\\) on an unknown class wpdb\\.$#"
-			count: 1
+			count: 2
 			path: src/Services/Db.php
 
 		-
@@ -1372,7 +2857,7 @@ parameters:
 
 		-
 			message: "#^Call to method query\\(\\) on an unknown class wpdb\\.$#"
-			count: 6
+			count: 7
 			path: src/Services/Db.php
 
 		-
@@ -1396,12 +2881,97 @@ parameters:
 			path: src/Services/Db.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:bulkInsert\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:exec\\(\\) has parameter \\$params with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:getTableStructure\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:insert\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:query\\(\\) has parameter \\$params with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:query\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:update\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Db\\:\\:update\\(\\) has parameter \\$where with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:first\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:get\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:select\\(\\) has parameter \\$columns with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:where\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Parameter \\$wpdb of method SmartAlloc\\\\Services\\\\Db\\:\\:repairDuplicateAllocations\\(\\) has invalid type wpdb\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
 			message: "#^Parameter \\$wpdb of method SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:__construct\\(\\) has invalid type wpdb\\.$#"
 			count: 1
 			path: src/Services/Db.php
 
 		-
 			message: "#^Property SmartAlloc\\\\Services\\\\Db\\:\\:\\$wpdb has unknown class wpdb as its type\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:\\$orderBy type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:\\$params type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:\\$select type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Db.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\QueryBuilder\\:\\:\\$where type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Services/Db.php
 
@@ -1419,6 +2989,16 @@ parameters:
 			message: "#^Function wp_json_encode not found\\.$#"
 			count: 1
 			path: src/Services/EventStoreWp.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\EventStoreWp\\:\\:insertEventIfNotExists\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/EventStoreWp.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Services/ExportService.php
 
 		-
 			message: "#^Function current_time not found\\.$#"
@@ -1446,12 +3026,142 @@ parameters:
 			path: src/Services/ExportService.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:calculateDerivedValue\\(\\) has parameter \\$columnConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:calculateDerivedValue\\(\\) has parameter \\$row with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:createSummarySheet\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:exportSabt\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:extractColumnValue\\(\\) has parameter \\$columnConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:extractColumnValue\\(\\) has parameter \\$row with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:getExportErrors\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:getSystemValue\\(\\) has parameter \\$columnConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeDigits\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeSheetData\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeSheetData\\(\\) has parameter \\$sheetConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeSheetData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeValue\\(\\) has parameter \\$columnConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:populateSheetData\\(\\) has parameter \\$columns with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:populateSheetData\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:populateSheetData\\(\\) has parameter \\$sheet with no type specified\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:processSheet\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:processSheet\\(\\) has parameter \\$sheetConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:setSheetHeaders\\(\\) has parameter \\$columns with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:setSheetHeaders\\(\\) has parameter \\$sheet with no type specified\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\ExportService\\:\\:shouldUseExplicitValue\\(\\) has parameter \\$columnConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeDigits\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of method SmartAlloc\\\\Services\\\\ExportService\\:\\:normalizeMobileIran\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\ExportService\\:\\:\\$config \\(array\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Property SmartAlloc\\\\Services\\\\ExportService\\:\\:\\$config type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
 			message: "#^Constant SMARTALLOC_VERSION not found\\.$#"
 			count: 1
 			path: src/Services/HealthService.php
 
 		-
 			message: "#^Function current_time not found\\.$#"
+			count: 1
+			path: src/Services/HealthService.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\HealthService\\:\\:status\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Services/HealthService.php
 
@@ -1481,6 +3191,51 @@ parameters:
 			path: src/Services/Logging.php
 
 		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:debug\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:error\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:getLogFile\\(\\) should return string\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:getLogInfo\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:info\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:log\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:maskSensitiveData\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:maskSensitiveData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Logging\\:\\:warning\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
 			message: "#^Constant ARRAY_A not found\\.$#"
 			count: 2
 			path: src/Services/Metrics.php
@@ -1489,3 +3244,28 @@ parameters:
 			message: "#^Function wp_json_encode not found\\.$#"
 			count: 1
 			path: src/Services/Metrics.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Metrics\\:\\:get\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Metrics.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Metrics\\:\\:getAggregated\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Metrics.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Metrics\\:\\:inc\\(\\) has parameter \\$labels with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Metrics.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\Metrics\\:\\:observe\\(\\) has parameter \\$labels with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/Metrics.php
+
+		-
+			message: "#^Method SmartAlloc\\\\Services\\\\NotificationService\\:\\:send\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/NotificationService.php

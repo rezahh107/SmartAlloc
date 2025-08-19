@@ -132,7 +132,7 @@ final class ReportsPage
         header('Content-Disposition: attachment; filename="smartalloc-report.csv"');
 
         $out = fopen('php://output', 'w');
-        fputcsv($out, array('key', 'allocated', 'manual', 'reject', 'fuzzy_auto_rate', 'fuzzy_manual_rate', 'capacity_used'));
+        fputcsv($out, array('key', 'allocated', 'manual', 'reject', 'fuzzy_auto_rate', 'fuzzy_manual_rate', 'capacity_used'), ',', '"', '\\');
         foreach ($metrics['rows'] as $row) {
             $key = $row['date'] ?? ($row['center'] ?? '');
             $values = array(
@@ -145,7 +145,7 @@ final class ReportsPage
                 $row['capacity_used'],
             );
             $sanitized = array_map(['\SmartAlloc\Infra\Export\FormulaEscaper', 'escape'], array_map('strval', $values));
-            fputcsv($out, $sanitized);
+            fputcsv($out, $sanitized, ',', '"', '\\');
         }
         fclose($out);
     }

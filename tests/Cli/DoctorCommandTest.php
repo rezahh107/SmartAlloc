@@ -9,6 +9,7 @@ use SmartAlloc\Tests\BaseTestCase;
 
 final class DoctorCommandTest extends BaseTestCase
 {
+    private $oldWpdb;
     protected function setUp(): void
     {
         parent::setUp();

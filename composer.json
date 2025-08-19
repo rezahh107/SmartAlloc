@@ -34,17 +34,19 @@
         }
     },
     "scripts": {
-        "lint": "phpcs --standard=phpcs.xml.dist -p",
-        "stan": "phpstan analyse --no-progress",
-        "stan:baseline": "phpstan analyse --generate-baseline",
+        "cs": "phpcs",
+        "cs:fix": "phpcbf",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "phpstan:baseline": "phpstan analyse --memory-limit=1G --generate-baseline",
         "psalm": "psalm --no-cache --taint-analysis --show-info=false",
         "test": "phpunit",
         "test:security": "phpunit --testsuite Security && psalm --no-cache --taint-analysis --show-info=false",
         "test:e2e": "phpunit --testsuite E2E",
-        "qa": "composer lint && composer psalm && composer test",
-        "ci": "composer lint && composer test:security && composer test",
+        "coverage": "phpunit --coverage-clover build/coverage.xml && php tools/coverage-check.php build/coverage.xml",
+        "qa": "composer cs && composer psalm && composer test",
+        "ci": "composer cs && composer test:security && composer coverage",
         "build": "rm -rf dist && mkdir dist && VERSION=$(php -r \"include 'smart-alloc.php'; echo SMARTALLOC_VERSION;\") && rsync -a . dist/smartalloc --exclude 'tests' --exclude 'stubs' --exclude 'docs' --exclude 'node_modules' --exclude '.github' --exclude 'dist' && cd dist && zip -r smartalloc-v$VERSION.zip smartalloc && rm -rf smartalloc",
-        "dist": "composer lint && composer test:security && composer test && composer build"
+        "dist": "composer cs && composer test:security && composer test && composer build"
     },
     "config": {
         "allow-plugins": {

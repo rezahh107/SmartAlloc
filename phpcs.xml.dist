@@ -12,8 +12,8 @@
     <file>src/Http/Rest/AllocationController.php</file>
     <file>src/Http/Ajax/AllocationAction.php</file>
     <file>src/Infra/Export/ExporterService.php</file>
-    <exclude-pattern>vendor/</exclude-pattern>
-    <exclude-pattern>tests/</exclude-pattern>
-    <exclude-pattern>stubs/</exclude-pattern>
-    <exclude-pattern>docs/</exclude-pattern>
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>node_modules/*</exclude-pattern>
+    <exclude-pattern>tests/*</exclude-pattern>
+    <exclude-pattern>build/*</exclude-pattern>
 </ruleset>

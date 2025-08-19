@@ -2,9 +2,12 @@ includes:
     - phpstan-baseline.neon
 
 parameters:
-    level: 5
+    level: 9
     paths:
         - src
+    excludePaths:
+        - tests
+        - vendor
     bootstrapFiles:
         - stubs/wp-stubs.php
     ignoreErrors:
