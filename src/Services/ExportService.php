@@ -7,6 +7,7 @@ namespace SmartAlloc\Services;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use SmartAlloc\Infra\Export\FormulaEscaper;
 
 /**
  * Enhanced Export Service with config-driven export functionality
@@ -265,17 +266,18 @@ final class ExportService
             $colIndex = 1;
             
             foreach ($columns as $columnKey => $columnConfig) {
-                $value = $dataRow[$columnKey] ?? '';
-                
-                // Use setCellValueExplicit for leading zeros
-                if ($this->shouldUseExplicitValue($columnConfig)) {
+                $value = (string) ($dataRow[$columnKey] ?? '');
+                $sanitized = FormulaEscaper::escape($value);
+
+                // Use setCellValueExplicit for leading zeros or sanitized formulas
+                if ($this->shouldUseExplicitValue($columnConfig) || $sanitized !== $value) {
                     $sheet->setCellValueExplicit(
                         $sheet->getCellByColumnAndRow($colIndex, $rowIndex),
-                        $value,
+                        $sanitized,
                         DataType::TYPE_STRING
                     );
                 } else {
-                    $sheet->setCellValueByColumnAndRow($colIndex, $rowIndex, $value);
+                    $sheet->setCellValueByColumnAndRow($colIndex, $rowIndex, $sanitized);
                 }
                 
                 $colIndex++;

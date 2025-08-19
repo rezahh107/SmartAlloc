@@ -127,10 +127,9 @@ final class CsvInjectionTest extends TestCase
         }
         $cell = $data[0] ?? '';
         $trimmed = ltrim($cell, " \t\r\n");
-        if (in_array($trimmed[0] ?? '', riskyLeadingTokens(), true)) {
-            $this->markTestSkipped('CSV formula-escaping not implemented yet — TODO: escape [=+ - @] after embedded whitespace');
-        }
-        $this->assertSame($input, $cell);
+        $this->assertFalse(in_array($trimmed[0] ?? '', riskyLeadingTokens(), true));
+        $expected = \SmartAlloc\Infra\Export\FormulaEscaper::escape($input);
+        $this->assertSame($expected, $cell);
     }
 
     /**
