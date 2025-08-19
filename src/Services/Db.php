@@ -121,7 +121,7 @@ class Db
             reason_code VARCHAR(64) NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
-            UNIQUE KEY entry_id (entry_id),
+            UNIQUE KEY alloc_entry (entry_id),
             KEY mentor_id (mentor_id),
             KEY status (status),
             KEY reviewed_at (reviewed_at),
@@ -193,12 +193,35 @@ class Db
 
         // Ensure base allocations table has unique constraint on entry_id
         $allocTable = $prefix . 'allocations';
-        $sql = sprintf('SHOW INDEX FROM %s WHERE Key_name = %%s', $allocTable);
-        $idx = $wpdb->get_var($wpdb->prepare($sql, 'entry_id'));
+        $idx = $wpdb->get_var(
+            $wpdb->prepare(
+                "SHOW INDEX FROM {$allocTable} WHERE Column_name = %s AND Non_unique = 0",
+                'entry_id'
+            )
+        );
         if (!$idx) {
+            self::repairDuplicateAllocations($wpdb, $allocTable);
             // Table name built from trusted prefix; column name is fixed
-            $wpdb->query("ALTER TABLE {$allocTable} ADD UNIQUE KEY entry_id (entry_id)");
+            $wpdb->query("ALTER TABLE {$allocTable} ADD UNIQUE KEY alloc_entry (entry_id)");
         }
+    }
+
+    private static function repairDuplicateAllocations(\wpdb $wpdb, string $table): void
+    {
+        // Find duplicate entry_ids
+        $sql = "SELECT COUNT(*) FROM (SELECT entry_id FROM {$table} GROUP BY entry_id HAVING COUNT(*) > 1) d";
+        $dupeIds = (int) $wpdb->get_var($sql);
+        if ($dupeIds <= 0) {
+            return;
+        }
+        // Delete older duplicates, keep newest via highest id
+        $deleteSql = "DELETE a FROM {$table} a JOIN {$table} b ON a.entry_id = b.entry_id AND a.id < b.id";
+        $deleted = $wpdb->query($deleteSql);
+        if ($deleted === false) {
+            error_log('SmartAlloc migration WARN: duplicate repair failed: ' . $wpdb->last_error);
+            return;
+        }
+        error_log(sprintf('SmartAlloc migration: duplicate allocation repair removed %d rows across %d entry_ids', (int) $deleted, $dupeIds));
     }
 
     /**

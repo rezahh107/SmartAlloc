@@ -119,7 +119,7 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $res2 = $m->invoke($controller,$req);
         $this->assertSame(409,$res2->get_status());
         $this->assertSame('duplicate_allocation', $res2->get_data()['code']);
-        $this->assertSame(['review_defer_total'], $metrics->inc);
+        $this->assertSame(['review_defer_total','review_duplicate_blocked'], $metrics->inc);
     }
 
     public function test_lock_returns_409(): void
@@ -156,6 +156,7 @@ final class ManualReviewEndpointTest extends BaseTestCase
         $res = $m->invoke($controller,$req);
         $this->assertSame(409,$res->get_status());
         $this->assertSame('duplicate_allocation',$res->get_data()['code']);
+        $this->assertSame(['review_duplicate_blocked'], $metrics->inc);
     }
 }
 
