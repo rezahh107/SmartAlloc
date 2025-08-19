@@ -21,7 +21,11 @@ final class DebugCommand
             echo "forbidden\n";
             return 1;
         }
-        $id = $assoc['id'] ?? '';
+        if (function_exists('\\WP_CLI\\Utils\\get_flag_value')) {
+            $id = \WP_CLI\Utils\get_flag_value($assoc, 'id', '');
+        } else {
+            $id = $assoc['id'] ?? '';
+        }
         if (function_exists('sanitize_text_field')) {
             $id = sanitize_text_field($id);
         }

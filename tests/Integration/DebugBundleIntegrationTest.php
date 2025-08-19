@@ -28,7 +28,7 @@ final class DebugBundleIntegrationTest extends BaseTestCase
         Functions\when('esc_html__')->alias(fn($v) => $v);
         Functions\when('esc_html')->alias(fn($v) => $v);
         Functions\when('esc_attr')->alias(fn($v) => $v);
-        Functions\when('wp_die')->alias(fn($m) => throw new \RuntimeException($m));
+        Functions\when('wp_die')->alias(fn($m, $t = '', $a = []) => throw new \RuntimeException((string) ($a['response'] ?? 0)));
         $entry = ['message' => 'oops', 'file' => 'file.php', 'line' => 1];
         $GLOBALS['sa_options'] = ['smartalloc_debug_errors' => [$entry], 'smartalloc_debug_enabled' => true];
     }
@@ -56,21 +56,19 @@ final class DebugBundleIntegrationTest extends BaseTestCase
     {
         $_GET['bundle'] = md5('oopsfile.php1');
         $_REQUEST['_wpnonce'] = 'bad';
-        ob_start();
-        $this->expectException(\RuntimeException::class);
         try {
             DebugScreen::render();
-        } finally {
-            ob_end_clean();
+            $this->fail('Expected wp_die');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('403', $e->getMessage());
         }
         Functions\when('current_user_can')->alias(fn($c) => false);
         $_REQUEST['_wpnonce'] = 'good';
-        ob_start();
-        $this->expectException(\RuntimeException::class);
         try {
             DebugScreen::render();
-        } finally {
-            ob_end_clean();
+            $this->fail('Expected wp_die');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('403', $e->getMessage());
         }
     }
 }
