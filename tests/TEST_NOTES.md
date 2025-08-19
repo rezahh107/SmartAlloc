@@ -15,6 +15,7 @@ Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 | 8.x PHP 8.3 | `OverrideAttributeTest`, `TypedClassConstantsTest`, `JsonValidateTest`, `ReadonlyClassTest`, `DynamicConstFetchTest` verify new language features (SKIP on PHP <8.3 or missing functions). |
 | 8.x Persian/RTL | `JalaliBypassTest` and `RTLLayoutTest` assert Jalali filter bypass and RTL data integrity (SKIP if PhpSpreadsheet/helper unavailable). |
 | Third-Party Compatibility | `JalaliFilterBypassTest` and Playwright `@e2e-compat` protect against Jalali date filters and Persian GF admin styles. |
+| Exporter/Importer Path | `MappingTest`, `NormalizerTest`, `PriorityRulesTest`, `LegacySheetTest` verify Excel mappings, normalizers and priority rules (SKIP if PhpSpreadsheet/vfsStream missing). |
 | Prod-Risk A/B/C/D/E/G | `EnvLimitsTest`, `UnicodeAndCorruptionTest`, `ConcurrencyLiteTest` simulate env caps, unicode/corruption handling and idempotent locks (SKIP if env unknown or handlers absent). |
 | Debug Kit | `ErrorCollectorTest` verifies redaction, breadcrumbs and SAVEQUERIES behaviour; `DebugIntegrationTest` covers nonce/capability checks and prompt context; `DebugKitTest` guards against PII leakage and ensures only sanitized prepared SQL is surfaced. `ReproBuilderTest` scaffolds repros, `DebugBundleIntegrationTest` downloads bundles and `DebugBundleSecurityTest` scans for PII (requires `SAVEQUERIES` for SQL samples). |
 | Chaos/Resilience | `ReproBuilderTest` and `DebugBundleIntegrationTest` validate reproducible scaffolds and admin/CLI flows. |
