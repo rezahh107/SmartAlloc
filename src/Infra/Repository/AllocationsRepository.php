@@ -186,6 +186,40 @@ final class AllocationsRepository
     }
 
     /**
+     * Defer a manual allocation with optional notes.
+     */
+    public function deferManual(int $entryId, int $reviewerId, ?string $notes = null): bool
+    {
+        $entryId = absint($entryId);
+        $reviewerId = absint($reviewerId);
+
+        $table = $this->wpdb->prefix . 'smartalloc_allocations';
+
+        $sql = $this->wpdb->prepare(
+            "UPDATE {$table} SET status = %s, reviewer_id = %d, review_notes = %s, reviewed_at = NOW() WHERE entry_id = %d AND status = %s",
+            AllocationStatus::DEFER,
+            $reviewerId,
+            $notes,
+            $entryId,
+            AllocationStatus::MANUAL
+        );
+        $this->wpdb->query($sql);
+
+        if ($this->wpdb->rows_affected === 1) {
+            do_action('smartalloc/event', 'ManualDeferred', [
+                'entry_id' => $entryId,
+                'reviewer_id' => $reviewerId,
+            ]);
+            $this->logger->info('allocations.manual_deferred', [
+                'entry_id' => $entryId,
+                'reviewer_id' => $reviewerId,
+            ]);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Find manual allocations page with optional filters.
      *
      * @param array<string,mixed> $filters

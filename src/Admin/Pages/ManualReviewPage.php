@@ -61,23 +61,41 @@ final class ManualReviewPage
 
         foreach ($data['rows'] as $row) {
             $id = (int) $row['entry_id'];
-            $mentor = (int) ($row['candidates'][0]['mentor_id'] ?? 0);
+            $candidates = [];
+            if (!empty($row['candidates'])) {
+                $candidates = json_decode((string) $row['candidates'], true) ?: [];
+            }
+            $first = $candidates[0] ?? [];
+            $mentor = (int) ($first['mentor_id'] ?? 0);
+            $used = (int) ($first['used'] ?? 0);
+            $capacity = (int) ($first['capacity'] ?? 0);
+            $full = $capacity > 0 && $used >= $capacity;
             echo '<tr>';
             echo '<th scope="row" class="check-column"><input type="checkbox" name="entry_ids[]" value="' . esc_attr((string)$id) . '" /></th>';
             echo '<td>' . esc_html((string)$id) . '</td>';
-            echo '<td>' . esc_html((string)$row['status']) . '</td>';
+            echo '<td>' . esc_html((string)$row['status']);
+            if ($capacity > 0) {
+                echo ' <span class="smartalloc-capacity">(' . esc_html((string)$used) . '/' . esc_html((string)$capacity) . ')</span>';
+            }
+            echo '</td>';
             echo '<td>';
-            echo '<button class="button smartalloc-approve" data-entry="' . esc_attr((string)$id) . '" data-mentor="' . esc_attr((string)$mentor) . '">' . esc_html__('Approve', 'smartalloc') . '</button> ';
-            echo '<button class="button smartalloc-reject" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Reject', 'smartalloc') . '</button>';
+            $approveAttrs = 'class="button smartalloc-approve" data-entry="' . esc_attr((string)$id) . '" data-mentor="' . esc_attr((string)$mentor) . '"';
+            if ($full) { $approveAttrs .= ' disabled data-full="1"'; }
+            echo '<button ' . $approveAttrs . '>' . esc_html__('Approve', 'smartalloc') . '</button> ';
+            echo '<button class="button smartalloc-reject" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Reject', 'smartalloc') . '</button> ';
+            echo '<button class="button smartalloc-defer" data-entry="' . esc_attr((string)$id) . '">' . esc_html__('Defer', 'smartalloc') . '</button>';
             echo '</td>';
             echo '</tr>';
         }
         echo '</tbody></table>';
         echo '<p>';
         echo '<button class="button" id="smartalloc-bulk-approve">' . esc_html__('Approve Selected', 'smartalloc') . '</button> ';
-        echo '<button class="button" id="smartalloc-bulk-reject">' . esc_html__('Reject Selected', 'smartalloc') . '</button>';
+        echo '<button class="button" id="smartalloc-bulk-reject">' . esc_html__('Reject Selected', 'smartalloc') . '</button> ';
+        echo '<button class="button" id="smartalloc-bulk-defer">' . esc_html__('Defer Selected', 'smartalloc') . '</button>';
         echo '</p>';
         echo '</form>';
         echo '</div>';
     }
 }
+
+
