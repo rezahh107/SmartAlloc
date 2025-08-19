@@ -7,6 +7,8 @@
     { "step": "setSiteOptions", "options": { "blogname": "SmartAlloc E2E", "blogdescription": "Playground" } },
     { "step": "wp-cli", "command": "wp user update admin --user_pass=admin" },
     { "step": "wp-cli", "command": "wp user create editor editor@example.com --role=editor --user_pass=editor || true" },
+    { "step": "wp-cli", "command": "wp plugin install wp-jalali --activate || true" },
+    { "step": "wp-cli", "command": "wp plugin install gravityforms-persian --activate || true" },
     { "step": "wp-cli", "command": "wp plugin activate smartalloc || true" }
   ]
 }

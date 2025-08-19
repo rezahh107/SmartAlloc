@@ -40,7 +40,7 @@ final class ReportsPage
             'smartalloc_reports_nonce'
         );
 
-        echo '<div class="wrap">';
+        echo '<div class="smartalloc-admin"><div class="wrap">';
         echo '<h1>' . esc_html__('Reports', 'smartalloc') . '</h1>';
 
         echo '<form method="get">';
@@ -101,7 +101,7 @@ final class ReportsPage
         echo '</tbody></table>';
 
         echo '<p><a href="' . esc_url($csv_url) . '">' . esc_html__('Export CSV', 'smartalloc') . '</a></p>';
-        echo '</div>';
+        echo '</div></div>';
     }
 
     /**

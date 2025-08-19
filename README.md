@@ -10,6 +10,7 @@ SmartAlloc is a comprehensive WordPress plugin designed for automatic mentor all
 
 - **Event-Driven Architecture**: Robust event system with deduplication support
 - **Config-Driven Export**: Excel export with configurable schemas
+- **ISO-8601 Exports**: All export files use UTC Gregorian dates immune to site-wide filters
 - **Gravity Forms Integration**: Automatic form processing with validation
 - **Three-Layer Caching**: Object cache, transients, and database caching
 - **REST API**: Health, metrics, and export endpoints

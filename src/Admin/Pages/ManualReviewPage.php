@@ -39,7 +39,7 @@ final class ManualReviewPage
 
         $data = $repo->findManualPage($page, 20, array_filter($filters));
 
-        echo '<div class="wrap">';
+        echo '<div class="smartalloc-admin"><div class="wrap">';
         echo '<h1>' . esc_html__('Manual Review', 'smartalloc') . '</h1>';
 
         echo '<form method="get">';
@@ -94,7 +94,7 @@ final class ManualReviewPage
         echo '<button class="button" id="smartalloc-bulk-defer" aria-label="Defer selected entries">' . esc_html__('Defer Selected', 'smartalloc') . '</button>';
         echo '</p>';
         echo '</form>';
-        echo '</div>';
+        echo '</div></div>';
     }
 }
 

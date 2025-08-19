@@ -24,7 +24,7 @@ final class SettingsPage
         /** @var array<string,mixed> $values */
         $values = (array) get_option('smartalloc_settings', []);
 
-        echo '<div class="wrap">';
+        echo '<div class="smartalloc-admin"><div class="wrap">';
         echo '<h1>' . esc_html__('Settings', 'smartalloc') . '</h1>';
         echo '<form method="post" action="' . esc_url(admin_url('options.php')) . '">';
         settings_fields('smartalloc_settings');
@@ -65,7 +65,7 @@ final class SettingsPage
 
         echo '</tbody></table>';
         submit_button();
-        echo '</form></div>';
+        echo '</form></div></div>';
     }
 
     /**
