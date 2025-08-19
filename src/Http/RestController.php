@@ -15,6 +15,8 @@ use WP_REST_Response;
  */
 final class RestController
 {
+    private array $reasonAllowlist = ['duplicate', 'invalid'];
+
     public function __construct(private Container $container) {}
 
     /**
@@ -82,6 +84,17 @@ final class RestController
                 },
                 'callback' => function(WP_REST_Request $request) {
                     return $this->rejectManual($request);
+                },
+            ]);
+
+            // Manual review defer endpoint
+            register_rest_route('smartalloc/v1', '/review/(?P<entry>\d+)/defer', [
+                'methods' => 'POST',
+                'permission_callback' => function() {
+                    return current_user_can(SMARTALLOC_CAP);
+                },
+                'callback' => function(WP_REST_Request $request) {
+                    return $this->deferManual($request);
                 },
             ]);
         });
@@ -206,7 +219,8 @@ final class RestController
         $lockOwner = get_transient($lockKey);
         $current   = (string) get_current_user_id();
         if ($lockOwner && $lockOwner !== $current) {
-            return new WP_REST_Response(['error' => 'locked'], 409);
+            $this->container->get(Metrics::class)->inc('review_lock_hit');
+            return new WP_REST_Response(['error' => 'entry_locked'], 409);
         }
         set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
 
@@ -215,7 +229,20 @@ final class RestController
 
         delete_transient($lockKey);
 
-        return new WP_REST_Response(['ok' => true, 'result' => $result->to_array()]);
+        $metrics = $this->container->get(Metrics::class);
+        $data = $result->to_array();
+        if (($data['committed'] ?? false) !== true) {
+            if (($data['reason'] ?? '') === 'capacity') {
+                $metrics->inc('review_capacity_blocked');
+                delete_transient('smartalloc_metrics_cache');
+                return new WP_REST_Response(['error' => 'capacity_exceeded'], 409);
+            }
+            delete_transient('smartalloc_metrics_cache');
+            return new WP_REST_Response(['error' => 'idempotent_conflict'], 409);
+        }
+        $metrics->inc('review_approve_total');
+        delete_transient('smartalloc_metrics_cache');
+        return new WP_REST_Response(['ok' => true, 'result' => $data]);
     }
 
     /**
@@ -230,7 +257,7 @@ final class RestController
 
         $entryId = absint($request->get_param('entry'));
         $reason  = sanitize_key((string) $request->get_param('reason'));
-        if ($entryId <= 0 || $reason === '') {
+        if ($entryId <= 0 || $reason === '' || !in_array($reason, $this->reasonAllowlist, true)) {
             return new WP_REST_Response(['error' => 'invalid_params'], 400);
         }
 
@@ -238,7 +265,8 @@ final class RestController
         $lockOwner = get_transient($lockKey);
         $current   = (string) get_current_user_id();
         if ($lockOwner && $lockOwner !== $current) {
-            return new WP_REST_Response(['error' => 'locked'], 409);
+            $this->container->get(Metrics::class)->inc('review_lock_hit');
+            return new WP_REST_Response(['error' => 'entry_locked'], 409);
         }
         set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
 
@@ -247,6 +275,53 @@ final class RestController
 
         delete_transient($lockKey);
 
+        $metrics = $this->container->get(Metrics::class);
+        $metrics->inc('review_reject_total');
+        delete_transient('smartalloc_metrics_cache');
+
+        return new WP_REST_Response(['ok' => true]);
+    }
+
+    /**
+     * Handle manual defer via REST.
+     */
+    private function deferManual(WP_REST_Request $request): WP_REST_Response
+    {
+        $nonce = $request->get_header('X-WP-Nonce');
+        if (!$nonce || !wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_REST_Response(['error' => 'invalid_nonce'], 403);
+        }
+
+        $entryId = absint($request->get_param('entry'));
+        $note    = sanitize_text_field((string) $request->get_param('note'));
+        if ($entryId <= 0) {
+            return new WP_REST_Response(['error' => 'invalid_params'], 400);
+        }
+
+        $lockKey   = 'smartalloc_review_lock_' . $entryId;
+        $lockOwner = get_transient($lockKey);
+        $current   = (string) get_current_user_id();
+        if ($lockOwner && $lockOwner !== $current) {
+            $this->container->get(Metrics::class)->inc('review_lock_hit');
+            return new WP_REST_Response(['error' => 'entry_locked'], 409);
+        }
+        set_transient($lockKey, $current, 5 * MINUTE_IN_SECONDS);
+
+        $repo = $this->container->get(AllocationsRepository::class);
+        $ok   = $repo->deferManual($entryId, (int) $current, $note);
+
+        delete_transient($lockKey);
+
+        if (!$ok) {
+            delete_transient('smartalloc_metrics_cache');
+            return new WP_REST_Response(['error' => 'idempotent_conflict'], 409);
+        }
+
+        $metrics = $this->container->get(Metrics::class);
+        $metrics->inc('review_defer_total');
+        delete_transient('smartalloc_metrics_cache');
+
         return new WP_REST_Response(['ok' => true]);
     }
 }
+
