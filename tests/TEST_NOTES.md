@@ -18,6 +18,7 @@ Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 | Exporter/Importer Path | `MappingTest`, `NormalizerTest`, `PriorityRulesTest`, `LegacySheetTest` verify Excel mappings, normalizers and priority rules (SKIP if PhpSpreadsheet/vfsStream missing). |
 | Prod-Risk A/B/C/D/E/G | `EnvLimitsTest`, `UnicodeAndCorruptionTest`, `ConcurrencyLiteTest` simulate env caps, unicode/corruption handling and idempotent locks (SKIP if env unknown or handlers absent). |
 | Debug Kit | `ErrorCollectorTest` verifies redaction, breadcrumbs and SAVEQUERIES behaviour; `DebugIntegrationTest` covers nonce/capability checks and prompt context; `DebugKitTest` guards against PII leakage and ensures only sanitized prepared SQL is surfaced. `ReproBuilderTest` scaffolds repros, `DebugBundleIntegrationTest` downloads bundles and `DebugBundleSecurityTest` scans for PII (requires `SAVEQUERIES` for SQL samples). |
+| Reports & Logs | `RedactionTest` masks mobile/national_id/postal_code; `CorrelationIdTest` checks request id propagation and health hashing; `AdminReportTest` renders metrics without leaking PII (SKIP if Brain Monkey/helpers missing). |
 | Chaos/Resilience | `ReproBuilderTest` and `DebugBundleIntegrationTest` validate reproducible scaffolds and admin/CLI flows. |
 | GF/i18n | Repro blueprints and tests remain locale-neutral and RTL-safe. |
 | Repro Hardening | Bundles stay under 1MB and PII-free; blueprint schema, nonce and capability checks are validated. |
