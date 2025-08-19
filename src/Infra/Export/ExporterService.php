@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace SmartAlloc\Infra\Export;
 
 use InvalidArgumentException;
-use SmartAlloc\Infra\Export\ExcelExporter;
 
 /**
- * Exporter using WordPress database access with table name safety.
+ * Exporter service bridging database and Excel exporter.
  *
  * @phpcs:ignoreFile
  */
@@ -23,6 +22,8 @@ class ExporterService
     }
 
     /**
+     * Retrieve raw export data by id.
+     *
      * @return array<int,array<string,mixed>>
      */
     public function exportData(int $id): array
@@ -35,45 +36,78 @@ class ExporterService
         $sql   = $this->wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", absint($id));
 
         /** @var list<array<string,mixed>> $results */
-        $results = $this->wpdb->get_results($sql, 'ARRAY_A') ?: [];
+        $results = $this->wpdb->get_results($sql, ARRAY_A) ?: [];
 
         return $results;
     }
 
     /**
-     * Export allocations by batch id to Excel.
+     * Generate an export and record metadata.
      *
-     * @return array{path:string, spreadsheet:\PhpOffice\PhpSpreadsheet\Spreadsheet}
+     * @return array{file:string,url:string,rows_exported:int}
      */
-    public function exportToExcelByBatch(int $batchId): array
+    public function generate(string $from, string $to, ?int $batch = null): array
     {
-        $table = $this->wpdb->prefix . 'allocations';
-        $sql   = $this->wpdb->prepare(
-            "SELECT * FROM {$table} WHERE batch_id = %d",
-            absint($batchId)
-        );
-        /** @var list<array<string,mixed>> $rows */
-        $rows = $this->wpdb->get_results($sql, 'ARRAY_A') ?: [];
+        $upload = wp_upload_dir();
+        $dir    = trailingslashit($upload['basedir']) . 'smartalloc/exports/' . gmdate('Y/m/');
+        wp_mkdir_p($dir);
 
-        return $this->excelExporter->exportFromRows($rows);
+        $table = $this->wpdb->prefix . 'allocations';
+        if ($batch !== null) {
+            $sql = $this->wpdb->prepare("SELECT * FROM {$table} WHERE batch_id = %d", absint($batch));
+        } else {
+            $sql = $this->wpdb->prepare(
+                "SELECT * FROM {$table} WHERE created_at BETWEEN %s AND %s",
+                $from . ' 00:00:00',
+                $to . ' 23:59:59'
+            );
+        }
+        /** @var list<array<string,mixed>> $rows */
+        $rows     = $this->wpdb->get_results($sql, ARRAY_A) ?: [];
+        $exporter = new ExcelExporter($this->wpdb, null, $dir);
+        $result   = $exporter->exportFromRows($rows);
+        $path     = $result['path'];
+        $filename = basename($path);
+        $size     = is_file($path) ? (int) filesize($path) : 0;
+        $checksum = is_file($path) ? hash_file('sha256', $path) : '';
+
+        $filters = $batch !== null
+            ? array('mode' => 'batch', 'batch' => $batch)
+            : array('mode' => 'date-range', 'from' => $from, 'to' => $to);
+
+        $registry = $this->wpdb->prefix . 'smartalloc_exports';
+        $this->wpdb->insert($registry, array(
+            'filename'   => $filename,
+            'path'       => $path,
+            'filters'    => wp_json_encode($filters),
+            'size'       => $size,
+            'checksum'   => $checksum ?: null,
+            'created_at' => current_time('mysql'),
+        ));
+
+        $url = str_replace(trailingslashit($upload['basedir']), trailingslashit($upload['baseurl']), $path);
+
+        return array(
+            'file'          => $path,
+            'url'           => $url,
+            'rows_exported' => count($rows),
+        );
     }
 
     /**
-     * Export allocations by date range to Excel.
+     * Retrieve recent exports.
      *
-     * @return array{path:string, spreadsheet:\PhpOffice\PhpSpreadsheet\Spreadsheet}
+     * @return list<array<string,mixed>>
      */
-    public function exportToExcelByDateRange(string $from, string $to): array
+    public function getRecent(int $limit = 20): array
     {
-        $table = $this->wpdb->prefix . 'allocations';
-        $sql   = $this->wpdb->prepare(
-            "SELECT * FROM {$table} WHERE created_at BETWEEN %s AND %s",
-            $from,
-            $to
-        );
+        if ($limit <= 0) {
+            throw new InvalidArgumentException('Invalid limit');
+        }
+        $table = $this->wpdb->prefix . 'smartalloc_exports';
+        $sql   = $this->wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d", $limit);
         /** @var list<array<string,mixed>> $rows */
-        $rows = $this->wpdb->get_results($sql, 'ARRAY_A') ?: [];
-
-        return $this->excelExporter->exportFromRows($rows);
+        $rows = $this->wpdb->get_results($sql, ARRAY_A) ?: [];
+        return $rows;
     }
 }
