@@ -10,8 +10,13 @@ function has(cmd) {
 }
 
 if (!has('docker version')) {
-  console.error(`Docker not found. Install Docker Desktop or use wp-env. Then run:
+  if (has('wp-env --version')) {
+    console.error(`Docker not found. wp-env detected. Run:
+npm run e2e:install && npm run e2e:all:wpenv`);
+  } else {
+    console.error(`Docker not found. Install Docker Desktop or wp-env. Then run:
 npm run e2e:install && npm run e2e:up && npm run e2e:wait && npm run e2e:seed && npm run test:e2e`);
+  }
   process.exit(1);
 }
 
