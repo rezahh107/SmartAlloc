@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use SmartAlloc\Infra\Log\LoggerWp;
+use SmartAlloc\Infra\Logging\Logger;
 use SmartAlloc\Tests\BaseTestCase;
 
 final class LoggerTest extends BaseTestCase
@@ -10,7 +10,7 @@ final class LoggerTest extends BaseTestCase
     public function test_redaction_and_level_routing(): void
     {
         $lines = [];
-        $logger = new LoggerWp(function (string $line) use (&$lines): void {
+        $logger = new Logger(function (string $line) use (&$lines): void {
             $lines[] = $line;
         });
 

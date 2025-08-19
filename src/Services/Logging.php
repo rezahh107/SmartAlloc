@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Services;
 
 use SmartAlloc\Contracts\LoggerInterface;
+use SmartAlloc\Infra\Logging\Redactor;
 
 /**
  * Logging service with data masking for sensitive information
@@ -65,20 +66,8 @@ final class Logging implements LoggerInterface
      */
     private function maskSensitiveData(array $context): array
     {
-        $sensitiveKeys = ['national_id', 'phone', 'mobile', 'email', 'password'];
-        
-        foreach ($sensitiveKeys as $key) {
-            if (isset($context[$key])) {
-                $value = (string) $context[$key];
-                if (strlen($value) > 3) {
-                    $context[$key] = substr($value, 0, 3) . '***';
-                } else {
-                    $context[$key] = '***';
-                }
-            }
-        }
-        
-        return $context;
+        $redactor = new Redactor();
+        return $redactor->redact($context);
     }
 
     /**
