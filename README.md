@@ -17,6 +17,7 @@ SmartAlloc is a comprehensive WordPress plugin designed for automatic mentor all
 - **WP-CLI Support**: Command-line tools for management
 - **Circuit Breaker Pattern**: Graceful handling of external service failures
 - **Comprehensive Logging**: Structured logging with data masking
+- **Internal Debug Kit**: Optional admin-only tool that captures recent PHP errors and builds copyable Markdown prompts for local debugging
 
 ## Requirements
 
@@ -302,6 +303,15 @@ The plugin creates several tables with the prefix `wp_salloc_`:
 ## Support
 
 For support and documentation, please refer to the plugin documentation or contact the development team.
+
+## Internal Debug Kit (MVP)
+
+An optional admin-only utility captures recent PHP errors and builds ready-to-copy Markdown prompts for large language models.
+
+- Enable via the `smartalloc_debug_enabled` option with `WP_DEBUG`.
+- Access the collected entries from the SmartAlloc Debug admin screen (requires `manage_smartalloc`).
+- Data is stored locally and redacted; no automatic outbound requests are made.
+- Stores up to 25 entries and throttles duplicates for five minutes.
 
 ## Uninstall
 

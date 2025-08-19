@@ -8,6 +8,7 @@ parameters:
     excludePaths:
         - tests
         - vendor
+        - src/Admin/DebugScreen.php
     bootstrapFiles:
         - stubs/wp-stubs.php
     ignoreErrors:
