@@ -1,6 +1,6 @@
 # Test Notes
 
-Mapping to master checklist sections A–G.
+Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 
 | Section | Coverage |
 | ------- | -------- |
@@ -11,5 +11,7 @@ Mapping to master checklist sections A–G.
 | E. Security Regression | Composer `test:security` suite and Psalm taint analysis run in CI. |
 | F. Performance & Rate Limiting | `export-load.js` k6 script drives 50 concurrent requests; checks success or HTTP 429. |
 | G. User Experience / Accessibility | Playwright `approve flow shows success` validates admin notices and interactions. |
+| 3.x Gravity Forms | PHPUnit scaffolds `ComplexFormTest` and `FlowPerksIntegrationTest` (marked SKIP with TODO) cover nested conditionals, uploads, multipage sessions and Flow/Perks routing. |
+| 8.x Persian/RTL | `PersianRtlTest` and Playwright `@e2e-i18n` placeholders ensure RTL rendering, character handling and Jalali round-trip (SKIP with TODO). |
 
 

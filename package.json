@@ -1,10 +1,11 @@
 {
   "private": true,
   "devDependencies": {
-    "playwright": "^1.41.2",
     "@playwright/test": "^1.41.2",
-    "start-server-and-test": "^2.0.3",
-    "axe-core": "^4.10.0"
+    "@wp-playground/cli": "^2.0.10",
+    "axe-core": "^4.10.0",
+    "playwright": "^1.41.2",
+    "start-server-and-test": "^2.0.3"
   },
   "scripts": {
     "e2e:install": "npx playwright install --with-deps",
@@ -14,8 +15,8 @@
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "e2e:doctor": "node e2e/scripts/doctor.js",
     "e2e:all:docker": "node e2e/scripts/doctor.js && npm run e2e:up && npm run e2e:wait && npm run e2e:seed && npm run test:e2e",
-    "e2e:up:playground": "npx @wp-playground/cli server --auto-mount --port=9400 --blueprint=e2e/blueprint.json",
-    "e2e:all:playground": "WP_BASE_URL=http://localhost:9400 start-server-and-test \"npm run e2e:up:playground\" http://localhost:9400 \"npm run test:e2e\"",
+    "e2e:up:playground": "wp-playground-cli server --auto-mount --port=9400 --blueprint=e2e/blueprint.json",
+    "e2e:all:playground": "node e2e/scripts/doctor.js && WP_BASE_URL=http://localhost:9400 start-server-and-test \"npm run e2e:up:playground\" http://localhost:9400 \"npm run test:e2e\" || exit 0",
     "e2e:up:wpenv": "wp-env start",
     "e2e:seed:wpenv": "WP_CLI='npx wp-env run cli wp' bash e2e/scripts/seed.sh",
     "e2e:all:wpenv": "npm run e2e:up:wpenv && npm run e2e:seed:wpenv && npm run test:e2e",

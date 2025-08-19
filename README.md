@@ -191,6 +191,8 @@ Run a11y and editor smoke tests via Playwright using one of three paths:
 
 ### A) Playground CLI (default)
 
+Uses the locally-installed `@wp-playground/cli` devDependency—no `npx` prompts.
+
 ```bash
 npm run e2e:install && npm run e2e:all
 ```
@@ -211,7 +213,7 @@ The Playground CLI mounts the current plugin automatically via `--auto-mount` an
 
 ### Troubleshooting
 
-- Offline? Playground download may fail → use Docker or wp-env paths
+- Offline or blocked network? The doctor script prints a hint and you can fall back to Docker or wp-env paths
 - Port in use → set `WP_BASE_URL` accordingly (defaults to 9400)
 - ECONNREFUSED → ensure the chosen path is running and `WP_BASE_URL` matches
 - Node < 20 → upgrade Node for Playground CLI
