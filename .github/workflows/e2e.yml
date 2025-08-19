@@ -12,6 +12,17 @@ jobs:
         run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Run E2E (optional)
-        run: npm run e2e:all || echo "Hint: WP healthcheck failed"
+      - name: Doctor
+        run: node e2e/scripts/doctor.js || (echo "Hint: Docker not available" && exit 1)
+        env: { WP_BASE_URL: http://localhost:8080 }
+      - name: Start stack
+        run: docker compose up -d
+      - name: Wait for WP
+        run: node e2e/scripts/wait-for-wp.js || (echo "Hint: WP healthcheck failed" && exit 1)
+        env: { WP_BASE_URL: http://localhost:8080 }
+      - name: Seed data
+        run: bash e2e/scripts/seed.sh
+        env: { WP_BASE_URL: http://localhost:8080 }
+      - name: Run E2E tests
+        run: npm run test:e2e
         env: { WP_BASE_URL: http://localhost:8080 }

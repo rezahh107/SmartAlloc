@@ -187,18 +187,20 @@ vendor/bin/phpunit tests/DigitsNormalizerTest.php
 
 ## E2E quick start
 
-Playwright tests run in an optional CI job (`continue-on-error: true`). To run them locally:
+One-shot:
 
 ```bash
-npm run e2e:install # install browsers once
-npm run e2e:all
+npm run e2e:install && npm run e2e:all
 ```
 
-If tests fail with ECONNREFUSED, run:
+### Troubleshooting
 
-```bash
-npm run e2e:up && npm run e2e:wait && npm run e2e:seed
-```
+Common errors:
+
+- docker not found → install Docker or run via wp-env
+- ECONNREFUSED → run up→wait→seed or fix WP_BASE_URL
+
+CI E2E is optional and won’t block merges.
 
 ### Code Quality
 

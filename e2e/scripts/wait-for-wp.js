@@ -23,7 +23,7 @@ function retry() {
   if (Date.now() < deadline) {
     setTimeout(ping, 1500);
   } else {
-    console.error(`Timed out waiting for ${url}`);
+    console.error(`WordPress unreachable at ${url}. Did you run: npm run e2e:up ?`);
     process.exit(1);
   }
 }

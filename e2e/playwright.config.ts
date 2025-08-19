@@ -1,11 +1,10 @@
 import { defineConfig } from '@playwright/test';
 
-const baseURL = process.env.WP_BASE_URL || 'http://localhost:8080';
-
 export default defineConfig({
+  reporter: 'html',
   retries: 1,
   use: {
-    baseURL,
+    baseURL: process.env.WP_BASE_URL || 'http://localhost:8080',
     actionTimeout: 15000,
     navigationTimeout: 30000,
     screenshot: 'only-on-failure',
