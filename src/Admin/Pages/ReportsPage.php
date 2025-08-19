@@ -135,7 +135,7 @@ final class ReportsPage
         fputcsv($out, array('key', 'allocated', 'manual', 'reject', 'fuzzy_auto_rate', 'fuzzy_manual_rate', 'capacity_used'));
         foreach ($metrics['rows'] as $row) {
             $key = $row['date'] ?? ($row['center'] ?? '');
-            fputcsv($out, array(
+            $values = array(
                 $key,
                 $row['allocated'],
                 $row['manual'],
@@ -143,7 +143,9 @@ final class ReportsPage
                 $row['fuzzy_auto_rate'],
                 $row['fuzzy_manual_rate'],
                 $row['capacity_used'],
-            ));
+            );
+            $sanitized = array_map(['\SmartAlloc\Infra\Export\FormulaEscaper', 'escape'], array_map('strval', $values));
+            fputcsv($out, $sanitized);
         }
         fclose($out);
     }

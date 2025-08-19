@@ -7,8 +7,10 @@ namespace SmartAlloc\Infra\Export;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Settings as SpreadsheetSettings;
 use PhpOffice\PhpSpreadsheet\CachedObjectStorageFactory;
+use SmartAlloc\Infra\Export\FormulaEscaper;
 use SmartAlloc\Infra\Settings\Settings;
 
 /**
@@ -151,7 +153,7 @@ class ExcelExporter
             $key = $column['key'] ?? '';
             $label = $column['label'] ?? $key;
             $sheet->setCellValueByColumnAndRow($col, 1, $label);
-            $sheet->setCellValueByColumnAndRow($col, 2, $data[$key] ?? '');
+            $sheet->setCellValueByColumnAndRow($col, 2, FormulaEscaper::escape((string)($data[$key] ?? '')));
             $col++;
         }
     }
@@ -176,7 +178,8 @@ class ExcelExporter
                 $col = 1;
                 foreach ($columns as $column) {
                     $key = $column['key'] ?? '';
-                    $sheet->setCellValueByColumnAndRow($col, $rowIndex, $row[$key] ?? '');
+                    $value = FormulaEscaper::escape((string)($row[$key] ?? ''));
+                    $sheet->setCellValueExplicitByColumnAndRow($col, $rowIndex, $value, DataType::TYPE_STRING);
                     $col++;
                 }
                 $rowIndex++;
