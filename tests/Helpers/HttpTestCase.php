@@ -19,9 +19,21 @@ if (!function_exists('stub_header')) {
 }
 
 if (!class_exists('HttpTest')) {
-    class HttpTest extends \PHPUnit\Framework\TestCase {
-        public function test_placeholder(): void {
-            $this->assertTrue(true);
+    abstract class HttpTest extends \PHPUnit\Framework\TestCase {
+        /**
+         * Run callback within an output buffer and ensure cleanup.
+         */
+        protected function withBufferedOutput(callable $run): string {
+            $level = ob_get_level();
+            ob_start();
+            try {
+                $run();
+                return ob_get_contents() ?: '';
+            } finally {
+                while (ob_get_level() > $level) {
+                    ob_end_clean();
+                }
+            }
         }
     }
 }

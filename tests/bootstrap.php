@@ -298,7 +298,7 @@ if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
     if (file_exists($patch)) {
         require_once $patch;
     }
-    foreach (['EnvReset', 'AdminTest', 'HttpTest', 'WpdbSpy'] as $h) {
+    foreach (['EnvReset', 'AdminTest', 'HttpTestCase', 'WpdbSpy'] as $h) {
         $p = __DIR__ . '/Helpers/' . $h . '.php';
         if (file_exists($p)) {
             require_once $p;
