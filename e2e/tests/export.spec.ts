@@ -11,7 +11,15 @@ async function login(page, creds) {
   await page.click('#wp-submit');
 }
 
-test.describe('SmartAlloc Admin Export', () => {
+test.describe('@e2e-review SmartAlloc Admin Export', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+  });
   test('happy path generates file', async ({ page }) => {
     await login(page, admin);
     await page.goto('/wp-admin/admin.php?page=smartalloc-export');

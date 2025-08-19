@@ -10,7 +10,15 @@ async function login(page, creds) {
   await page.click('#wp-submit');
 }
 
-test.describe('SmartAlloc Manual Review', () => {
+test.describe('@e2e-review SmartAlloc Manual Review', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+  });
   test('approve flow shows success', async ({ page }) => {
     await login(page, admin);
     await page.goto('/wp-admin/admin.php?page=smartalloc-manual-review');

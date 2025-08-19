@@ -190,12 +190,14 @@ vendor/bin/phpunit tests/DigitsNormalizerTest.php
 Playwright tests run in an optional CI job (`continue-on-error: true`). To run them locally:
 
 ```bash
-npm run e2e:install
-npm run e2e:up
-export WP_BASE_URL=http://localhost:8080
-npm run e2e:wait
-npm run e2e:seed
-npm run test:e2e
+npm run e2e:install # install browsers once
+npm run e2e:all
+```
+
+If tests fail with ECONNREFUSED, run:
+
+```bash
+npm run e2e:up && npm run e2e:wait && npm run e2e:seed
 ```
 
 ### Code Quality
