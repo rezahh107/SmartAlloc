@@ -77,6 +77,7 @@ add_action('plugins_loaded', function () {
     // Set container in AdminController
     SmartAlloc\Http\Admin\AdminController::setContainer(SmartAlloc\Bootstrap::container());
     \SmartAlloc\Cron\RetentionTasks::register();
+    \SmartAlloc\Cron\ExportRetention::register();
     (new \SmartAlloc\Http\Rest\WebhookController())->register_routes();
 });
 

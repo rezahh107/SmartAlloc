@@ -70,6 +70,7 @@ class ExporterService
         $filename = basename($path);
         $size     = is_file($path) ? (int) filesize($path) : 0;
         $checksum = is_file($path) ? hash_file('sha256', $path) : '';
+        $rowCount = count($rows);
 
         $filters = $batch !== null
             ? array('mode' => 'batch', 'batch' => $batch)
@@ -81,7 +82,9 @@ class ExporterService
             'path'       => $path,
             'filters'    => wp_json_encode($filters),
             'size'       => $size,
+            'rows'       => $rowCount,
             'checksum'   => $checksum ?: null,
+            'status'     => 'Valid',
             'created_at' => current_time('mysql'),
         ));
 
@@ -90,7 +93,7 @@ class ExporterService
         return array(
             'file'          => $path,
             'url'           => $url,
-            'rows_exported' => count($rows),
+            'rows_exported' => $rowCount,
         );
     }
 
@@ -108,6 +111,18 @@ class ExporterService
         $sql   = $this->wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d", $limit);
         /** @var list<array<string,mixed>> $rows */
         $rows = $this->wpdb->get_results($sql, ARRAY_A) ?: [];
-        return $rows;
+        return array_map(
+            static function (array $row): array {
+                return array(
+                    'filename'   => $row['filename'] ?? '',
+                    'size'       => (int) ($row['size'] ?? 0),
+                    'checksum'   => $row['checksum'] ?? '',
+                    'rows'       => (int) ($row['rows'] ?? 0),
+                    'created_at' => $row['created_at'] ?? '',
+                    'status'     => $row['status'] ?? 'Valid',
+                );
+            },
+            $rows
+        );
     }
 }

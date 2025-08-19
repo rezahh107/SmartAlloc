@@ -114,11 +114,15 @@ if (!function_exists('wp_json_encode')) {
       class WP_REST_Request {
           private string $body = '';
           private array $headers = [];
+          private array $params = [];
+          public function __construct(array $p = []) { $this->params = $p; }
           public function set_body(string $body): void { $this->body = $body; }
           public function get_body(): string { return $this->body; }
           public function set_header(string $k, string $v): void { $this->headers[strtolower($k)] = $v; }
           public function get_header(string $k): string { return $this->headers[strtolower($k)] ?? ''; }
-          public function get_params(): array { return []; }
+          public function get_params(): array { return $this->params; }
+          public function get_param(string $k) { return $this->params[$k] ?? null; }
+          public function get_json_params(): array { return json_decode($this->body, true) ?: []; }
       }
   }
 
@@ -140,6 +144,10 @@ if (!function_exists('wp_json_encode')) {
 
 if (!defined('ARRAY_A')) {
     define('ARRAY_A', 'ARRAY_A');
+}
+
+if (!defined('DAY_IN_SECONDS')) {
+    define('DAY_IN_SECONDS', 86400);
 }
 
 if (!function_exists('wp_upload_dir')) {

@@ -3,14 +3,14 @@
 declare(strict_types=1);
 
 use Brain\Monkey\Functions;
-use SmartAlloc\Cron\RetentionTasks;
+use SmartAlloc\Cron\ExportRetention;
 use SmartAlloc\Tests\BaseTestCase;
 
 if (!class_exists('WP_Error')) {
     class WP_Error {}
 }
 
-final class RetentionTasksTest extends BaseTestCase
+final class ExportRetentionTest extends BaseTestCase
 {
     private string $dir;
 
@@ -24,7 +24,7 @@ final class RetentionTasksTest extends BaseTestCase
         touch($old, time() - 2 * 86400);
         $new = $this->dir . '/new.csv';
         file_put_contents($new, 'y');
-        $GLOBALS['sa_options']['smartalloc_settings'] = [
+        $GLOBALS['sa_options'] = [
             'export_retention_days' => 1,
             'log_retention_days' => 1,
         ];
@@ -34,13 +34,15 @@ final class RetentionTasksTest extends BaseTestCase
             public $prefix = 'wp_';
             public array $rows;
             public array $deleted = [];
+            public array $updated = [];
             public function get_results($sql, $output) { return $this->rows; }
             public function prepare($q, $id) { return str_replace('%d', (string)$id, $q); }
             public function query($sql) { $this->deleted[] = $sql; }
+            public function update($table, $data, $where) { $this->updated[] = [$table, $data, $where]; }
         };
         $wpdb->rows = [
-            ['id' => 1, 'path' => $this->dir . '/old.csv', 'created_at' => date('Y-m-d H:i:s', time()-2*86400)],
-            ['id' => 2, 'path' => $this->dir . '/new.csv', 'created_at' => date('Y-m-d H:i:s')],
+            ['id' => 1, 'path' => $this->dir . '/old.csv', 'checksum' => '', 'created_at' => date('Y-m-d H:i:s', time()-2*86400)],
+            ['id' => 2, 'path' => $this->dir . '/new.csv', 'checksum' => '', 'created_at' => date('Y-m-d H:i:s')],
         ];
     }
 
@@ -54,7 +56,7 @@ final class RetentionTasksTest extends BaseTestCase
 
     public function test_deletes_old_exports(): void
     {
-        RetentionTasks::run();
+        ExportRetention::run();
         $this->assertFalse(file_exists($this->dir . '/old.csv'));
         $this->assertTrue(file_exists($this->dir . '/new.csv'));
         global $wpdb;

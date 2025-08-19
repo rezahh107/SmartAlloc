@@ -56,6 +56,7 @@ final class ExportPage
         echo '<th>' . esc_html__('Filters', 'smartalloc') . '</th>';
         echo '<th>' . esc_html__('Size', 'smartalloc') . '</th>';
         echo '<th>' . esc_html__('Checksum', 'smartalloc') . '</th>';
+        echo '<th>' . esc_html__('Status', 'smartalloc') . '</th>';
         echo '<th>' . esc_html__('Action', 'smartalloc') . '</th>';
         echo '</tr></thead><tbody>';
 
@@ -72,12 +73,15 @@ final class ExportPage
             echo '<td>' . esc_html($summary) . '</td>';
             echo '<td>' . esc_html(size_format((int) $export['size'])) . '</td>';
             echo '<td>' . esc_html($export['checksum'] ?? '') . '</td>';
+            $status = strtolower((string) ($export['status'] ?? ''));
+            $label  = $status ?: 'missing';
+            echo '<td><span class="sa-status sa-status-' . esc_attr($status) . '" aria-label="' . esc_attr($label) . '">' . esc_html(ucfirst($label)) . '</span></td>';
             echo '<td><a href="' . esc_url($download) . '">' . esc_html__('Download', 'smartalloc') . '</a></td>';
             echo '</tr>';
         }
 
         if (empty($exports)) {
-            echo '<tr><td colspan="6">' . esc_html__('No exports found.', 'smartalloc') . '</td></tr>';
+        echo '<tr><td colspan="7">' . esc_html__('No exports found.', 'smartalloc') . '</td></tr>';
         }
 
         echo '</tbody></table>';
