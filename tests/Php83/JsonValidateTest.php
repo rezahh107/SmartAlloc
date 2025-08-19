@@ -10,9 +10,12 @@ final class JsonValidateTest extends BaseTestCase
 {
     public function test_json_validate_function(): void
     {
-        if (!function_exists('json_validate')) {
+        if (PHP_VERSION_ID < 80300 || !function_exists('json_validate')) {
             self::markTestSkipped('json_validate() requires PHP 8.3+.');
         }
+
+        $ref = new \ReflectionFunction('json_validate');
+        $this->assertTrue($ref->isInternal());
 
         $valid   = '{"a":1}';
         $invalid = '{"a":,}';
