@@ -12,6 +12,10 @@ final class ExportPage
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
+        $pluginFile = dirname(__DIR__, 3) . '/smart-alloc.php';
+        wp_enqueue_script('smartalloc-export', plugins_url('assets/admin/export.js', $pluginFile), ['jquery'], SMARTALLOC_VERSION, true);
+        wp_enqueue_style('smartalloc-export', plugins_url('assets/admin/export.css', $pluginFile), [], SMARTALLOC_VERSION);
+
         global $wpdb;
         $table   = $wpdb->prefix . 'smartalloc_exports';
         $exports = $wpdb->get_results(
