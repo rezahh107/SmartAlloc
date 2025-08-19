@@ -310,6 +310,16 @@ The plugin creates several tables with the prefix `wp_salloc_`:
 - Capability-based access control
 - Sensitive data masking in logs
 
+## Security Scans (Optional)
+
+Run additional security checks locally:
+
+- `composer sec:semgrep`
+- `npm run sec:snyk` (requires Snyk CLI)
+- `composer sec:wp`
+
+These jobs currently run in CI as non-blocking steps; enforcement may be added later.
+
 ## Support
 
 For support and documentation, please refer to the plugin documentation or contact the development team.

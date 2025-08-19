@@ -21,6 +21,7 @@
     "e2e:up:wpenv": "wp-env start",
     "e2e:seed:wpenv": "WP_CLI='npx wp-env run cli wp' bash e2e/scripts/seed.sh",
     "e2e:all:wpenv": "npm run e2e:up:wpenv && npm run e2e:seed:wpenv && npm run test:e2e",
-    "e2e:all": "npm run e2e:all:playground"
+    "e2e:all": "npm run e2e:all:playground",
+    "sec:snyk": "snyk test --severity-threshold=medium || exit 0"
   }
 }
