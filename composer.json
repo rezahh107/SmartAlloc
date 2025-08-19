@@ -42,7 +42,7 @@
         "test": "phpunit",
         "test:security": "phpunit --testsuite Security && psalm --no-cache --taint-analysis --show-info=false",
         "test:e2e": "phpunit --testsuite E2E",
-        "coverage": "phpunit --coverage-clover build/coverage.xml && php tools/coverage-check.php build/coverage.xml",
+        "coverage": "php tools/coverage.php",
         "qa": "composer cs && composer psalm && composer test",
         "ci": "composer cs && composer test:security && composer coverage",
         "build": "rm -rf dist && mkdir dist && VERSION=$(php -r \"include 'smart-alloc.php'; echo SMARTALLOC_VERSION;\") && rsync -a . dist/smartalloc --exclude 'tests' --exclude 'stubs' --exclude 'docs' --exclude 'node_modules' --exclude '.github' --exclude 'dist' && cd dist && zip -r smartalloc-v$VERSION.zip smartalloc && rm -rf smartalloc",
