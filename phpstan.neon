@@ -5,6 +5,8 @@ parameters:
     level: 5
     paths:
         - src
+    bootstrapFiles:
+        - stubs/wp-stubs.php
     ignoreErrors:
-        - '#Function wp_[a-z_]+ not found#'
+        - '#^Function (esc_html__|esc_attr|esc_url|wp_nonce_field|wp_verify_nonce) not found\.$#'
     tmpDir: .phpstan-cache
