@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
-// The Playground CLI path sets WP_BASE_URL to http://localhost:9400.
-const baseURL = process.env.WP_BASE_URL || 'http://localhost:8080';
+// Default to Playground port 9400; WP_BASE_URL overrides.
+const baseURL = process.env.WP_BASE_URL || 'http://localhost:9400';
 
 export default defineConfig({
   reporter: 'html',
