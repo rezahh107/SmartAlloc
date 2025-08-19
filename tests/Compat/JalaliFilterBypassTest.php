@@ -53,8 +53,8 @@ final class JalaliFilterBypassTest extends BaseTestCase
 
             $csv = tempnam(sys_get_temp_dir(), 'sa') . '.csv';
             $fh = fopen($csv, 'w');
-            fputcsv($fh, ['created_at']);
-            fputcsv($fh, [$iso]);
+            fputcsv($fh, ['created_at'], ',', '"', '\\');
+            fputcsv($fh, [$iso], ',', '"', '\\');
             fclose($fh);
 
             $xlsx = tempnam(sys_get_temp_dir(), 'sa') . '.xlsx';

@@ -15,4 +15,9 @@ Mapping to master checklist sections A–G and numerics 3.x & 8.x.
 | 8.x Persian/RTL | `PersianRtlTest` and Playwright `@e2e-i18n` placeholders ensure RTL rendering, character handling and Jalali round-trip (SKIP with TODO). |
 | Third-Party Compatibility | `JalaliFilterBypassTest` and Playwright `@e2e-compat` protect against Jalali date filters and Persian GF admin styles. |
 
+## Quality Gates 2024
 
+- Coding standards: WordPress-Core + WordPress-Extra (`composer cs`)
+- Static analysis: PHPStan level 9 (`composer phpstan`) and Psalm
+- Deprecations fail tests by default (`SA_FAIL_ON_DEPRECATION=0` to allow)
+- Coverage gate: `composer coverage` enforces **MIN_COVERAGE=85** for ExporterService, Http/Rest and Compat namespaces (others TBD)

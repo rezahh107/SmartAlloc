@@ -8,6 +8,8 @@ use SmartAlloc\Tests\BaseTestCase;
 
 final class CircuitBreakerTest extends BaseTestCase
 {
+    private MetricsCollector $metrics;
+
     protected function setUp(): void
     {
         parent::setUp();

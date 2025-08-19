@@ -224,11 +224,21 @@ CI E2E is optional and won’t block merges.
 ### Code Quality
 
 ```bash
-# Check coding standards
-composer lint
+# Coding standards
+composer cs
+
+# Auto-fix coding standards
+composer cs:fix
 
 # Static analysis
-composer analyze
+composer phpstan
+composer psalm
+
+# Run tests with coverage
+composer coverage
+
+# Allow deprecations locally
+SA_FAIL_ON_DEPRECATION=0 composer test
 ```
 
 ## Architecture

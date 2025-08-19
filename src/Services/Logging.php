@@ -133,7 +133,7 @@ final class Logging implements LoggerInterface
     /**
      * Get log file contents
      */
-    public function getLogContents(string $date = null): string
+    public function getLogContents(?string $date = null): string
     {
         if ($date === null) {
             $date = date('Y-m-d');

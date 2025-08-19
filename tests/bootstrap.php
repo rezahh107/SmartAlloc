@@ -17,19 +17,24 @@ if (!defined('WP_DEBUG')) {
 }
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
-error_reporting(E_ALL | E_STRICT);
+error_reporting(E_ALL);
 
-set_error_handler(function ($severity, $message, $file, $line) {
-    if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
-        // Log deprecations but do not throw.
+$saFailOnDeprecation = getenv('SA_FAIL_ON_DEPRECATION') !== '0';
+$saErrorHandler = function ($severity, $message, $file, $line) use ($saFailOnDeprecation) {
+    if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
+        if ($saFailOnDeprecation) {
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        }
         error_log('[DEPRECATED] ' . $message);
-        return false;
+        return true;
     }
     if (!(error_reporting() & $severity)) {
         return false;
     }
     throw new \ErrorException($message, 0, $severity, $file, $line);
-});
+};
+set_error_handler($saErrorHandler);
+$GLOBALS['sa_test_error_handler'] = $saErrorHandler;
 
 if (!function_exists('_doing_it_wrong')) {
     function _doing_it_wrong($function, $message, $version) {
@@ -326,15 +331,6 @@ if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
     });
     ini_set('display_errors', '0');
     error_reporting(E_ALL);
-    set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-        if ($errno === E_DEPRECATED || $errno === E_USER_DEPRECATED) {
-            error_log('[DEPRECATED] ' . $errstr);
-            return true;
-        }
-        if (!(error_reporting() & $errno)) {
-            return false;
-        }
-        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    });
+    set_error_handler($GLOBALS['sa_test_error_handler']);
 }
 // === SMARTALLOC TEST FOUNDATION END ===

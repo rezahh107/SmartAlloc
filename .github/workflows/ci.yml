@@ -9,21 +9,28 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
-        wp: ['latest', 'latest-1', 'latest-2']
+        php: ['8.1', '8.2', '8.3']
+        wp: ['6.4', 'trunk']
+        exclude:
+          - php: '8.3'
+            wp: '6.4'
     env:
       WP_VERSION: ${{ matrix.wp }}
+      SA_FAIL_ON_DEPRECATION: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          coverage: pcov
       - run: composer config platform.php ${{ matrix.php }}
       - run: composer update --no-interaction --prefer-dist --no-progress
-      - run: composer lint | tee phpcs.log
-      - run: composer psalm | tee psalm.log
-      - run: composer test:security | tee phpunit-security.log
-      - run: composer test | tee phpunit.log
+      - run: composer cs
+      - run: composer phpstan
+      - run: composer psalm
+      - run: composer test
+      - run: composer test:security
+      - run: composer coverage
       - run: |
           curl -L https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o wp
           chmod +x wp && sudo mv wp /usr/local/bin/wp
@@ -40,22 +47,6 @@ jobs:
           path: |
             plugin_check.txt
             artifacts/validation_report.md
-
-  phpstan:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v3
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-      - run: composer config platform.php 8.1
-      - run: composer update --no-interaction --prefer-dist --no-progress
-      - run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G | tee phpstan.log
-      - uses: actions/upload-artifact@v3
-        with:
-          name: phpstan
-          path: phpstan.log
 
   e2e:
     runs-on: ubuntu-latest
