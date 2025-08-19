@@ -14,6 +14,9 @@ final class DebugCommandTest extends BaseTestCase
         Functions\when('current_user_can')->justReturn(true);
         $GLOBALS['wp_upload_dir_basedir'] = sys_get_temp_dir();
         Functions\when('get_bloginfo')->alias(fn() => '6.0');
+        if (!function_exists('\\WP_CLI\\Utils\\get_flag_value')) {
+            Functions\when('\\WP_CLI\\Utils\\get_flag_value')->alias(fn($assoc, $key, $default = null) => $assoc[$key] ?? $default);
+        }
         if (!defined('WP_DEBUG')) {
             define('WP_DEBUG', true);
         }
@@ -30,6 +33,9 @@ final class DebugCommandTest extends BaseTestCase
 
     public function test_creates_bundle(): void
     {
+        if (!class_exists('WP_CLI')) {
+            $this->markTestSkipped('WP-CLI not present');
+        }
         $finger = md5('oopsfile.php1');
         $cmd = new DebugCommand();
         ob_start();

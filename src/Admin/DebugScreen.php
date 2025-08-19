@@ -18,13 +18,13 @@ final class DebugScreen
     public static function render(): void
     {
         if (!current_user_can('manage_smartalloc')) {
-            wp_die(esc_html__('Access denied', 'smartalloc'));
+            wp_die(esc_html__('Access denied', 'smartalloc'), '', ['response' => 403]);
         }
         $bundle = isset($_GET['bundle']) ? sanitize_text_field((string) $_GET['bundle']) : '';
         $nonce = $_REQUEST['_wpnonce'] ?? '';
         $action = $bundle ? 'smartalloc_debug_bundle' : 'smartalloc_debug';
         if (!wp_verify_nonce((string) $nonce, $action)) {
-            wp_die(esc_html__('Invalid nonce', 'smartalloc'));
+            wp_die(esc_html__('Invalid nonce', 'smartalloc'), '', ['response' => 403]);
         }
         if ($bundle !== '') {
             $path = (new ReproBuilder())->buildBundle($bundle);

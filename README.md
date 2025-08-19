@@ -325,6 +325,8 @@ An optional admin-only utility captures recent PHP errors and builds ready-to-co
 - The same bundle can be generated via CLI: `wp smartalloc debug pack --id=<fingerprint>`.
 - To run the scaffold, copy the generated test into your test suite and fill in the TODOs; it is marked `@group repro` and skipped by default.
 - Blueprints can be loaded in [WordPress Playground](https://developer.wordpress.org/playground/). When offline, fall back to Docker/wp-env and activate SmartAlloc and required plugins manually.
+- Bundles are capped at 1&nbsp;MB; logs are truncated on overflow.
+- Bundle creation is rate-limited to one per fingerprint per hour.
 
 ## Uninstall
 
