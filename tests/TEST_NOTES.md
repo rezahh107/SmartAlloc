@@ -31,3 +31,9 @@ These tests do not modify runtime code. If a prerequisite such as Brain Monkey, 
 - Static analysis: PHPStan level 9 (`composer phpstan`) and Psalm
 - Deprecations fail tests by default (`SA_FAIL_ON_DEPRECATION=0` to allow)
 - Coverage gate: `composer coverage` enforces **MIN_COVERAGE=85** for ExporterService, Http/Rest and Compat namespaces (others TBD)
+
+## Conflict Cleanup & Discovery
+
+- `NoConflictMarkersTest` fails if merge conflict markers remain in the tree.
+- PHP 8.3 feature tests skip on older runtimes using `PHP_VERSION_ID`/`function_exists` guards.
+- PHPUnit discovery remains default; no additional paths were required.
