@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0-rc.2
+- Added Exporter/Importer and Reports & Logs test suites to release checklist.
+
 ## 1.0.0-rc.1
 - Added release documentation and tooling.
 
