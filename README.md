@@ -352,6 +352,14 @@ An optional admin-only utility captures recent PHP errors and builds ready-to-co
 
 Set the `purge_on_uninstall` option to true to remove SmartAlloc options and caches. By default only transient caches are cleared and allocation data remains.
 
+## Release
+
+Run `composer dist` to build a distributable zip. The artifact will be written to `build/smartalloc-<version>.zip`.
+
+## Preflight
+
+Run `composer preflight` to verify plugin headers and version alignment before tagging a release.
+
 ## License
 
 This plugin is licensed under the MIT License. See `LICENSE` for details.

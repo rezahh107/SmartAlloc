@@ -2,7 +2,7 @@
     "name": "smartalloc/wordpress-plugin",
     "description": "Event-driven student support allocation with Gravity Forms + Exporter",
     "type": "wordpress-plugin",
-    "version": "1.0.0",
+    "version": "1.0.0-rc.1",
     "license": "MIT",
     "authors": [
         {
@@ -50,8 +50,9 @@
         "coverage": "php tools/coverage.php",
         "qa": "composer cs && composer psalm && composer test",
         "ci": "composer cs && composer test:security && composer coverage",
-        "build": "rm -rf dist && mkdir dist && VERSION=$(php -r \"include 'smart-alloc.php'; echo SMARTALLOC_VERSION;\") && rsync -a . dist/smartalloc --exclude 'tests' --exclude 'stubs' --exclude 'docs' --exclude 'node_modules' --exclude '.github' --exclude 'dist' && cd dist && zip -r smartalloc-v$VERSION.zip smartalloc && rm -rf smartalloc",
-        "dist": "composer cs && composer test:security && composer test && composer build",
+        "preflight": "php tools/preflight.php",
+        "dist": "php tools/build-dist.php",
+        "release:check": "composer cs && composer phpstan && composer psalm && composer test && composer test:security && composer preflight",
         "sec:semgrep": "if command -v docker >/dev/null; then docker run --rm -v $PWD:/src returntocorp/semgrep --config=auto --timeout 120 --sarif --output semgrep.sarif /src; else echo 'Docker not installed, skipping Semgrep'; fi",
         "sec:wp": "if [ -x vendor/bin/patchstack ]; then vendor/bin/patchstack scan --format=json --output build/patchstack.json || true; else echo 'Patchstack unavailable'; fi",
         "post-install-cmd": [

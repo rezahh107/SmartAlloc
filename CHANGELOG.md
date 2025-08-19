@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0-rc.1
+- Added release documentation and tooling.
+
 ## 1.0.0
 - Allocator: initial release.
 - GF hook: Gravity Forms integration.
