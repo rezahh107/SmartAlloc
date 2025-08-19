@@ -26,17 +26,22 @@ parameters:
 			path: src/Admin/Actions/ExportDownloadAction.php
 
 		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 5
-			path: src/Admin/Actions/ExportDownloadAction.php
-
-		-
 			message: "#^Function nocache_headers not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ExportDownloadAction.php
 
 		-
 			message: "#^Function trailingslashit not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportDownloadAction.php
+
+		-
+			message: "#^Function wp_die not found\\.$#"
+			count: 5
+			path: src/Admin/Actions/ExportDownloadAction.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ExportDownloadAction.php
 
@@ -76,11 +81,6 @@ parameters:
 			path: src/Admin/Actions/ExportGenerateAction.php
 
 		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 5
-			path: src/Admin/Actions/ExportGenerateAction.php
-
-		-
 			message: "#^Function sanitize_text_field not found\\.$#"
 			count: 3
 			path: src/Admin/Actions/ExportGenerateAction.php
@@ -91,12 +91,37 @@ parameters:
 			path: src/Admin/Actions/ExportGenerateAction.php
 
 		-
-			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
+			message: "#^Function wp_checkdate not found\\.$#"
 			count: 1
-			path: src/Admin/Actions/ManualApproveAction.php
+			path: src/Admin/Actions/ExportGenerateAction.php
 
 		-
-			message: "#^Function apply_filters not found\\.$#"
+			message: "#^Function wp_die not found\\.$#"
+			count: 5
+			path: src/Admin/Actions/ExportGenerateAction.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportGenerateAction.php
+
+		-
+			message: "#^Function wp_mkdir_p not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportGenerateAction.php
+
+		-
+			message: "#^Function wp_safe_redirect not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportGenerateAction.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ExportGenerateAction.php
+
+		-
+			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualApproveAction.php
 
@@ -117,6 +142,16 @@ parameters:
 
 		-
 			message: "#^Function sanitize_textarea_field not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualApproveAction.php
+
+		-
+			message: "#^Function wp_send_json_error not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualApproveAction.php
+
+		-
+			message: "#^Function wp_send_json_success not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualApproveAction.php
 
@@ -141,11 +176,6 @@ parameters:
 			path: src/Admin/Actions/ManualAssignAction.php
 
 		-
-			message: "#^Function apply_filters not found\\.$#"
-			count: 2
-			path: src/Admin/Actions/ManualAssignAction.php
-
-		-
 			message: "#^Function check_ajax_referer not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualAssignAction.php
@@ -166,17 +196,22 @@ parameters:
 			path: src/Admin/Actions/ManualAssignAction.php
 
 		-
+			message: "#^Function wp_send_json_error not found\\.$#"
+			count: 3
+			path: src/Admin/Actions/ManualAssignAction.php
+
+		-
+			message: "#^Function wp_send_json_success not found\\.$#"
+			count: 2
+			path: src/Admin/Actions/ManualAssignAction.php
+
+		-
 			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, 'absint' given\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualAssignAction.php
 
 		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
-			count: 1
-			path: src/Admin/Actions/ManualRejectAction.php
-
-		-
-			message: "#^Function apply_filters not found\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualRejectAction.php
 
@@ -206,6 +241,16 @@ parameters:
 			path: src/Admin/Actions/ManualRejectAction.php
 
 		-
+			message: "#^Function wp_send_json_error not found\\.$#"
+			count: 2
+			path: src/Admin/Actions/ManualRejectAction.php
+
+		-
+			message: "#^Function wp_send_json_success not found\\.$#"
+			count: 1
+			path: src/Admin/Actions/ManualRejectAction.php
+
+		-
 			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, 'absint' given\\.$#"
 			count: 1
 			path: src/Admin/Actions/ManualRejectAction.php
@@ -218,11 +263,6 @@ parameters:
 		-
 			message: "#^Function add_submenu_page not found\\.$#"
 			count: 4
-			path: src/Admin/Menu.php
-
-		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 8
 			path: src/Admin/Menu.php
 
 		-
@@ -256,22 +296,22 @@ parameters:
 			path: src/Admin/Pages/ExportPage.php
 
 		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 19
-			path: src/Admin/Pages/ExportPage.php
-
-		-
-			message: "#^Function esc_url not found\\.$#"
-			count: 2
-			path: src/Admin/Pages/ExportPage.php
-
-		-
 			message: "#^Function size_format not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ExportPage.php
 
 		-
 			message: "#^Function submit_button not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Function wp_die not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ExportPage.php
+
+		-
+			message: "#^Function wp_nonce_url not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ExportPage.php
 
@@ -296,28 +336,13 @@ parameters:
 			path: src/Admin/Pages/ManualReviewPage.php
 
 		-
-			message: "#^Function apply_filters not found\\.$#"
-			count: 1
-			path: src/Admin/Pages/ManualReviewPage.php
-
-		-
 			message: "#^Function current_user_can not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ManualReviewPage.php
 
 		-
-			message: "#^Function esc_attr not found\\.$#"
-			count: 6
-			path: src/Admin/Pages/ManualReviewPage.php
-
-		-
 			message: "#^Function esc_html not found\\.$#"
 			count: 2
-			path: src/Admin/Pages/ManualReviewPage.php
-
-		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 7
 			path: src/Admin/Pages/ManualReviewPage.php
 
 		-
@@ -336,6 +361,21 @@ parameters:
 			path: src/Admin/Pages/ManualReviewPage.php
 
 		-
+			message: "#^Function wp_die not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Function wp_enqueue_script not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
+			message: "#^Function wp_enqueue_style not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ManualReviewPage.php
+
+		-
 			message: "#^Constant SMARTALLOC_CAP not found\\.$#"
 			count: 2
 			path: src/Admin/Pages/ReportsPage.php
@@ -343,11 +383,6 @@ parameters:
 		-
 			message: "#^Function admin_url not found\\.$#"
 			count: 1
-			path: src/Admin/Pages/ReportsPage.php
-
-		-
-			message: "#^Function apply_filters not found\\.$#"
-			count: 2
 			path: src/Admin/Pages/ReportsPage.php
 
 		-
@@ -361,23 +396,8 @@ parameters:
 			path: src/Admin/Pages/ReportsPage.php
 
 		-
-			message: "#^Function esc_attr not found\\.$#"
-			count: 6
-			path: src/Admin/Pages/ReportsPage.php
-
-		-
 			message: "#^Function esc_html not found\\.$#"
 			count: 11
-			path: src/Admin/Pages/ReportsPage.php
-
-		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 24
-			path: src/Admin/Pages/ReportsPage.php
-
-		-
-			message: "#^Function esc_url not found\\.$#"
-			count: 1
 			path: src/Admin/Pages/ReportsPage.php
 
 		-
@@ -387,6 +407,16 @@ parameters:
 
 		-
 			message: "#^Function submit_button not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Function wp_die not found\\.$#"
+			count: 2
+			path: src/Admin/Pages/ReportsPage.php
+
+		-
+			message: "#^Function wp_nonce_url not found\\.$#"
 			count: 1
 			path: src/Admin/Pages/ReportsPage.php
 
@@ -416,28 +446,8 @@ parameters:
 			path: src/Admin/Pages/SettingsPage.php
 
 		-
-			message: "#^Function esc_attr not found\\.$#"
-			count: 5
-			path: src/Admin/Pages/SettingsPage.php
-
-		-
 			message: "#^Function esc_html not found\\.$#"
 			count: 2
-			path: src/Admin/Pages/SettingsPage.php
-
-		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 8
-			path: src/Admin/Pages/SettingsPage.php
-
-		-
-			message: "#^Function esc_url not found\\.$#"
-			count: 1
-			path: src/Admin/Pages/SettingsPage.php
-
-		-
-			message: "#^Function get_option not found\\.$#"
-			count: 1
 			path: src/Admin/Pages/SettingsPage.php
 
 		-
@@ -461,17 +471,17 @@ parameters:
 			path: src/Admin/Pages/SettingsPage.php
 
 		-
+			message: "#^Function wp_die not found\\.$#"
+			count: 1
+			path: src/Admin/Pages/SettingsPage.php
+
+		-
 			message: "#^Constant SMARTALLOC_UPLOAD_DIR not found\\.$#"
 			count: 1
 			path: src/Bootstrap.php
 
 		-
 			message: "#^Function flush_rewrite_rules not found\\.$#"
-			count: 1
-			path: src/Bootstrap.php
-
-		-
-			message: "#^Function get_option not found\\.$#"
 			count: 1
 			path: src/Bootstrap.php
 
@@ -501,7 +511,12 @@ parameters:
 			path: src/Bootstrap.php
 
 		-
-			message: "#^Function update_option not found\\.$#"
+			message: "#^Function wp_mkdir_p not found\\.$#"
+			count: 1
+			path: src/Bootstrap.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
 			count: 1
 			path: src/Bootstrap.php
 
@@ -526,6 +541,11 @@ parameters:
 			path: src/Cli/AllocateCommand.php
 
 		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Cli/AllocateCommand.php
+
+		-
 			message: "#^Used function absint not found\\.$#"
 			count: 1
 			path: src/Cli/AllocateCommand.php
@@ -546,12 +566,22 @@ parameters:
 			path: src/Cli/DoctorCommand.php
 
 		-
-			message: "#^Function get_option not found\\.$#"
+			message: "#^Function rest_get_server not found\\.$#"
 			count: 1
 			path: src/Cli/DoctorCommand.php
 
 		-
-			message: "#^Function rest_get_server not found\\.$#"
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Cli/DoctorCommand.php
+
+		-
+			message: "#^Function wp_next_scheduled not found\\.$#"
+			count: 1
+			path: src/Cli/DoctorCommand.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
 			count: 1
 			path: src/Cli/DoctorCommand.php
 
@@ -573,6 +603,11 @@ parameters:
 		-
 			message: "#^Function sanitize_text_field not found\\.$#"
 			count: 2
+			path: src/Cli/ExportCommand.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
 			path: src/Cli/ExportCommand.php
 
 		-
@@ -611,6 +646,11 @@ parameters:
 			path: src/Cli/ReviewCommand.php
 
 		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Cli/ReviewCommand.php
+
+		-
 			message: "#^Offset 'action' on array\\{action\\: 'approve', entry\\: mixed, mentor\\?\\: mixed\\}\\|array\\{action\\: 'reject', entry\\: mixed, reason\\: mixed\\} on left side of \\?\\? always exists and is not nullable\\.$#"
 			count: 1
 			path: src/Cli/ReviewCommand.php
@@ -636,13 +676,23 @@ parameters:
 			path: src/Cron/RetentionTasks.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 2
+			message: "#^Function trailingslashit not found\\.$#"
+			count: 1
 			path: src/Cron/RetentionTasks.php
 
 		-
-			message: "#^Function trailingslashit not found\\.$#"
+			message: "#^Function wp_next_scheduled not found\\.$#"
 			count: 1
+			path: src/Cron/RetentionTasks.php
+
+		-
+			message: "#^Function wp_schedule_event not found\\.$#"
+			count: 1
+			path: src/Cron/RetentionTasks.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
+			count: 2
 			path: src/Cron/RetentionTasks.php
 
 		-
@@ -651,22 +701,7 @@ parameters:
 			path: src/Domain/Allocation/StudentAllocator.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 1
-			path: src/Event/EventBus.php
-
-		-
-			message: "#^Function do_action not found\\.$#"
-			count: 1
-			path: src/Event/EventBus.php
-
-		-
 			message: "#^Function absint not found\\.$#"
-			count: 1
-			path: src/Http/Admin/AdminController.php
-
-		-
-			message: "#^Function esc_attr not found\\.$#"
 			count: 1
 			path: src/Http/Admin/AdminController.php
 
@@ -676,17 +711,7 @@ parameters:
 			path: src/Http/Admin/AdminController.php
 
 		-
-			message: "#^Function esc_html__ not found\\.$#"
-			count: 10
-			path: src/Http/Admin/AdminController.php
-
-		-
 			message: "#^Function esc_textarea not found\\.$#"
-			count: 1
-			path: src/Http/Admin/AdminController.php
-
-		-
-			message: "#^Function get_option not found\\.$#"
 			count: 1
 			path: src/Http/Admin/AdminController.php
 
@@ -697,11 +722,6 @@ parameters:
 
 		-
 			message: "#^Function submit_button not found\\.$#"
-			count: 1
-			path: src/Http/Admin/AdminController.php
-
-		-
-			message: "#^Function update_option not found\\.$#"
 			count: 1
 			path: src/Http/Admin/AdminController.php
 
@@ -721,12 +741,17 @@ parameters:
 			path: src/Http/Ajax/AllocationAction.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
+			message: "#^Function current_user_can not found\\.$#"
 			count: 1
 			path: src/Http/Ajax/AllocationAction.php
 
 		-
-			message: "#^Function current_user_can not found\\.$#"
+			message: "#^Function wp_send_json_error not found\\.$#"
+			count: 2
+			path: src/Http/Ajax/AllocationAction.php
+
+		-
+			message: "#^Function wp_send_json_success not found\\.$#"
 			count: 1
 			path: src/Http/Ajax/AllocationAction.php
 
@@ -748,11 +773,6 @@ parameters:
 		-
 			message: "#^Function absint not found\\.$#"
 			count: 2
-			path: src/Http/Rest/AllocationController.php
-
-		-
-			message: "#^Function add_action not found\\.$#"
-			count: 1
 			path: src/Http/Rest/AllocationController.php
 
 		-
@@ -801,17 +821,17 @@ parameters:
 			path: src/Http/Rest/AllocationController.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
+			message: "#^Function register_rest_route not found\\.$#"
 			count: 1
 			path: src/Http/Rest/HealthController.php
 
 		-
-			message: "#^Function get_option not found\\.$#"
-			count: 2
+			message: "#^Function wp_cache_get not found\\.$#"
+			count: 1
 			path: src/Http/Rest/HealthController.php
 
 		-
-			message: "#^Function register_rest_route not found\\.$#"
+			message: "#^Function wp_cache_set not found\\.$#"
 			count: 1
 			path: src/Http/Rest/HealthController.php
 
@@ -851,11 +871,6 @@ parameters:
 			path: src/Http/Rest/MetricsController.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 1
-			path: src/Http/Rest/MetricsController.php
-
-		-
 			message: "#^Function current_user_can not found\\.$#"
 			count: 2
 			path: src/Http/Rest/MetricsController.php
@@ -877,6 +892,11 @@ parameters:
 
 		-
 			message: "#^Function set_transient not found\\.$#"
+			count: 1
+			path: src/Http/Rest/MetricsController.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
 			count: 1
 			path: src/Http/Rest/MetricsController.php
 
@@ -926,11 +946,6 @@ parameters:
 			path: src/Http/Rest/WebhookController.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 1
-			path: src/Http/Rest/WebhookController.php
-
-		-
 			message: "#^Function get_transient not found\\.$#"
 			count: 2
 			path: src/Http/Rest/WebhookController.php
@@ -976,11 +991,6 @@ parameters:
 			path: src/Http/RestController.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 1
-			path: src/Http/RestController.php
-
-		-
 			message: "#^Function current_user_can not found\\.$#"
 			count: 2
 			path: src/Http/RestController.php
@@ -1018,11 +1028,6 @@ parameters:
 		-
 			message: "#^Function current_time not found\\.$#"
 			count: 1
-			path: src/Infra/CLI/Commands.php
-
-		-
-			message: "#^Function update_option not found\\.$#"
-			count: 2
 			path: src/Infra/CLI/Commands.php
 
 		-
@@ -1096,11 +1101,6 @@ parameters:
 			path: src/Infra/GF/SabtSubmissionHandler.php
 
 		-
-			message: "#^Function do_action not found\\.$#"
-			count: 3
-			path: src/Infra/GF/SabtSubmissionHandler.php
-
-		-
 			message: "#^Function is_wp_error not found\\.$#"
 			count: 1
 			path: src/Infra/GF/SabtSubmissionHandler.php
@@ -1109,6 +1109,21 @@ parameters:
 			message: "#^Function rest_url not found\\.$#"
 			count: 1
 			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Function wp_remote_post not found\\.$#"
+			count: 1
+			path: src/Infra/GF/SabtSubmissionHandler.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Infra/Log/LoggerWp.php
 
 		-
 			message: "#^Used function esc_html not found\\.$#"
@@ -1176,11 +1191,6 @@ parameters:
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
-			message: "#^Function do_action not found\\.$#"
-			count: 2
-			path: src/Infra/Repository/AllocationsRepository.php
-
-		-
 			message: "#^Function sanitize_key not found\\.$#"
 			count: 1
 			path: src/Infra/Repository/AllocationsRepository.php
@@ -1201,11 +1211,6 @@ parameters:
 			path: src/Infra/Repository/AllocationsRepository.php
 
 		-
-			message: "#^Function get_option not found\\.$#"
-			count: 1
-			path: src/Infra/Settings/Settings.php
-
-		-
 			message: "#^Function sanitize_text_field not found\\.$#"
 			count: 1
 			path: src/Infra/Settings/Settings.php
@@ -1221,16 +1226,6 @@ parameters:
 			path: src/Infra/Upgrade/MigrationRunner.php
 
 		-
-			message: "#^Function get_option not found\\.$#"
-			count: 1
-			path: src/Infra/Upgrade/MigrationRunner.php
-
-		-
-			message: "#^Function update_option not found\\.$#"
-			count: 1
-			path: src/Infra/Upgrade/MigrationRunner.php
-
-		-
 			message: "#^Call to static method schedule_single_action\\(\\) on an unknown class ActionScheduler\\.$#"
 			count: 2
 			path: src/Integration/ActionSchedulerAdapter.php
@@ -1241,18 +1236,18 @@ parameters:
 			path: src/Integration/ActionSchedulerAdapter.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 1
-			path: src/Integration/ActionSchedulerAdapter.php
-
-		-
-			message: "#^Function apply_filters not found\\.$#"
-			count: 1
-			path: src/Integration/ActionSchedulerAdapter.php
-
-		-
 			message: "#^Function current_time not found\\.$#"
 			count: 3
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Function wp_schedule_single_event not found\\.$#"
+			count: 1
+			path: src/Integration/ActionSchedulerAdapter.php
+
+		-
+			message: "#^Function wp_unschedule_event not found\\.$#"
+			count: 1
 			path: src/Integration/ActionSchedulerAdapter.php
 
 		-
@@ -1261,22 +1256,7 @@ parameters:
 			path: src/Integration/GravityForms.php
 
 		-
-			message: "#^Function add_action not found\\.$#"
-			count: 2
-			path: src/Integration/GravityForms.php
-
-		-
-			message: "#^Function add_filter not found\\.$#"
-			count: 1
-			path: src/Integration/GravityForms.php
-
-		-
 			message: "#^Function current_time not found\\.$#"
-			count: 1
-			path: src/Integration/GravityForms.php
-
-		-
-			message: "#^Function get_option not found\\.$#"
 			count: 1
 			path: src/Integration/GravityForms.php
 
@@ -1284,11 +1264,6 @@ parameters:
 			message: "#^Function rgar not found\\.$#"
 			count: 5
 			path: src/Integration/GravityForms.php
-
-		-
-			message: "#^Function do_action not found\\.$#"
-			count: 1
-			path: src/Listeners/AutoAssignListener.php
 
 		-
 			message: "#^Constant SmartAlloc\\\\Services\\\\AllocationService\\:\\:DEFAULT_CAPACITY is unused\\.$#"
@@ -1326,7 +1301,27 @@ parameters:
 			path: src/Services/Cache.php
 
 		-
+			message: "#^Function wp_cache_delete not found\\.$#"
+			count: 1
+			path: src/Services/Cache.php
+
+		-
+			message: "#^Function wp_cache_get not found\\.$#"
+			count: 1
+			path: src/Services/Cache.php
+
+		-
+			message: "#^Function wp_cache_set not found\\.$#"
+			count: 1
+			path: src/Services/Cache.php
+
+		-
 			message: "#^Function current_time not found\\.$#"
+			count: 1
+			path: src/Services/CircuitBreaker.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
 			count: 1
 			path: src/Services/CircuitBreaker.php
 
@@ -1421,6 +1416,11 @@ parameters:
 			path: src/Services/EventStoreWp.php
 
 		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Services/EventStoreWp.php
+
+		-
 			message: "#^Function current_time not found\\.$#"
 			count: 7
 			path: src/Services/ExportService.php
@@ -1436,6 +1436,16 @@ parameters:
 			path: src/Services/ExportService.php
 
 		-
+			message: "#^Function wp_mkdir_p not found\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
+			count: 2
+			path: src/Services/ExportService.php
+
+		-
 			message: "#^Constant SMARTALLOC_VERSION not found\\.$#"
 			count: 1
 			path: src/Services/HealthService.php
@@ -1444,16 +1454,6 @@ parameters:
 			message: "#^Function current_time not found\\.$#"
 			count: 1
 			path: src/Services/HealthService.php
-
-		-
-			message: "#^Deprecated in PHP 8\\.4\\: Parameter \\#1 \\$date \\(string\\) is implicitly nullable via default value null\\.$#"
-			count: 1
-			path: src/Services/Logging.php
-
-		-
-			message: "#^Function apply_filters not found\\.$#"
-			count: 2
-			path: src/Services/Logging.php
 
 		-
 			message: "#^Function current_time not found\\.$#"
@@ -1466,6 +1466,26 @@ parameters:
 			path: src/Services/Logging.php
 
 		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Function wp_mkdir_p not found\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
+			message: "#^Function wp_upload_dir not found\\.$#"
+			count: 1
+			path: src/Services/Logging.php
+
+		-
 			message: "#^Constant ARRAY_A not found\\.$#"
 			count: 2
+			path: src/Services/Metrics.php
+
+		-
+			message: "#^Function wp_json_encode not found\\.$#"
+			count: 1
 			path: src/Services/Metrics.php

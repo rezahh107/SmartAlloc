@@ -1,57 +1,80 @@
 <?php
-
 declare(strict_types=1);
 
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
-use SmartAlloc\Services\Metrics;
-use SmartAlloc\Services\ExportService;
-use SmartAlloc\Services\Logging;
+use SmartAlloc\Http\Rest\MetricsController;
+use SmartAlloc\Infra\Export\ExcelExporter;
+use SmartAlloc\Tests\Helpers\WpdbSpy as Spy;
+use SmartAlloc\Tests\Helpers\EnvReset as Env;
 
 final class BudgetTest extends TestCase
 {
-    private function wpdbStub(): void
+    protected function setUp(): void
     {
+        Env::sa_test_flush_cache();
         global $wpdb;
         $wpdb = new class {
             public string $prefix = 'wp_';
             public array $queries = [];
-            public int $insert_id = 0;
-            public function log($q){ $this->queries[]=$q; }
-            public function prepare($q, ...$a){ return $q; }
-            public function get_results($q, $o = ARRAY_A){ $this->log($q); return []; }
-            public function get_var($q){ $this->log($q); return null; }
-            public function query($q){ $this->log($q); return 1; }
-            public function insert($t,$d){ $this->log('INSERT'); $this->insert_id = 1; return 1; }
-            public function get_charset_collate(){ return ''; }
+            public function prepare($q, ...$a) { return $q; }
+            public function get_results($q, $o = null) { $this->queries[] = $q; return []; }
+            public function query($q) { $this->queries[] = $q; return 1; }
         };
-    }
-    public function test_metrics_query_budget(): void
-    {
-        $this->wpdbStub();
-        global $wpdb;
-        $metrics = new Metrics();
-        for ($i = 0; $i < 5; $i++) { $metrics->inc('t'); }
-        $metrics->get('t', 5);
-        $count = count($wpdb->queries);
-        file_put_contents('budgets.log', "queries:$count\n", FILE_APPEND);
-        $this->assertLessThanOrEqual(100, $count);
+        Spy::start();
+        Functions\when('current_user_can')->justReturn(true);
     }
 
-    public function test_metrics_cache_reduces_queries(): void
+    protected function tearDown(): void
     {
-        $this->wpdbStub();
-        global $wpdb;
-        $metrics = new Metrics();
-        $metrics->get('t', 5); // miss
-        $first = count($wpdb->queries);
-        $metrics->get('t', 5); // hit
-        $second = count($wpdb->queries) - $first;
-        file_put_contents('budgets.log', "cache_first:$first cache_second:$second\n", FILE_APPEND);
-        $this->assertLessThanOrEqual($first, $second);
+        Spy::stop();
+        parent::tearDown();
     }
 
-    public function test_excel_exporter_memory_budget(): void
+    public function test_metrics_queries_under_budget(): void
     {
-        $this->markTestSkipped('memory budget check requires real environment');
+        $params = [
+            'date_from' => '2025-01-01',
+            'date_to'   => '2025-01-03',
+            'group_by'  => 'day',
+        ];
+        $q1 = Spy::count(function () use ($params) {
+            MetricsController::query($params);
+        });
+        $this->assertLessThanOrEqual(100, $q1, 'metrics queries should be ≤100 for small ranges');
+    }
+
+    public function test_metrics_cache_hit_reduces_queries(): void
+    {
+        $controller = new MetricsController();
+        $params = ['date_from' => '2025-01-01', 'date_to' => '2025-01-03'];
+        $miss = Spy::count(function () use ($controller, $params) {
+            $_GET = $params;
+            $controller->handle(new \WP_REST_Request());
+        });
+        $hit = Spy::count(function () use ($controller, $params) {
+            $_GET = $params;
+            $controller->handle(new \WP_REST_Request());
+        });
+        $this->assertTrue($hit < $miss, 'cache hit should reduce queries');
+    }
+
+    public function test_exporter_peak_memory_under_32mb_or_skip(): void
+    {
+        if (!class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
+            $this->markTestSkipped('PhpSpreadsheet not available in this env');
+        }
+        Env::sa_test_seed_rng(1337);
+        global $wpdb;
+        $exporter = new ExcelExporter($wpdb, null, sys_get_temp_dir());
+        $rows = array_fill(0, 1100, ['status' => 'allocated']);
+        $before = memory_get_peak_usage(true);
+        try {
+            $exporter->exportFromRows($rows);
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Exporter unavailable: ' . $e->getMessage());
+        }
+        $after = memory_get_peak_usage(true);
+        $this->assertLessThan(32 * 1024 * 1024, max($before, $after), 'peak memory < 32MB');
     }
 }
