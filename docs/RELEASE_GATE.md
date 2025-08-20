@@ -26,3 +26,14 @@ artifacts/qa/qa-bundle.zip
 ```
 
 All steps are advisory and may be skipped; missing tools are ignored.
+
+## Packaging
+
+Verify distribution artifacts before release:
+
+```bash
+php scripts/dist-audit.php [path]
+php scripts/dist-manifest.php [path]
+```
+
+`dist-audit` emits JSON with any violations (e.g., dev files or oversized assets). Review the list; minor warnings may pass for GA, but serious issues should be fixed before shipping. `dist-manifest` records checksums and sizes for auditing.
