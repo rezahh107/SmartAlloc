@@ -1,22 +1,17 @@
-# E2E Smoke Tests
+# E2E (Opt-in) — Local Only
 
-Optional Playwright tests exercise the Gravity Forms contact form.
+## Run with wp-env
+1) `wp-env start`
+2) Seed a GF form at `/contact-form/`.
 
-## Run locally
+## Playwright
+- Install locally: `npx playwright install`
+- Run (opt-in): `E2E=1 npx playwright test`
 
-```bash
-npx wp-env start    # boots WordPress at http://localhost:8889
-E2E=1 npx playwright test
-```
+## Skips & CI
+- By default, E2E tests SKIP (E2E!=1).
+- If Playwright/wp-env or the form is missing → SKIP.
+- CI stays green; no required jobs are added.
 
-Set `BASE_URL` to point to a different site if needed.
-
-## Skip behaviour
-
-- If `E2E` is not `1`, tests are skipped.
-- If Playwright is not installed, the spec does nothing.
-- The smoke test checks for `/contact-form/`; when missing it calls `test.skip('form missing')`.
-
-## Performance
-
-`tests/perf/k6/export-smoke.js` is a manual k6 script for the export endpoint. CI never runs it.
+## k6 (manual)
+- `k6 run tests/perf/k6/export-smoke.js` (manual only; never in CI).
