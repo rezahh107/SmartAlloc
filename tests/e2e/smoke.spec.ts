@@ -1,31 +1,16 @@
-let pw;
-try {
-  pw = require('@playwright/test');
-} catch (e) {
-  console.warn('Playwright not installed; skipping e2e tests.');
-}
+import { test, expect } from '@playwright/test';
 
-if (pw) {
-  const { test, expect } = pw;
-  test.skip(process.env.E2E !== '1', 'E2E tests disabled');
+const enabled = process.env.E2E === '1';
+const t = enabled ? test : test.skip;
 
-  test('gravity form smoke', async ({ page }) => {
-    await page.goto('/contact-form/');
-    const form = page.locator('form');
-    if ((await form.count()) === 0) {
-      test.skip('form missing');
-    }
-    const name = page.locator('input[type="text"]').first();
-    const message = page.locator('textarea').first();
-    if ((await name.count()) === 0 || (await message.count()) === 0) {
-      test.skip('required fields missing');
-    }
-    await name.fill('رضا');
-    await message.fill('سلام');
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'load' }),
-      form.locator('input[type="submit"]').first().click(),
-    ]);
-    await expect(page.locator('body')).toContainText(/پیام شما ارسال شد/);
-  });
-}
+t('contact form smoke (Persian)', async ({ page }) => {
+  await page.goto('/contact-form/');
+  // اگر فرم موجود نبود، Skip تمیز
+  const formExists = await page.locator('[id^=gform_]').first().isVisible().catch(() => false);
+  test.skip(!formExists, 'contact form not found');
+
+  await page.fill('input[id^="input_"][id$="_1"]', 'نام تست');
+  await page.fill('input[type="email"]', 'test@example.com');
+  await page.click('button[id^="gform_submit_button_"]');
+  await expect(page.locator('body')).toContainText(/پیام شما ارسال شد/);
+});
