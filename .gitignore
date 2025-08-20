@@ -76,3 +76,6 @@ artifacts/axe/
 artifacts/lighthouse/
 artifacts/qa/
 *.lhreport.html
+# allow committed artifact templates
+!scripts/templates/artifacts/
+!scripts/templates/artifacts/index.template.html
