@@ -20,3 +20,26 @@
 ## Links
 - Dashboards (fill in URLs)
 - Playbooks & On-call (fill in)
+
+## Alerts & SLOs
+
+### Alerts
+- Export error rate > 5 in 10m → notify Slack and email on-call.
+- Circuit Breaker state=OPEN → immediate alert; page team.
+- p95 response > 2s sustained for 3m → alert and create incident.
+
+### Tooling
+- APM: check New Relic and Sentry dashboards for spikes.
+- Logging: ensure PII fields are masked; review structured log dashboards.
+
+### Weekly Checks
+- Run Patchstack security scan.
+- Review DB health: indexes and table size trends.
+- Smoke test: onboard one new student end-to-end.
+
+### Examples
+```bash
+# fetch latest QA report if available
+[ -f qa-report.json ] && cat qa-report.json
+[ -f qa-report.html ] && echo "see qa-report.html"
+```
