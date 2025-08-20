@@ -74,4 +74,5 @@ e2e/downloads/
 artifacts/
 artifacts/axe/
 artifacts/lighthouse/
+artifacts/qa/
 *.lhreport.html
