@@ -173,9 +173,14 @@ composer lint
 # Static analysis
 composer analyze
 
+# Build docs bundle
+composer docs
+
 # Build package
-composer zip
+composer dist
 ```
+
+`composer docs` compiles `docs/Docs-Bundle.compiled.md` by resolving `@include` directives in `docs/Docs-Bundle.md`. The test coverage matrix is sourced directly from `tests/TEST_NOTES.md`.
 
 ### Testing
 
