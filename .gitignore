@@ -6,6 +6,12 @@
 /build/
 /dist/
 *.zip
+# Docs build artifacts
+docs/*.compiled.md
+docs/*.html
+docs/*.pdf
+release/
+*.tar.gz
 *.xlsx
 
 # IDE files
