@@ -41,6 +41,30 @@ To automatically run the SQL scanner before committing, install the sample pre-c
 ln -sf ../../scripts/git-hooks/pre-commit.sample .git/hooks/pre-commit
 ```
 
+To scan for leaked secrets, run:
+
+```
+php scripts/scan-secrets.php > secrets.json
+```
+
+The tool emits a JSON array of findings with `file`, `line`, `type`, and `snippet` fields. Investigate any reported secrets and allowlist intentional ones with `@security-ok-secret`.
+
+To audit Composer licenses, run:
+
+```
+php scripts/license-audit.php > licenses.json
+```
+
+The audit prints JSON containing a `summary` (`total`, `unknown`, `denied`) and a detailed `packages` list. Review packages with unknown or denied licenses and resolve issues before release.
+
+To bundle QA artifacts, run:
+
+```
+php scripts/qa-bundle.php
+```
+
+This writes `artifacts/qa/qa-bundle.zip` with available reports and the latest Axe/Lighthouse outputs for easy sharing.
+
 ## Interpreting the report
 
 `qa-report.json` contains:
