@@ -1,0 +1,16 @@
+#!/bin/sh
+# Sample pre-commit hook for SQL prepare scanning.
+# Install with:
+#   ln -sf ../../scripts/git-hooks/pre-commit.sample .git/hooks/pre-commit
+# By default this hook is non-blocking. To make it block commits on violations,
+# uncomment the exit line below.
+
+OUT=$(php scripts/scan-sql-prepare.php)
+COUNT=$(printf '%s' "$OUT" | php -r 'echo count(json_decode(stream_get_contents(STDIN), true));')
+if [ "$COUNT" -gt 0 ]; then
+    echo "SQL prepare scanner found $COUNT violation(s):"
+    printf '%s' "$OUT" | php -r '$d=json_decode(stream_get_contents(STDIN), true);$m=0;foreach($d as $v){if($m++>=20)break;echo " - {$v["file"]}:{$v["line"]} {$v["snippet"]}\n";}'
+    # exit 1  # Uncomment to make the hook blocking
+fi
+
+exit 0
