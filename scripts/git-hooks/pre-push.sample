@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Scan REST permissions before pushing.
+# Install with:
+#   ln -sf ../../scripts/git-hooks/pre-push.sample .git/hooks/pre-push
+
+output="$(php scripts/scan-rest-permissions.php)"
+echo "$output" | jq .
+
+# Uncomment the next line to make this hook blocking on violations:
+# test "$(echo "$output" | jq 'length')" -eq 0 || exit 1
+
+exit 0

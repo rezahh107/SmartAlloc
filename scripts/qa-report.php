@@ -36,10 +36,29 @@ foreach ($rii as $file) {
     }
 }
 
+$restViolations = null;
+$scanner = $root . '/scripts/scan-rest-permissions.php';
+if (is_file($scanner)) {
+    $json = @shell_exec('php ' . escapeshellarg($scanner));
+    if ($json !== null) {
+        $decoded = json_decode($json, true);
+        if (is_array($decoded)) {
+            $restViolations = count($decoded);
+        } else {
+            $notes[] = 'rest permission scan parse failed';
+        }
+    } else {
+        $notes[] = 'rest permission scan failed';
+    }
+} else {
+    $notes[] = 'rest permission scanner missing';
+}
+
 $data = [
     'coverage_percent' => $coverage,
     'env' => $env,
     'test_files' => $testFiles,
+    'rest_permission_violations' => $restViolations,
     'notes' => $notes,
 ];
 
@@ -49,6 +68,7 @@ $html  = '<!DOCTYPE html><html dir="rtl"><meta charset="utf-8"><title>QA Report<
 $html .= '<h1>QA Report</h1><ul>';
 $html .= '<li>Coverage: ' . ($coverage !== null ? $coverage . '%' : 'N/A') . '</li>';
 $html .= '<li>Test files: ' . $testFiles . '</li>';
+$html .= '<li>REST permission violations: ' . ($restViolations !== null ? $restViolations : 'N/A') . '</li>';
 $html .= '<li>Env toggles:<ul>';
 foreach ($env as $k => $v) {
     $html .= '<li>' . htmlspecialchars($k, ENT_QUOTES, 'UTF-8') . ': ' . ($v ? 'on' : 'off') . '</li>';
