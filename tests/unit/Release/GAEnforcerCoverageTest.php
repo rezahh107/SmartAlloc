@@ -14,22 +14,26 @@ final class GAEnforcerCoverageTest extends TestCase
         $rootArtifacts = __DIR__ . '/../../../artifacts';
         @mkdir($rootArtifacts . '/coverage', 0777, true);
         @mkdir($rootArtifacts . '/dist', 0777, true);
+        @mkdir($rootArtifacts . '/i18n', 0777, true);
 
         $cov = [
             'source' => 'json',
             'generated_at' => date('c'),
-            'totals' => ['lines_total' => 100, 'lines_covered' => 70, 'pct' => 70.0],
+            'totals' => ['lines_total' => 100, 'lines_covered' => 85, 'pct' => 85.0],
             'files' => [],
         ];
         file_put_contents($rootArtifacts . '/coverage/coverage.json', json_encode($cov));
 
-        $manifest = [
+        $pot = ['pot_entries' => 10, 'domain_mismatch' => 0];
+        file_put_contents($rootArtifacts . '/i18n/pot-refresh.json', json_encode($pot));
+        file_put_contents($rootArtifacts . '/dist/sbom.json', '{}');
+
+        $clean = [
             'entries' => [
-                ['path' => 'a.txt', 'size' => 1],
-                ['path' => 'b.txt', 'sha256' => 'abc'],
+                ['path' => 'a.txt', 'sha256' => str_repeat('a', 64), 'size' => 1],
             ],
         ];
-        file_put_contents($rootArtifacts . '/dist/manifest.json', json_encode($manifest));
+        file_put_contents($rootArtifacts . '/dist/manifest.json', json_encode($clean));
 
         putenv('RUN_ENFORCE');
         $cmd = PHP_BINARY . ' '
@@ -41,7 +45,14 @@ final class GAEnforcerCoverageTest extends TestCase
         $this->assertFileExists($junit);
         $xml = (string)file_get_contents($junit);
         $this->assertStringContainsString('<testcase name="Artifacts.Schema">', $xml);
-        $this->assertStringContainsString('<skipped/>', $xml);
+        $this->assertStringContainsString('<skipped', $xml);
+
+        $bad = [
+            'files' => [
+                ['path' => 'a.txt', 'sha256' => str_repeat('a', 64), 'size' => 1],
+            ],
+        ];
+        file_put_contents($rootArtifacts . '/dist/manifest.json', json_encode($bad));
 
         putenv('RUN_ENFORCE=1');
         $cmd = PHP_BINARY . ' '
