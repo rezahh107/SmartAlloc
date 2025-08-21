@@ -54,28 +54,21 @@ if (is_file($scanner)) {
     $notes[] = 'rest permission scanner missing';
 }
 
-$sqlViolations = null;
-$sqlFiles = [];
-$sqlScanner = $root . '/scripts/scan-sql-prepare.php';
-if (is_file($sqlScanner)) {
-    $json = @shell_exec('php ' . escapeshellarg($sqlScanner));
-    if ($json !== null) {
-        $decoded = json_decode($json, true);
-        if (is_array($decoded)) {
-            $sqlViolations = count($decoded);
-            foreach (array_slice($decoded, 0, 10) as $item) {
-                if (isset($item['file'])) {
-                    $sqlFiles[] = $item['file'];
-                }
-            }
-        } else {
-            $notes[] = 'sql prepare scan parse failed';
-        }
+$sqlCounts = null;
+$sqlReport = $root . '/artifacts/security/sql-prepare.json';
+if (is_file($sqlReport)) {
+    $data = json_decode((string)file_get_contents($sqlReport), true);
+    if (is_array($data) && isset($data['counts'])) {
+        $sqlCounts = [
+            'violations' => (int)($data['counts']['violations'] ?? 0),
+            'allowlisted' => (int)($data['counts']['allowlisted'] ?? 0),
+        ];
+        ksort($sqlCounts);
     } else {
-        $notes[] = 'sql prepare scan failed';
+        $notes[] = 'sql prepare report parse failed';
     }
 } else {
-    $notes[] = 'sql prepare scanner missing';
+    $notes[] = 'sql prepare report missing';
 }
 
 $data = [
@@ -83,24 +76,27 @@ $data = [
     'env' => $env,
     'test_files' => $testFiles,
     'rest_permission_violations' => $restViolations,
-    'sql_prepare_violations' => $sqlViolations,
+    'sql_prepare' => $sqlCounts,
     'notes' => $notes,
 ];
+ksort($data);
 
-file_put_contents($root . '/qa-report.json', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+$jsonOut = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+file_put_contents($root . '/qa-report.json', $jsonOut);
+@mkdir($root . '/artifacts/qa', 0777, true);
+file_put_contents($root . '/artifacts/qa/qa-report.json', $jsonOut);
+file_put_contents($root . '/artifacts/qa/report.json', $jsonOut);
 
 $html  = '<!DOCTYPE html><html dir="rtl"><meta charset="utf-8"><title>QA Report</title><body>';
 $html .= '<h1>QA Report</h1><ul>';
 $html .= '<li>Coverage: ' . ($coverage !== null ? $coverage . '%' : 'N/A') . '</li>';
 $html .= '<li>Test files: ' . $testFiles . '</li>';
 $html .= '<li>REST permission violations: ' . ($restViolations !== null ? $restViolations : 'N/A') . '</li>';
-$html .= '<li>SQL prepare violations: ' . ($sqlViolations !== null ? $sqlViolations : 'N/A');
-if ($sqlFiles) {
-    $html .= '<ul>';
-    foreach ($sqlFiles as $f) {
-        $html .= '<li>' . htmlspecialchars($f, ENT_QUOTES, 'UTF-8') . '</li>';
-    }
-    $html .= '</ul>';
+$html .= '<li>SQL prepare: ';
+if ($sqlCounts !== null) {
+    $html .= 'violations=' . $sqlCounts['violations'] . ', allowlisted=' . $sqlCounts['allowlisted'];
+} else {
+    $html .= 'N/A';
 }
 $html .= '</li>';
 $html .= '<li>Env toggles:<ul>';

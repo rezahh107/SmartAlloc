@@ -80,6 +80,14 @@ report always includes a testcase `Artifacts.Schema`; advisory runs mark it
 skipped, and GA enforcement fails the testcase when schema warnings exceed the
 configured threshold.
 
+The SQL prepare scanner integrates similarly. GA Enforcer runs
+`scan-sql-prepare.php` automatically and emits a testcase `SQL.Prepare` in its
+JUnit output. Advisory and RC profiles mark the testcase skipped with a message
+containing the violation and allowlist counts. When run with
+`--profile=ga --enforce`, any non‑allowlisted violations cause the testcase to
+fail and the first few `file:line` locations are included in the failure
+message.
+
 ### Profiles
 
 * RC: `coverage_pct_min` 60, `schema_warnings` ≤ 3
