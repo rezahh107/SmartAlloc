@@ -4,30 +4,21 @@ declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
 final class PotFreshnessTest extends TestCase {
-    public function test_pot_is_fresh_enough_or_skip(): void {
+    public function test_pot_refresh_or_skip(): void {
         if (getenv('RUN_I18N_POT') !== '1') {
-            $this->markTestSkipped('pot freshness opt-in');
+            $this->markTestSkipped('pot refresh opt-in');
         }
-        $pot = dirname(__DIR__, 2) . '/artifacts/i18n/messages.pot';
-        if (!is_file($pot)) {
-            $this->markTestSkipped('messages.pot not found');
-        }
-        $count = $this->countEntries($pot);
-        if ($count < 10) {
-            $this->markTestSkipped('messages.pot has ' . $count . ' entries');
-        }
-        $this->assertGreaterThanOrEqual(10, $count);
-    }
-
-    private function countEntries(string $file): int {
-        $lines = file($file) ?: [];
-        $count = 0;
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (str_starts_with($line, 'msgid "') && $line !== 'msgid ""') {
-                $count++;
-            }
-        }
-        return $count;
+        $root = dirname(__DIR__, 2);
+        $script = $root . '/scripts/pot-refresh.php';
+        $json = $root . '/artifacts/i18n/pot-refresh.json';
+        $pot = $root . '/artifacts/i18n/messages.pot';
+        @unlink($json);
+        @unlink($pot);
+        exec(PHP_BINARY . ' ' . escapeshellarg($script), $output, $code);
+        $this->assertSame(0, $code, 'pot-refresh exit code');
+        $this->assertFileExists($pot, 'messages.pot missing');
+        $data = json_decode((string) file_get_contents($json), true);
+        $this->assertIsArray($data, 'pot-refresh.json invalid');
+        $this->assertGreaterThanOrEqual(10, (int) ($data['pot_entries'] ?? 0), 'pot_entries < 10');
     }
 }

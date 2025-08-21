@@ -60,6 +60,7 @@ if [ -f scripts/pot-refresh.php ]; then
     if [ -f artifacts/i18n/pot-refresh.json ]; then
         pot_entries=$(php -r '$d=json_decode(file_get_contents("artifacts/i18n/pot-refresh.json"),true);echo $d["pot_entries"]??0;' 2>/dev/null || echo 0)
         pot_domain_mismatch=$(php -r '$d=json_decode(file_get_contents("artifacts/i18n/pot-refresh.json"),true);echo $d["domain_mismatch"]??0;' 2>/dev/null || echo 0)
+        summary+=("i18n: pot_entries=$pot_entries, domain_mismatch=$pot_domain_mismatch")
     fi
 fi
 
