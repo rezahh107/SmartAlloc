@@ -47,7 +47,12 @@ canonical `entries` array. Each entry is sorted by path and includes:
 ```
 
 Legacy fields may appear for backwards compatibility, but `entries` is the
-source of truth for consumers.
+source of truth for consumers. If a legacy `files[]` array exists the schema
+validator emits a warning:
+
+```
+legacy files[] present; use entries[] as canonical
+```
 
 ## Artifact Schema Validation
 
@@ -59,8 +64,11 @@ artifacts. It inspects, when present:
 * `artifacts/dist/*.json`
 * `artifacts/i18n/*.json`
 
-Coverage and dist artifacts receive structural checks. `artifacts/qa/**/*.json`
-and `artifacts/i18n/**/*.json` are parsed only to verify they are valid JSON.
+Coverage and dist artifacts receive structural checks. The manifest requires a
+canonical `entries[]` array where each entry has a `path`, `sha256` (hex), and
+`size`. A legacy `files[]` array triggers the warning above.
+`artifacts/qa/**/*.json` and `artifacts/i18n/**/*.json` are parsed only to verify
+they are valid JSON.
 Results are written to `artifacts/schema/schema-validate.json`:
 
 ```json
