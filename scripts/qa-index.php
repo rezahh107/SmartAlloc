@@ -22,6 +22,8 @@ $files = [
     'i18n-lint.json',
     'pot-diff.json',
     'pot-diff.md',
+    'artifacts/i18n/messages.pot',
+    'artifacts/i18n/pot-refresh.json',
     'wporg-assets.json',
 ];
 

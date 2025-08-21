@@ -51,12 +51,21 @@ i18n_wrong=0
 i18n_placeholder=0
 pot_missing=0
 wporg_warn=0
+pot_entries=0
+pot_domain_mismatch=0
 if command -v php >/dev/null 2>&1; then
     mkdir -p "$ROOT/artifacts"
     if [ -f "$ROOT/scripts/i18n-lint.php" ]; then
         php "$ROOT/scripts/i18n-lint.php" > "$ROOT/artifacts/i18n-lint.json" 2>/dev/null || true
         i18n_wrong=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo isset($d["wrong_domain"])?count($d["wrong_domain"]):0;' "$ROOT/artifacts/i18n-lint.json" 2>/dev/null || echo 0)
         i18n_placeholder=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo isset($d["placeholder_mismatch"])?count($d["placeholder_mismatch"]):0;' "$ROOT/artifacts/i18n-lint.json" 2>/dev/null || echo 0)
+    fi
+    if [ -f "$ROOT/scripts/pot-refresh.php" ]; then
+        php "$ROOT/scripts/pot-refresh.php" >/dev/null 2>&1 || true
+        if [ -f "$ROOT/artifacts/i18n/pot-refresh.json" ]; then
+            pot_entries=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["pot_entries"]??0;' "$ROOT/artifacts/i18n/pot-refresh.json" 2>/dev/null || echo 0)
+            pot_domain_mismatch=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["domain_mismatch"]??0;' "$ROOT/artifacts/i18n/pot-refresh.json" 2>/dev/null || echo 0)
+        fi
     fi
     if [ -f "$ROOT/scripts/pot-diff.php" ]; then
         php "$ROOT/scripts/pot-diff.php" > "$ROOT/artifacts/pot-diff.json" 2>/dev/null || true
@@ -109,6 +118,8 @@ warn_lines=()
 [ "$i18n_placeholder" -gt 0 ] && warn_lines+=("WARN i18n_placeholder_mismatch=$i18n_placeholder")
 [ "$pot_missing" -gt 0 ] && warn_lines+=("WARN pot_missing=1")
 [ "$wporg_warn" -gt 0 ] && warn_lines+=("WARN wporg_asset_warnings=$wporg_warn")
+[ "$pot_domain_mismatch" -gt 0 ] && warn_lines+=("WARN pot_domain_mismatch=$pot_domain_mismatch")
+[ "$pot_entries" -eq 0 ] && warn_lines+=("WARN pot_entries=0")
 for w in "${warn_lines[@]}"; do
     echo "$w" >> "$ROOT/artifacts/ga/GA_READY.txt"
 done
