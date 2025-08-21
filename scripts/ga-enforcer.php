@@ -203,9 +203,7 @@ if (is_file($vc)) {
 // coverage
 $signals['coverage_pct'] = null;
 $covJson = $root . '/artifacts/coverage/coverage.json';
-if (!is_file($covJson)) {
-    @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/coverage-import.php'));
-}
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/coverage-import.php'));
 if (is_file($covJson)) {
     $data = json_decode((string)file_get_contents($covJson), true);
     if (is_array($data)) {

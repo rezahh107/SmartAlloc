@@ -5,13 +5,12 @@ use PHPUnit\Framework\TestCase;
 
 final class GAEnforcerCoverageTest extends TestCase
 {
-    public function test_ga_profile_enforces_low_coverage(): void
+    public function test_artifacts_schema_junit_behavior(): void
     {
-        if (getenv('RUN_ENFORCE') !== '1') {
-            $this->markTestSkipped('opt-in');
-        }
-
         $rootArtifacts = __DIR__ . '/../../../artifacts';
+        if (is_dir($rootArtifacts)) {
+            exec('rm -rf ' . escapeshellarg($rootArtifacts));
+        }
         @mkdir($rootArtifacts . '/coverage', 0777, true);
         @mkdir($rootArtifacts . '/dist', 0777, true);
         @mkdir($rootArtifacts . '/i18n', 0777, true);
@@ -27,6 +26,9 @@ final class GAEnforcerCoverageTest extends TestCase
         $pot = ['pot_entries' => 10, 'domain_mismatch' => 0];
         file_put_contents($rootArtifacts . '/i18n/pot-refresh.json', json_encode($pot));
         file_put_contents($rootArtifacts . '/dist/sbom.json', '{}');
+        file_put_contents($rootArtifacts . '/dist/dist-audit.json', json_encode(['summary' => ['violations' => 0]]));
+        @mkdir($rootArtifacts . '/qa', 0777, true);
+        file_put_contents($rootArtifacts . '/qa/wporg-lint.json', json_encode(['readme' => [], 'assets' => []]));
 
         $clean = [
             'entries' => [

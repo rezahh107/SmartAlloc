@@ -94,24 +94,28 @@ foreach ($candidates as $cand) {
                         }
                     }
                 }
-                $files[] = [
+                $row = [
                     'path' => $path,
                     'lines_total' => $lt,
                     'lines_covered' => $lc,
                     'pct' => pct($lc, $lt),
                 ];
+                ksort($row);
+                $files[] = $row;
                 $total += $lt;
                 $covered += $lc;
             }
             usort($files, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
+            $totals = [
+                'lines_total' => $total,
+                'lines_covered' => $covered,
+                'pct' => pct($covered, $total),
+            ];
+            ksort($totals);
             $out = [
                 'source' => 'clover',
                 'generated_at' => gmdate('Y-m-d\\TH:i:s\\Z'),
-                'totals' => [
-                    'lines_total' => $total,
-                    'lines_covered' => $covered,
-                    'pct' => pct($covered, $total),
-                ],
+                'totals' => $totals,
                 'files' => $files,
             ];
         }
@@ -127,22 +131,26 @@ foreach ($candidates as $cand) {
                 $path = rel_path((string)($f['path'] ?? ($f['file'] ?? '')), $root);
                 $fl = (int)($f['lines_total'] ?? $f['lines'] ?? 0);
                 $fc = (int)($f['lines_covered'] ?? $f['covered'] ?? 0);
-                $files[] = [
+                $row = [
                     'path' => $path,
                     'lines_total' => $fl,
                     'lines_covered' => $fc,
                     'pct' => pct($fc, $fl),
                 ];
+                ksort($row);
+                $files[] = $row;
             }
             usort($files, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
+            $totals = [
+                'lines_total' => $lt,
+                'lines_covered' => $lc,
+                'pct' => pct($lc, $lt),
+            ];
+            ksort($totals);
             $out = [
                 'source' => 'json',
                 'generated_at' => gmdate('Y-m-d\\TH:i:s\\Z'),
-                'totals' => [
-                    'lines_total' => $lt,
-                    'lines_covered' => $lc,
-                    'pct' => pct($lc, $lt),
-                ],
+                'totals' => $totals,
                 'files' => $files,
             ];
         }
@@ -153,6 +161,7 @@ foreach ($candidates as $cand) {
 }
 
 $tmp = $target . '.tmp';
+ksort($out);
 file_put_contents($tmp, json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION) . "\n");
 rename($tmp, $target);
 
