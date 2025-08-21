@@ -1,5 +1,7 @@
 # Post-Release Monitoring & Operations (SmartAlloc)
 
+Run [`scripts/post-release-watch.sh`](../scripts/post-release-watch.sh) for an optional alerts checklist.
+
 ## Weekly
 - Patchstack scan & dependency review (record findings)
 - Review error logs & redaction samples (PII-free)
@@ -35,6 +37,8 @@
 ### Weekly Checks
 - Run Patchstack security scan.
 - Review DB health: indexes and table size trends.
+- Verify error rate < 0.1%.
+- Review LCP < 2.5s and CLS < 0.1 dashboards.
 - Smoke test: onboard one new student end-to-end.
 
 ### Examples
