@@ -12,6 +12,8 @@ i18n_wrong_domain=0
 i18n_placeholder_mismatch=0
 pot_missing=0
 wporg_asset_warnings=0
+pot_entries=0
+pot_domain_mismatch=0
 
 run_step() {
     local label="$1"; shift
@@ -52,6 +54,15 @@ if [ -f scripts/i18n-lint.php ]; then
     fi
 fi
 
+# POT refresh
+if [ -f scripts/pot-refresh.php ]; then
+    run_step "POT refresh" "php scripts/pot-refresh.php >/dev/null"
+    if [ -f artifacts/i18n/pot-refresh.json ]; then
+        pot_entries=$(php -r '$d=json_decode(file_get_contents("artifacts/i18n/pot-refresh.json"),true);echo $d["pot_entries"]??0;' 2>/dev/null || echo 0)
+        pot_domain_mismatch=$(php -r '$d=json_decode(file_get_contents("artifacts/i18n/pot-refresh.json"),true);echo $d["domain_mismatch"]??0;' 2>/dev/null || echo 0)
+    fi
+fi
+
 # POT diff
 if [ -f scripts/pot-diff.php ]; then
     run_step "POT diff" "php scripts/pot-diff.php > pot-diff.json"
@@ -87,7 +98,7 @@ echo "QA Orchestrator Summary:"
 for line in "${summary[@]}"; do
     echo " - $line"
 done
-echo "Counts: i18n_wrong_domain=$i18n_wrong_domain, i18n_placeholder_mismatch=$i18n_placeholder_mismatch, pot_missing=$pot_missing, wporg_asset_warnings=$wporg_asset_warnings"
+echo "Counts: i18n_wrong_domain=$i18n_wrong_domain, i18n_placeholder_mismatch=$i18n_placeholder_mismatch, pot_missing=$pot_missing, wporg_asset_warnings=$wporg_asset_warnings, pot_entries=$pot_entries, domain_mismatch=$pot_domain_mismatch"
 echo "Done."
 
 exit 0
