@@ -2,7 +2,7 @@
 /*
 Plugin Name: SmartAlloc
 Description: Event-driven student support allocation with Gravity Forms + Exporter.
-Version: 1.0.0-rc.1
+Version: 1.0.0-rc.2
 Author: رضا هاشمی حسینی
 Text Domain: smartalloc
 Domain Path: /languages
@@ -104,8 +104,8 @@ if (defined('WP_CLI') && WP_CLI) {
 // Persian Admin Menu
 add_action('admin_menu', function () {
     add_menu_page(
-        esc_html__('مدیریت تخصیص هوشمند', 'smart-alloc'),
-        esc_html__('مدیریت تخصیص هوشمند', 'smart-alloc'),
+        esc_html__('مدیریت تخصیص هوشمند', 'smartalloc'),
+        esc_html__('مدیریت تخصیص هوشمند', 'smartalloc'),
         SMARTALLOC_CAP,
         'smartalloc-dashboard',
         function () { SmartAlloc\Http\Admin\AdminController::dashboard(); },
@@ -115,8 +115,8 @@ add_action('admin_menu', function () {
 
     add_submenu_page(
         'smartalloc-dashboard',
-        esc_html__('داشبورد', 'smart-alloc'),
-        esc_html__('داشبورد', 'smart-alloc'),
+        esc_html__('داشبورد', 'smartalloc'),
+        esc_html__('داشبورد', 'smartalloc'),
         SMARTALLOC_CAP,
         'smartalloc-dashboard',
         function () { SmartAlloc\Http\Admin\AdminController::dashboard(); }
@@ -124,8 +124,8 @@ add_action('admin_menu', function () {
 
     add_submenu_page(
         'smartalloc-dashboard',
-        esc_html__('تنظیمات', 'smart-alloc'),
-        esc_html__('تنظیمات', 'smart-alloc'),
+        esc_html__('تنظیمات', 'smartalloc'),
+        esc_html__('تنظیمات', 'smartalloc'),
         SMARTALLOC_CAP,
         'smartalloc-settings',
         function () { SmartAlloc\Http\Admin\AdminController::settings(); }
@@ -133,8 +133,8 @@ add_action('admin_menu', function () {
 
     add_submenu_page(
         'smartalloc-dashboard',
-        esc_html__('گزارش‌ها', 'smart-alloc'),
-        esc_html__('گزارش‌ها', 'smart-alloc'),
+        esc_html__('گزارش‌ها', 'smartalloc'),
+        esc_html__('گزارش‌ها', 'smartalloc'),
         SMARTALLOC_CAP,
         'smartalloc-reports',
         function () { SmartAlloc\Http\Admin\AdminController::reports(); }
@@ -142,8 +142,8 @@ add_action('admin_menu', function () {
 
     add_submenu_page(
         'smartalloc-dashboard',
-        esc_html__('لاگ‌ها', 'smart-alloc'),
-        esc_html__('لاگ‌ها', 'smart-alloc'),
+        esc_html__('لاگ‌ها', 'smartalloc'),
+        esc_html__('لاگ‌ها', 'smartalloc'),
         SMARTALLOC_CAP,
         'smartalloc-logs',
         function () { SmartAlloc\Http\Admin\AdminController::logs(); }

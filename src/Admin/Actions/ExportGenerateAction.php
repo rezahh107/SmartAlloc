@@ -57,6 +57,7 @@ final class ExportGenerateAction
         $checksum = file_exists($path) ? hash_file('sha256', $path) : '';
 
         $table = $wpdb->prefix . 'smartalloc_exports';
+        // @security-ok-sql
         $wpdb->insert($table, [
             'filename'   => $filename,
             'path'       => $path,

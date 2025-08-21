@@ -47,7 +47,7 @@ final class ManualReviewPage
         echo '<input type="text" name="reason_code" placeholder="reason" value="' . esc_attr((string)($filters['reason_code'] ?? '')) . '" /> ';
         echo '<input type="date" name="date_from" value="' . esc_attr((string)($filters['date_from'] ?? '')) . '" /> ';
         echo '<input type="date" name="date_to" value="' . esc_attr((string)($filters['date_to'] ?? '')) . '" /> ';
-        submit_button(__('Filter'), '', '', false);
+        submit_button(__('Filter', 'smartalloc'), '', '', false);
         echo '</form>';
 
         echo '<form method="post" id="smartalloc-manual-form">';

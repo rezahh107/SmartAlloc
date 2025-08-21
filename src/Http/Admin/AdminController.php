@@ -35,19 +35,19 @@ final class AdminController
 
             // Render dashboard view
             echo '<div class="wrap">';
-            echo '<h1>' . esc_html__('داشبورد مدیریت تخصیص هوشمند', 'smart-alloc') . '</h1>';
-            echo '<p>' . esc_html__('خوش آمدید به داشبورد مدیریت تخصیص هوشمند. در اینجا می‌توانید وضعیت کلی سیستم را مشاهده کنید.', 'smart-alloc') . '</p>';
+            echo '<h1>' . esc_html__('داشبورد مدیریت تخصیص هوشمند', 'smartalloc') . '</h1>';
+            echo '<p>' . esc_html__('خوش آمدید به داشبورد مدیریت تخصیص هوشمند. در اینجا می‌توانید وضعیت کلی سیستم را مشاهده کنید.', 'smartalloc') . '</p>';
 
-            echo '<h2>' . esc_html__('آمار تخصیص', 'smart-alloc') . '</h2>';
+            echo '<h2>' . esc_html__('آمار تخصیص', 'smartalloc') . '</h2>';
             echo '<table class="wp-list-table widefat fixed striped">';
-            echo '<caption class="screen-reader-text">' . esc_html__('آمار کلی تخصیص پشتیبان‌ها', 'smart-alloc') . '</caption>';
+            echo '<caption class="screen-reader-text">' . esc_html__('آمار کلی تخصیص پشتیبان‌ها', 'smartalloc') . '</caption>';
             echo '<thead><tr>';
-            echo '<th scope="col">' . esc_html__('کل پشتیبان‌ها', 'smart-alloc') . '</th>';
-            echo '<th scope="col">' . esc_html__('کل ظرفیت', 'smart-alloc') . '</th>';
-            echo '<th scope="col">' . esc_html__('تخصیص‌یافته', 'smart-alloc') . '</th>';
-            echo '<th scope="col">' . esc_html__('میانگین اشغال', 'smart-alloc') . '</th>';
-            echo '<th scope="col">' . esc_html__('تخصیص‌های امروز', 'smart-alloc') . '</th>';
-            echo '<th scope="col">' . esc_html__('ظرفیت باقیمانده', 'smart-alloc') . '</th>';
+            echo '<th scope="col">' . esc_html__('کل پشتیبان‌ها', 'smartalloc') . '</th>';
+            echo '<th scope="col">' . esc_html__('کل ظرفیت', 'smartalloc') . '</th>';
+            echo '<th scope="col">' . esc_html__('تخصیص‌یافته', 'smartalloc') . '</th>';
+            echo '<th scope="col">' . esc_html__('میانگین اشغال', 'smartalloc') . '</th>';
+            echo '<th scope="col">' . esc_html__('تخصیص‌های امروز', 'smartalloc') . '</th>';
+            echo '<th scope="col">' . esc_html__('ظرفیت باقیمانده', 'smartalloc') . '</th>';
             echo '</tr></thead>';
             echo '<tbody>';
             echo '<tr>';

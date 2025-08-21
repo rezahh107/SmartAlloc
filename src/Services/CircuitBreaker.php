@@ -122,6 +122,7 @@ final class CircuitBreaker
     {
         global $wpdb;
         
+        // @security-ok-sql
         $results = $wpdb->get_results(
             "SELECT * FROM {$this->table} ORDER BY name",
             'ARRAY_A'

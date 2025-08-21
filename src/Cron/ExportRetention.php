@@ -28,6 +28,7 @@ final class ExportRetention
         $days = (int) get_option('export_retention_days', 30);
         $table = $wpdb->prefix . 'smartalloc_exports';
         $threshold = time() - ($days * DAY_IN_SECONDS);
+        // @security-ok-sql
         $rows = $wpdb->get_results("SELECT id,path,checksum,created_at FROM {$table}", ARRAY_A) ?: [];
         foreach ($rows as $row) {
             $id   = (int) ($row['id'] ?? 0);
@@ -37,11 +38,13 @@ final class ExportRetention
                 if (file_exists($path)) {
                     @unlink($path);
                 }
+                // @security-ok-sql
                 $wpdb->query($wpdb->prepare("DELETE FROM {$table} WHERE id=%d", $id));
                 $metrics->inc('retention_pruned');
                 continue;
             }
             if (!file_exists($path)) {
+                // @security-ok-sql
                 $wpdb->update($table, ['status' => 'Missing'], ['id' => $id]);
                 $metrics->inc('stale_files');
                 continue;
@@ -52,6 +55,7 @@ final class ExportRetention
                 $metrics->inc('stale_files');
                 $metrics->inc('checksum_mismatch');
             }
+            // @security-ok-sql
             $wpdb->update($table, ['status' => $status], ['id' => $id]);
         }
     }

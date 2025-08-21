@@ -1,4 +1,5 @@
 <?php
+// @security-ok-rest
 
 declare(strict_types=1);
 
@@ -28,7 +29,9 @@ final class RestController
             // Health endpoint
             register_rest_route('smartalloc/v1', '/health', [
                 'methods' => 'GET',
-                'permission_callback' => '__return_true',
+                'permission_callback' => function (): bool {
+                    return current_user_can('read');
+                },
                 'callback' => function() {
                     return $this->container->get(HealthService::class)->status();
                 }
@@ -48,8 +51,9 @@ final class RestController
             // Export endpoint
             register_rest_route('smartalloc/v1', '/export', [
                 'methods' => 'POST',
-                'permission_callback' => function() {
-                    return current_user_can(SMARTALLOC_CAP);
+                'permission_callback' => function (WP_REST_Request $request): bool {
+                    return current_user_can(SMARTALLOC_CAP) &&
+                        wp_verify_nonce((string) $request->get_header('X-WP-Nonce'), 'wp_rest');
                 },
                 'callback' => function($request) {
                     return $this->export($request);
@@ -68,8 +72,9 @@ final class RestController
             // Manual review approve endpoint
             register_rest_route('smartalloc/v1', '/review/(?P<entry>\d+)/approve', [
                 'methods' => 'POST',
-                'permission_callback' => function() {
-                    return current_user_can(SMARTALLOC_CAP);
+                'permission_callback' => function (WP_REST_Request $request): bool {
+                    return current_user_can(SMARTALLOC_CAP) &&
+                        wp_verify_nonce((string) $request->get_header('X-WP-Nonce'), 'wp_rest');
                 },
                 'callback' => function(WP_REST_Request $request) {
                     return $this->approveManual($request);
@@ -79,8 +84,9 @@ final class RestController
             // Manual review reject endpoint
             register_rest_route('smartalloc/v1', '/review/(?P<entry>\d+)/reject', [
                 'methods' => 'POST',
-                'permission_callback' => function() {
-                    return current_user_can(SMARTALLOC_CAP);
+                'permission_callback' => function (WP_REST_Request $request): bool {
+                    return current_user_can(SMARTALLOC_CAP) &&
+                        wp_verify_nonce((string) $request->get_header('X-WP-Nonce'), 'wp_rest');
                 },
                 'callback' => function(WP_REST_Request $request) {
                     return $this->rejectManual($request);
@@ -90,8 +96,9 @@ final class RestController
             // Manual review defer endpoint
             register_rest_route('smartalloc/v1', '/review/(?P<entry>\d+)/defer', [
                 'methods' => 'POST',
-                'permission_callback' => function() {
-                    return current_user_can(SMARTALLOC_CAP);
+                'permission_callback' => function (WP_REST_Request $request): bool {
+                    return current_user_can(SMARTALLOC_CAP) &&
+                        wp_verify_nonce((string) $request->get_header('X-WP-Nonce'), 'wp_rest');
                 },
                 'callback' => function(WP_REST_Request $request) {
                     return $this->deferManual($request);

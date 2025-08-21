@@ -4,7 +4,7 @@ Tags: allocation, exporter
 Requires at least: 6.3
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.0-rc.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 

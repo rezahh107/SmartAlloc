@@ -25,6 +25,9 @@
             <directory>tests</directory>
         </exclude>
     </coverage>
+    <logging>
+        <log type="coverage-clover" target="artifacts/coverage/clover.xml"/>
+    </logging>
     <php>
         <env name="WP_TESTS_DIR" value="vendor/wordpress/wordpress-tests-lib"/>
         <env name="WP_CORE_DIR" value="vendor/wordpress/wordpress"/>

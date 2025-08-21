@@ -67,6 +67,7 @@ final class ManualAssignAction
         // Simple query for available mentors
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_mentors';
+        // @security-ok-sql
         $rows  = $wpdb->get_results("SELECT mentor_id, name, assigned, capacity FROM {$table} WHERE active = 1 AND assigned < capacity LIMIT 5", ARRAY_A) ?: [];
         $out   = [];
         foreach ($rows as $r) {

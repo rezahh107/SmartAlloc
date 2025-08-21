@@ -215,7 +215,7 @@ final class GravityForms
                 // Check if mobile starts with 09 and is exactly 11 digits
                 if (!empty($normalized) && (!preg_match('/^09\d{9}$/', $normalized) || strlen($normalized) !== 11)) {
                     $result['is_valid'] = false;
-                    $result['message'] = __('شماره موبایل باید با ۰۹ شروع شود و دقیقاً ۱۱ رقم باشد.', 'smart-alloc');
+                    $result['message'] = __('شماره موبایل باید با ۰۹ شروع شود و دقیقاً ۱۱ رقم باشد.', 'smartalloc');
                 }
             }
 
@@ -226,7 +226,7 @@ final class GravityForms
                 // Check if tracking equals 1111111111111111 (حکمت tracking rule)
                 if (!empty($normalized) && $normalized === '1111111111111111') {
                     $result['is_valid'] = false;
-                    $result['message'] = __('کد رهگیری نمی‌تواند ۱۱۱۱۱۱۱۱۱۱۱۱۱۱۱۱ باشد.', 'smart-alloc');
+                    $result['message'] = __('کد رهگیری نمی‌تواند ۱۱۱۱۱۱۱۱۱۱۱۱۱۱۱۱ باشد.', 'smartalloc');
                 }
             }
 
@@ -249,7 +249,7 @@ final class GravityForms
                 'error' => $e->getMessage()
             ]);
             $result['is_valid'] = false;
-            $result['message'] = __('خطا در اعتبارسنجی فیلد.', 'smart-alloc');
+            $result['message'] = __('خطا در اعتبارسنجی فیلد.', 'smartalloc');
         }
 
         return $result;
@@ -273,7 +273,7 @@ final class GravityForms
                 
                 if ($normalizedValue === $normalizedOther) {
                     $result['is_valid'] = false;
-                    $result['message'] = __('شماره‌های تماس رابط نمی‌توانند یکسان باشند.', 'smart-alloc');
+                    $result['message'] = __('شماره‌های تماس رابط نمی‌توانند یکسان باشند.', 'smartalloc');
                     break;
                 }
             }

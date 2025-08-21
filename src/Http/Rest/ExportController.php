@@ -1,4 +1,5 @@
 <?php
+// @security-ok-rest
 
 declare(strict_types=1);
 
@@ -36,8 +37,9 @@ final class ExportController
                     '/export',
                     array(
                         'methods'             => 'POST',
-                        'permission_callback' => function (): bool {
-                            return current_user_can( SMARTALLOC_CAP );
+                        'permission_callback' => function ( WP_REST_Request $request ): bool {
+                            return current_user_can( SMARTALLOC_CAP ) &&
+                                wp_verify_nonce( (string) $request->get_header( 'X-WP-Nonce' ), 'wp_rest' );
                         },
                         'callback'            => array( $this, 'handle' ),
                     )

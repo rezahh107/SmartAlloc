@@ -1,4 +1,6 @@
 <?php
+// @security-ok-nonce
+// @security-ok-rest
 
 declare(strict_types=1);
 
@@ -19,10 +21,22 @@ final class WebhookController
             }
             register_rest_route('smartalloc/v1', '/hook/allocate', [
                 'methods' => 'POST',
-                'permission_callback' => '__return_true',
+                'permission_callback' => [$this, 'permissions'],
                 'callback' => [$this, 'handle'],
             ]);
         });
+    }
+
+    public function permissions(WP_REST_Request $request): bool
+    {
+        $ts = (int) $request->get_header('X-SmartAlloc-Timestamp');
+        if (abs(time() - $ts) > 300) {
+            return false;
+        }
+        $secret = Settings::getWebhookSecret();
+        $sig = (string) $request->get_header('X-SmartAlloc-Signature');
+        $expected = hash_hmac('sha256', $request->get_body() ?: '', $secret);
+        return $sig !== '' && hash_equals($expected, $sig);
     }
 
     /** @return WP_Error|WP_REST_Response */

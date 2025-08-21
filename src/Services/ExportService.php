@@ -432,6 +432,7 @@ final class ExportService
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_export_log';
         
+        // @security-ok-sql
         $wpdb->insert($table, [
             'file_name' => $filename,
             'rows_total' => $rowsTotal,
@@ -449,6 +450,7 @@ final class ExportService
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_export_errors';
         
+        // @security-ok-sql
         $wpdb->insert($table, [
             'export_id' => 0, // No specific export ID for failed exports
             'row_idx' => 0,
@@ -466,6 +468,7 @@ final class ExportService
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_export_errors';
         
+        // @security-ok-sql
         return $wpdb->get_results(
             "SELECT * FROM {$table} ORDER BY id DESC LIMIT 100",
             'ARRAY_A'

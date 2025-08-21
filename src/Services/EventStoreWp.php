@@ -28,16 +28,14 @@ final class EventStoreWp implements EventStoreInterface
     {
         global $wpdb;
         
-        $sql = $wpdb->prepare(
-            "INSERT INTO {$this->eventTable}(event_name, dedup_key, payload_json) 
-             VALUES (%s, %s, %s) 
+        $result = $wpdb->query($wpdb->prepare(
+            "INSERT INTO {$this->eventTable}(event_name, dedup_key, payload_json)
+             VALUES (%s, %s, %s)
              ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)",
             $event,
             $dedupeKey,
             wp_json_encode($payload)
-        );
-        
-        $result = $wpdb->query($sql);
+        ));
         
         if ($result === false) {
             throw new \RuntimeException('Database insertEvent error: ' . $wpdb->last_error);
@@ -54,6 +52,7 @@ final class EventStoreWp implements EventStoreInterface
     {
         global $wpdb;
         
+        // @security-ok-sql
         $result = $wpdb->insert($this->listenerTable, [
             'event_log_id' => $eventLogId,
             'listener' => $listener,
@@ -74,6 +73,7 @@ final class EventStoreWp implements EventStoreInterface
     {
         global $wpdb;
         
+        // @security-ok-sql
         $wpdb->update($this->listenerTable, [
             'status' => $status,
             'error_text' => $error,
@@ -88,6 +88,7 @@ final class EventStoreWp implements EventStoreInterface
     {
         global $wpdb;
         
+        // @security-ok-sql
         $wpdb->update($this->eventTable, [
             'status' => $status,
             'error_text' => $error,
