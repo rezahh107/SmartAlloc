@@ -61,6 +61,19 @@ spl_autoload_register(function ($class) {
     }
 });
 
+// Lazy-load Composer autoloader on demand to conserve memory.
+spl_autoload_register(function ($class) {
+    static $loaded = false;
+    if ($loaded || str_starts_with($class, 'SmartAlloc\\')) {
+        return;
+    }
+    $autoload = __DIR__ . '/vendor/autoload.php';
+    if (file_exists($autoload)) {
+        $loaded = true;
+        require_once $autoload;
+    }
+}, true, true);
+
 // Activation hook
 register_activation_hook(__FILE__, function (bool $network_wide) {
     SmartAlloc\Bootstrap::activate($network_wide);
@@ -68,10 +81,6 @@ register_activation_hook(__FILE__, function (bool $network_wide) {
 
 // Load textdomain and initialize
 add_action('plugins_loaded', function () {
-    $autoload = __DIR__ . '/vendor/autoload.php';
-    if (file_exists($autoload)) {
-        require_once $autoload;
-    }
     load_plugin_textdomain('smartalloc', false, dirname(plugin_basename(__FILE__)) . '/languages');
     SmartAlloc\Bootstrap::init();
 

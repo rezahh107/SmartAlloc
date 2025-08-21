@@ -3,7 +3,6 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
          colors="true"
-         verbose="true"
          stopOnFailure="false">
     <testsuites>
         <testsuite name="SmartAlloc Test Suite">
@@ -24,10 +23,10 @@
             <directory>vendor</directory>
             <directory>tests</directory>
         </exclude>
+        <report>
+            <clover outputFile="artifacts/coverage/clover.xml"/>
+        </report>
     </coverage>
-    <logging>
-        <log type="coverage-clover" target="artifacts/coverage/clover.xml"/>
-    </logging>
     <php>
         <env name="WP_TESTS_DIR" value="vendor/wordpress/wordpress-tests-lib"/>
         <env name="WP_CORE_DIR" value="vendor/wordpress/wordpress"/>
