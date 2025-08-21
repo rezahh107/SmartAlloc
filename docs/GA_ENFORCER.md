@@ -7,8 +7,9 @@ fails a build when enforcement is explicitly enabled.
 ## Coverage Import
 
 `scripts/coverage-import.php` normalises coverage reports into
-`artifacts/coverage/coverage.json`. Set `COVERAGE_INPUT` to override the
-search path.
+`artifacts/coverage/coverage.json`. GA Enforcer invokes this script
+automatically before evaluating coverage signals. Set `COVERAGE_INPUT` to
+override the search path.
 
 **Search order**
 
@@ -40,7 +41,8 @@ determinism. If no input is found the script writes a zeroed document with
 ## Dist Manifest
 
 `scripts/dist-manifest.php` writes `artifacts/dist/manifest.json` containing a
-canonical `entries` array. Each entry is sorted by path and includes:
+canonical `entries` array. The schema validator requires this manifest to
+exist. Each entry is sorted by path and includes:
 
 ```json
 { "path": "file.php", "sha256": "...", "size": 123 }
@@ -48,7 +50,7 @@ canonical `entries` array. Each entry is sorted by path and includes:
 
 Legacy fields may appear for backwards compatibility, but `entries` is the
 source of truth for consumers. If a legacy `files[]` array exists the schema
-validator emits a warning:
+validator emits an advisory warning:
 
 ```
 legacy files[] present; use entries[] as canonical

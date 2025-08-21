@@ -77,6 +77,8 @@ if (is_file($manifest)) {
             $warnings[] = ['file' => $rel, 'reason' => 'legacy files[] present; use entries[] as canonical'];
         }
     }
+} else {
+    $warnings[] = ['file' => substr($manifest, strlen($root) + 1), 'reason' => 'missing file'];
 }
 
 // qa and i18n JSON parseability
@@ -98,12 +100,19 @@ foreach (['qa', 'i18n'] as $dir) {
     }
 }
 
-usort($warnings, fn(array $a, array $b): int => strcmp($a['file'], $b['file']));
+usort(
+    $warnings,
+    function (array $a, array $b): int {
+        $cmp = strcmp($a['file'], $b['file']);
+        return $cmp !== 0 ? $cmp : strcmp($a['reason'], $b['reason']);
+    }
+);
 
 $out = [
     'warnings' => $warnings,
     'count' => count($warnings),
 ];
+ksort($out);
 
 $tmp = $schemaDir . '/schema-validate.json.tmp';
 file_put_contents($tmp, json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
