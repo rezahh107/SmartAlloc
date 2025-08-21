@@ -54,6 +54,26 @@ foreach ($paths as $p) {
         case 'manifest.json':
             if (empty($data['entries']) || !is_array($data['entries'])) {
                 $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'entries'];
+            } else {
+                foreach ($data['entries'] as $i => $entry) {
+                    if (!is_array($entry)) {
+                        $items[] = [
+                            'path' => substr($p, strlen($root) + 1),
+                            'issue' => 'Invalid entry',
+                            'field' => 'entries[' . $i . ']'
+                        ];
+                        continue;
+                    }
+                    foreach ([['path','string'], ['sha256','string'], ['size','integer']] as [$field,$type]) {
+                        if (!array_key_exists($field, $entry) || gettype($entry[$field]) !== $type) {
+                            $items[] = [
+                                'path' => substr($p, strlen($root) + 1),
+                                'issue' => 'Missing field',
+                                'field' => 'entries[' . $i .'].'.$field,
+                            ];
+                        }
+                    }
+                }
             }
             break;
         case 'sbom.json':

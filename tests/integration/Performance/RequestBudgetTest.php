@@ -15,7 +15,7 @@ final class RequestBudgetTest extends TestCase
         }
 
         $queries = function_exists('get_num_queries') ? get_num_queries() : -1;
-        if ($queries === -1) {
+        if ($queries === -1 || !defined('SAVEQUERIES') || SAVEQUERIES !== true) {
             $this->markTestSkipped('SAVEQUERIES not enabled');
         }
 

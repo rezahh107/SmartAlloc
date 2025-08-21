@@ -37,6 +37,18 @@ Files are sorted by path and percentages are rounded to two decimals for
 determinism. If no input is found the script writes a zeroed document with
 `"source": "none"`.
 
+## Dist Manifest
+
+`scripts/dist-manifest.php` writes `artifacts/dist/manifest.json` containing a
+canonical `entries` array. Each entry is sorted by path and includes:
+
+```json
+{ "path": "file.php", "sha256": "...", "size": 123 }
+```
+
+Legacy fields may appear for backwards compatibility, but `entries` is the
+source of truth for consumers.
+
 ## Artifact Schema Validation
 
 `scripts/artifact-schema-validate.php` scans for malformed or incomplete JSON
@@ -48,15 +60,15 @@ artifacts. It inspects, when present:
 * `artifacts/i18n/*.json`
 
 Each file is decoded and basic fields are verified (e.g. `totals.pct` in
-coverage, `entries` in a dist manifest). Results are written to
+coverage, `entries[*].path/sha256/size` in a dist manifest). Results are written to
 `artifacts/schema/schema-validate.json`:
 
 ```json
 { "warnings": 0, "items": [ { "path": "...", "issue": "Missing field", "field": "totals.pct" } ] }
 ```
 
-This validator is advisory; warnings do not fail the build unless GA Enforcer is
-run in enforce mode with a `schema_warnings` threshold.
+This validator is advisory; it never exits non‑zero. GA Enforcer consumes the
+warnings and may enforce thresholds when run with `--enforce`.
 
 ## Quick start
 
