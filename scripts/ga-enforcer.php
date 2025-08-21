@@ -285,14 +285,18 @@ if (is_array($lintData)) {
 }
 
 // schema validation
-@passthru(PHP_BINARY.' '.escapeshellarg(__DIR__.'/artifact-schema-validate.php'));
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/artifact-schema-validate.php'));
 $schemaPath = $root . '/artifacts/schema/schema-validate.json';
 $schemaWarn = null;
 if (is_file($schemaPath)) {
     $schemaData = json_decode((string)file_get_contents($schemaPath), true);
     if (is_array($schemaData)) {
         $schemaWarn = (int)($schemaData['count'] ?? 0);
+    } else {
+        $warnings[] = 'schema-validate.json parse failed';
     }
+} else {
+    $warnings[] = 'schema-validate.json missing';
 }
 $signals['schema_warnings'] = $schemaWarn;
 

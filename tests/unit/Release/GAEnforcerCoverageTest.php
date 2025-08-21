@@ -64,5 +64,8 @@ final class GAEnforcerCoverageTest extends TestCase
         $xml2 = (string)file_get_contents($junit);
         $this->assertMatchesRegularExpression('/<testcase name="Artifacts\.Schema">\s*<failure/s', $xml2);
         $this->assertDoesNotMatchRegularExpression('/<testcase name="Artifacts\.Schema">\s*<skipped/s', $xml2);
+
+        $report = json_decode((string)file_get_contents($rootArtifacts . '/ga/GA_ENFORCER.json'), true);
+        $this->assertGreaterThan(0, $report['signals']['schema_warnings'] ?? 0);
     }
 }

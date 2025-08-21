@@ -27,8 +27,9 @@ where each object includes:
 { "path": "file.php", "sha256": "<64-hex>", "size": 123 }
 ```
 
-If a legacy `files[]` key is present, `artifact-schema-validate.php` emits an
-advisory warning. Missing or malformed manifests also raise warnings.
+`artifact-schema-validate.php` only inspects this manifest. A legacy `files[]`
+key triggers an advisory warning; missing or malformed manifests also raise
+warnings.
 
 ## GA Enforcer JUnit
 
