@@ -53,3 +53,17 @@ php scripts/sbom-from-composer.php
 ```
 
 Expect `artifacts/dist/sbom.json` to exist for GA.
+
+## GO/NO-GO & Tag Preflight
+
+Run final advisory helpers to summarize QA signals and preview tagging:
+
+```bash
+php scripts/go-no-go.php
+php scripts/changelog-guard.php
+php scripts/tag-preflight.php
+```
+
+`go-no-go.php` aggregates any existing QA artifacts and writes `artifacts/qa/go-no-go.html` for a quick RTL review. `changelog-guard.php` checks that the top `CHANGELOG.md` entry aligns with the plugin version and readme stable tag. `tag-preflight.php` prints a release note stub and reports SHA256 hashes for `artifacts/dist/manifest.json` and `artifacts/dist/sbom.json` if present.
+
+All outputs are advisory and non-blocking; missing files are skipped.
