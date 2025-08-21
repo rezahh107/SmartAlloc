@@ -8,6 +8,9 @@ It runs only local tools and skips any missing step.
 ```bash
 bash scripts/ga-rehearsal.sh
 RUN_GA_REHEARSAL=1 vendor/bin/phpunit --filter GARehearsalSmokeTest
+
+# after rehearsal you may run the GA enforcer to apply thresholds
+RUN_ENFORCE=1 php scripts/ga-enforcer.php --enforce
 ```
 
 ## Artifact map
