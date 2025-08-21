@@ -1,0 +1,11 @@
+{
+  "rest_permission_violations": 0,
+  "sql_prepare_violations": 0,
+  "secrets_findings": 0,
+  "license_denied": 0,
+  "i18n_domain_mismatches": 0,
+  "coverage_min_lines_pct": 0,
+  "require_manifest": true,
+  "require_sbom": true,
+  "version_mismatch_fatal": true
+}
