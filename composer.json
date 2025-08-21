@@ -49,6 +49,14 @@
         "test:e2e": "phpunit --testsuite E2E",
         "coverage": "php tools/coverage.php",
         "qa": "composer cs && composer psalm && composer test",
+        "qa:advisory": [
+            "@php scripts/coverage-import.php",
+            "@php scripts/artifact-schema-validate.php",
+            "@php scripts/ga-enforcer.php --profile=rc --junit"
+        ],
+        "qa:enforce:ga": [
+            "RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=ga --enforce --junit"
+        ],
         "ci": "composer cs && composer test:security && composer coverage",
         "preflight": "php tools/preflight.php",
         "docs": "@php bin/docs_build.php --in=docs/Docs-Bundle.md --out=docs/Docs-Bundle.compiled.md || exit 0",

@@ -80,6 +80,7 @@ artifacts/e2e/rtl/
 artifacts/wporg/
 artifacts/coverage/
 artifacts/schema/
+artifacts/dist/
 artifacts/ga/
 *.lhreport.html
 # allow committed artifact templates
