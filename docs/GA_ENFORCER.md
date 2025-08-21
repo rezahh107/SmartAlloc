@@ -13,8 +13,13 @@ configured limits.
 
 ## Thresholds
 
-Thresholds are read from `scripts/.ga-enforce.json`. If the file is missing the
-following defaults are used:
+Thresholds are resolved with the following precedence:
+
+1. Baseline `scripts/.ga-enforce.json`.
+2. Profile selected via `--profile` (`rc`, `ga` or path).
+3. CLI flags overriding individual keys.
+
+Missing keys fall back to these internal defaults:
 
 ```json
 {
@@ -26,30 +31,39 @@ following defaults are used:
   "coverage_min_lines_pct": 0,
   "require_manifest": true,
   "require_sbom": true,
-  "version_mismatch_fatal": true
+  "version_mismatch_fatal": true,
+  "pot_min_entries": 10,
+  "dist_audit_max_errors": 0,
+  "wporg_lint_max_warnings": 0
 }
 ```
 
-Edit the JSON file to override any limit.
+Edit the JSON file or supply a profile/CLI flag to override any limit.
 
 ## Quick start
 
 ```bash
-php scripts/ga-enforcer.php                        # advisory, exit 0
-RUN_ENFORCE=1 php scripts/ga-enforcer.php --enforce # enforce thresholds
-RUN_ENFORCE=1 vendor/bin/phpunit --filter GAEnforcerTest
+# advisory
+php scripts/ga-enforcer.php --profile=rc
+
+# enforce RC thresholds
+RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=rc --enforce --junit
+
+# enforce GA thresholds
+RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=ga --enforce --junit
 ```
 
-After running `scripts/ga-rehearsal.sh` you can run the enforcer with
-`RUN_ENFORCE=1` to make the RC/GA decision.
+The `--junit` flag writes `artifacts/ga/GA_ENFORCER.junit.xml` with one
+`<testcase>` per signal and a `<failure>` node when that signal exceeds its
+threshold.
 
 ## QA Plan mapping
 
 | QA Plan stage | Artifact/Signal |
 | ------------- | ---------------- |
 | 2 | REST/SQL/Secrets/License scans |
-| 3 | `artifacts/dist/manifest.json` & `sbom.json` |
+| 3 | `artifacts/dist/manifest.json`, `sbom.json`, dist-audit |
 | 4 | `scripts/version-coherence.php` |
 | 7 | `artifacts/i18n/pot-refresh.json` |
-| 9 | `artifacts/qa/qa-report.json` |
-| 14 | `artifacts/ga/GA_ENFORCER.{json,txt}` |
+| 9 | Coverage reports |
+| 14 | `artifacts/ga/GA_ENFORCER.{json,txt,junit.xml}` |

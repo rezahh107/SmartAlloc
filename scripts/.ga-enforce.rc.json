@@ -1,0 +1,8 @@
+{
+  "rest_permission_violations": 1,
+  "coverage_min_lines_pct": 50,
+  "pot_min_entries": 5,
+  "dist_audit_max_errors": 2,
+  "wporg_lint_max_warnings": 5,
+  "version_mismatch_fatal": false
+}
