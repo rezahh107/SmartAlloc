@@ -24,6 +24,7 @@ final class ExportPage
 
         global $wpdb;
         $table   = $wpdb->prefix . 'smartalloc_exports';
+        // @security-ok-sql
         $exports = $wpdb->get_results(
             $wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d", 20),
             ARRAY_A

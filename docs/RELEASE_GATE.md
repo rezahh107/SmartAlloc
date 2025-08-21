@@ -11,7 +11,8 @@ Run the QA helpers and review the generated artifacts before releasing. This gat
 | Secrets scan | `secrets.json` | manual review |
 | License audit | `licenses.json` | denylist must be empty |
 | Version coherence & readme | stdout | run validators; expect no mismatches |
-| Coverage (optional) | `qa-report.json` | includes coverage% if available |
+| Coverage (>=80%) | `qa-report.json` | includes coverage% if available |
+| Schema warnings | `artifact-schema-validate` | must be zero for GA |
 | Perf opt-in | `AllocationPerformanceTest` | check p95/memory |
 
 ## How to run
@@ -79,3 +80,8 @@ bash scripts/tag-dry-run.sh
 ```
 
 All steps are advisory and non-blocking.
+
+## Runbooks
+
+- Rehearsal: `bash scripts/ga-rehearsal.sh`
+- Finalize: `bash scripts/release-finalizer.sh`

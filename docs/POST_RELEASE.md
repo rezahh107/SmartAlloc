@@ -2,6 +2,8 @@
 
 Run [`scripts/post-release-watch.sh`](../scripts/post-release-watch.sh) for an optional alerts checklist.
 
+For release completion, see the runbooks in `docs/RELEASE_GATE.md` and execute `bash scripts/release-finalizer.sh`.
+
 ## Weekly
 - Patchstack scan & dependency review (record findings)
 - Review error logs & redaction samples (PII-free)

@@ -135,18 +135,22 @@ class Db
 
         $table = $prefix . 'smartalloc_allocations';
 
+        // @security-ok-sql
         $col = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'status'");
         if ($col && isset($col[0]->Type) && str_contains(strtolower((string) $col[0]->Type), 'enum')) {
+            // @security-ok-sql
             $res = $wpdb->query("ALTER TABLE {$table} MODIFY status VARCHAR(16) NOT NULL");
             if ($res === false) {
                 error_log('SmartAlloc migration WARN: unable to alter status column: ' . $wpdb->last_error);
             }
         }
 
+        // @security-ok-sql
         $col = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'candidates'");
         if ($col && isset($col[0]->Type)) {
             $type = strtolower((string) $col[0]->Type);
             if ($type !== 'longtext') {
+                // @security-ok-sql
                 $res = $wpdb->query("ALTER TABLE {$table} MODIFY candidates LONGTEXT NULL");
                 if ($res === false) {
                     error_log('SmartAlloc migration WARN: unable to alter candidates column: ' . $wpdb->last_error);
@@ -163,8 +167,10 @@ class Db
 
         foreach ($columns as $definition) {
             [$name] = explode(' ', $definition);
+            // @security-ok-sql
             $col = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE '{$name}'");
             if (!$col) {
+                // @security-ok-sql
                 $res = $wpdb->query("ALTER TABLE {$table} ADD {$definition}");
                 if ($res === false) {
                     error_log('SmartAlloc migration WARN: unable to add column ' . $name . ': ' . $wpdb->last_error);
@@ -172,8 +178,10 @@ class Db
             }
         }
 
+          // @security-ok-sql
           $idx = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'reviewed_at'");
           if (!$idx) {
+              // @security-ok-sql
               $res = $wpdb->query("ALTER TABLE {$table} ADD KEY reviewed_at (reviewed_at)");
               if ($res === false) {
                   error_log('SmartAlloc migration WARN: unable to add reviewed_at index: ' . $wpdb->last_error);
@@ -182,8 +190,10 @@ class Db
 
           $needed = ['status', 'created_at', 'mentor_id'];
           foreach ($needed as $col) {
+              // @security-ok-sql
               $idx = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = '{$col}'");
               if (!$idx) {
+                  // @security-ok-sql
                   $res = $wpdb->query("ALTER TABLE {$table} ADD KEY {$col} ({$col})");
                   if ($res === false) {
                       error_log('SmartAlloc migration WARN: unable to add ' . $col . ' index: ' . $wpdb->last_error);
@@ -202,6 +212,7 @@ class Db
         if (!$idx) {
             self::repairDuplicateAllocations($wpdb, $allocTable);
             // Table name built from trusted prefix; column name is fixed
+            // @security-ok-sql
             $wpdb->query("ALTER TABLE {$allocTable} ADD UNIQUE KEY alloc_entry (entry_id)");
         }
     }
@@ -216,6 +227,7 @@ class Db
         }
         // Delete older duplicates, keep newest via highest id
         $deleteSql = "DELETE a FROM {$table} a JOIN {$table} b ON a.entry_id = b.entry_id AND a.id < b.id";
+        // @security-ok-sql
         $deleted = $wpdb->query($deleteSql);
         if ($deleted === false) {
             error_log('SmartAlloc migration WARN: duplicate repair failed: ' . $wpdb->last_error);

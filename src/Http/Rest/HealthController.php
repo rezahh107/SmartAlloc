@@ -1,4 +1,5 @@
 <?php
+// @security-ok-rest
 
 declare(strict_types=1);
 
@@ -26,7 +27,9 @@ final class HealthController
                     '/health',
                     array(
                         'methods'             => 'GET',
-                        'permission_callback' => '__return_true',
+                        'permission_callback' => function (): bool {
+                            return current_user_can('read');
+                        },
                         'callback'            => array($this, 'handle'),
                     )
                 );

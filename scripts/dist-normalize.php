@@ -64,7 +64,7 @@ foreach ($items as $item) {
     }
     $data = (string)file_get_contents($full);
     if (isText($full)) {
-        $data = preg_replace("/\r\n?/,\n", $data);
+        $data = preg_replace('/\r\n?/', "\n", $data);
     }
     $zip->addFromString($item['path'], $data);
     if (method_exists($zip, 'setMtimeName')) {

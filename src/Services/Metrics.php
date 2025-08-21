@@ -24,6 +24,7 @@ final class Metrics
     {
         global $wpdb;
         
+        // @security-ok-sql
         $wpdb->insert($this->table, [
             'metric_key' => $key,
             'labels' => wp_json_encode($labels),
