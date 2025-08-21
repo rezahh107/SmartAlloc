@@ -203,18 +203,16 @@ if (is_file($vc)) {
 $signals['coverage_percent'] = null;
 $covJson = $root . '/artifacts/coverage/coverage.json';
 if (!is_file($covJson)) {
-    $importer = $root . '/scripts/coverage-import.php';
-    if (is_file($importer)) {
-        @shell_exec('php ' . escapeshellarg($importer));
-    }
+    @passthru(PHP_BINARY.' '.escapeshellarg(__DIR__.'/coverage-import.php'));
 }
 if (is_file($covJson)) {
     $data = json_decode((string)file_get_contents($covJson), true);
     if (is_array($data)) {
-        if (isset($data['lines_pct']) && $data['lines_pct'] !== null) {
-            $signals['coverage_percent'] = (float)$data['lines_pct'];
+        $pct = $data['totals']['pct'] ?? null;
+        if ($pct !== null) {
+            $signals['coverage_percent'] = (float)$pct;
         } else {
-            $warnings[] = 'coverage.json missing line pct';
+            $warnings[] = 'coverage.json missing totals.pct';
         }
     } else {
         $warnings[] = 'coverage.json parse failed';
@@ -288,32 +286,10 @@ if (is_array($lintData)) {
 }
 
 // schema validation
-$schemaValidator = $root . '/scripts/validate-artifacts.php';
-$schemaWarnings = null;
-$schemaValidatorExists = is_file($schemaValidator);
-if ($schemaValidatorExists) {
-    @shell_exec('php ' . escapeshellarg($schemaValidator));
-    $schemaJson = $root . '/artifacts/qa/schema-validate.json';
-    if (is_file($schemaJson)) {
-        $svData = json_decode((string)file_get_contents($schemaJson), true);
-        if (is_array($svData)) {
-            $count = 0;
-            foreach ($svData as $row) {
-                if (empty($row['ok'])) {
-                    $count++;
-                }
-            }
-            $schemaWarnings = $count;
-        } else {
-            $schemaWarnings = 1;
-            $warnings[] = 'schema-validate.json parse failed';
-        }
-    } else {
-        $schemaWarnings = 1;
-        $warnings[] = 'schema-validate.json missing';
-    }
-    $signals['schema_warnings'] = $schemaWarnings;
-}
+@passthru(PHP_BINARY.' '.escapeshellarg(__DIR__.'/artifact-schema-validate.php'));
+$schema = @json_decode(@file_get_contents(__DIR__.'/../artifacts/schema/schema-validate.json'), true) ?: [];
+$schemaWarn = (int)($schema['count'] ?? 0);
+$signals['schema_warnings'] = $schemaWarn;
 
 // Threshold checks
 $failures = [];
@@ -423,12 +399,14 @@ if ($wantJUnit) {
     }
     $case = $suite->addChild('testcase');
     $case->addAttribute('name', 'Artifacts.Schema');
-    if (!$schemaValidatorExists) {
-        $case->addChild('skipped');
-    } elseif (($schemaWarnings ?? 0) > 0 && $enforce) {
-        $msg = 'schema warnings present';
-        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
-        $fail->addAttribute('message', $msg);
+    if ($schemaWarn > 0) {
+        if ($enforce) {
+            $msg = 'schema warnings present';
+            $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+            $fail->addAttribute('message', $msg);
+        } else {
+            $case->addChild('skipped');
+        }
     }
     $dom = dom_import_simplexml($suite)->ownerDocument;
     $dom->formatOutput = true;

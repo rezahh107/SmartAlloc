@@ -1,0 +1,21 @@
+name: Advisory GA Enforcer
+on: [workflow_dispatch]
+jobs:
+  enforcer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', tools: composer }
+      - run: composer install --no-interaction --prefer-dist
+      - run: php scripts/coverage-import.php
+      - run: php scripts/artifact-schema-validate.php
+      - run: php scripts/ga-enforcer.php --profile=rc --junit
+      - name: Upload advisory artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ga-enforcer-advisory
+          path: |
+            artifacts/coverage/coverage.json
+            artifacts/schema/schema-validate.json
+            artifacts/ga/GA_ENFORCER.*
