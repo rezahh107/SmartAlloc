@@ -2,109 +2,171 @@
 <?php
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') {
+    echo "CLI only\n";
+    exit(0);
+}
+
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
-function outDir(string $p): void { if (!is_dir($p)) @mkdir($p, 0777, true); }
-function pct(int $covered, int $total): float { return $total > 0 ? round(($covered / $total) * 100, 2) : 0.0; }
-function iso(): string { return date('c'); }
-
-$argvOpts = [
-  'clover:' => null,
-  'json:'   => null,
-];
-$opt = getopt('', array_keys($argvOpts));
-$clover = $opt['clover'] ?? getenv('COVERAGE_CLOVER') ?: null;
-$jsonIn = $opt['json']   ?? null;
-
-$targets = ['artifacts/coverage/coverage.json'];
-$covDir  = dirname($targets[0]);
-outDir($covDir);
-
-if ($jsonIn && is_file($jsonIn)) {
-  $data = json_decode((string)file_get_contents($jsonIn), true);
-  if (!is_array($data)) $data = [];
-  $data['source'] = $data['source'] ?? 'existing';
-  $data['generatedAt'] = $data['generatedAt'] ?? iso();
-  file_put_contents($targets[0], json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_PRESERVE_ZERO_FRACTION));
-  echo "[coverage-import] re-emitted existing coverage to {$targets[0]}\n";
-  exit(0);
-}
-
-// resolve clover path
-if (!$clover) {
-  foreach (['coverage/clover.xml', 'artifacts/coverage/clover.xml', 'clover.xml'] as $cand) {
-    if (is_file($cand)) { $clover = $cand; break; }
-  }
-}
-if (!$clover || !is_file($clover)) {
-  // write empty advisory coverage
-  $empty = ['source'=>'none','generatedAt'=>iso(),'totals'=>['lines'=>0,'covered'=>0,'pct'=>0],'files'=>[]];
-  file_put_contents($targets[0], json_encode($empty, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_PRESERVE_ZERO_FRACTION));
-  echo "[coverage-import] no clover.xml found; wrote empty coverage to {$targets[0]}\n";
-  exit(0);
-}
-
-$xml = @simplexml_load_file($clover);
-if (!$xml) {
-  $empty = ['source'=>'clover.xml:unreadable','generatedAt'=>iso(),'totals'=>['lines'=>0,'covered'=>0,'pct'=>0],'files'=>[]];
-  file_put_contents($targets[0], json_encode($empty, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_PRESERVE_ZERO_FRACTION));
-  echo "[coverage-import] unreadable clover; wrote empty coverage\n";
-  exit(0);
-}
-
-// Totals can live under project->metrics or deeper; also support statements/coveredstatements.
-$total = 0; $covered = 0; $filesOut = [];
-
-$project = $xml->project ?? null;
-$metricsNodes = [];
-if ($project && $project->metrics) $metricsNodes[] = $project->metrics;
-if ($xml->metrics) $metricsNodes[] = $xml->metrics;
-
-$sum = function($m) use (&$total,&$covered) {
-  $lv = (int)($m['lines-valid'] ?? 0);
-  $lc = (int)($m['lines-covered'] ?? 0);
-  $st = (int)($m['statements'] ?? 0);
-  $sc = (int)($m['coveredstatements'] ?? 0);
-
-  if ($lv > 0 || $lc > 0) { $total += $lv; $covered += $lc; }
-  elseif ($st > 0 || $sc > 0) { $total += $st; $covered += $sc; }
-};
-
-foreach ($metricsNodes as $mn) $sum($mn);
-
-// Per-file
-foreach ($xml->xpath('//file') as $f) {
-  $path = (string)$f['name'];
-  $m = $f->metrics ?? null;
-  $fl = 0; $fc = 0;
-  if ($m) {
-    $lv = (int)($m['lines-valid'] ?? 0);
-    $lc = (int)($m['lines-covered'] ?? 0);
-    $st = (int)($m['statements'] ?? 0);
-    $sc = (int)($m['coveredstatements'] ?? 0);
-    if ($lv>0 || $lc>0) { $fl=$lv; $fc=$lc; }
-    elseif ($st>0 || $sc>0) { $fl=$st; $fc=$sc; }
-  } else {
-    // fallback by counting <line type="stmt" count> entries
-    $lines = $f->line ?? [];
-    foreach ($lines as $ln) {
-      if ((string)$ln['type'] === 'stmt') {
-        $fl++;
-        if ((int)$ln['covered'] === 1 || (int)$ln['count'] > 0) $fc++;
-      }
+/**
+ * Ensure a directory exists.
+ */
+function ensure_dir(string $dir): void
+{
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
     }
-  }
-  $filesOut[] = ['path'=>$path, 'lines'=>$fl, 'covered'=>$fc, 'pct'=>pct($fc,$fl)];
 }
 
+/**
+ * Compute coverage percentage.
+ */
+function pct(int $covered, int $total): float
+{
+    return $total > 0 ? round(($covered / $total) * 100, 2) : 0.0;
+}
+
+$target = __DIR__ . '/../artifacts/coverage/coverage.json';
+ensure_dir(dirname($target));
+
+$candidates = [];
+$override = getenv('COVERAGE_INPUT');
+if ($override && is_file($override)) {
+    $candidates[] = $override;
+}
+$candidates = array_merge($candidates, [
+    __DIR__ . '/../artifacts/coverage/clover.xml',
+    __DIR__ . '/../coverage.xml',
+    __DIR__ . '/../artifacts/coverage/coverage.json',
+    __DIR__ . '/../coverage.json',
+]);
+
+$source = 'none';
 $out = [
-  'source' => 'clover.xml',
-  'generatedAt' => iso(),
-  'totals' => ['lines'=>$total, 'covered'=>$covered, 'pct'=>pct($covered,$total)],
-  'files' => $filesOut,
+    'source' => 'none',
+    'generated_at' => date('c'),
+    'totals' => ['lines_total' => 0, 'lines_covered' => 0, 'pct' => 0.0],
+    'files' => [],
 ];
 
-file_put_contents($targets[0], json_encode($out, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_PRESERVE_ZERO_FRACTION));
-echo "[coverage-import] wrote {$targets[0]} (pct {$out['totals']['pct']}%)\n";
+foreach ($candidates as $cand) {
+    if (!is_file($cand)) {
+        continue;
+    }
+    $ext = strtolower((string)pathinfo($cand, PATHINFO_EXTENSION));
+    if ($ext === 'xml') {
+        $xml = @simplexml_load_file($cand);
+        if ($xml instanceof SimpleXMLElement) {
+            $source = 'clover';
+            $total = 0;
+            $covered = 0;
+            $files = [];
+
+            // sum totals
+            foreach ($xml->xpath('//metrics') as $m) {
+                $lt = (int)($m['lines-valid'] ?? 0);
+                $lc = (int)($m['lines-covered'] ?? 0);
+                $st = (int)($m['statements'] ?? 0);
+                $sc = (int)($m['coveredstatements'] ?? 0);
+                if ($lt > 0 || $lc > 0) {
+                    $total += $lt;
+                    $covered += $lc;
+                } elseif ($st > 0 || $sc > 0) {
+                    $total += $st;
+                    $covered += $sc;
+                }
+            }
+
+            foreach ($xml->xpath('//file') as $f) {
+                $path = (string)$f['name'];
+                $m = $f->metrics ?? null;
+                $lt = 0;
+                $lc = 0;
+                if ($m) {
+                    $lv = (int)($m['lines-valid'] ?? 0);
+                    $lcov = (int)($m['lines-covered'] ?? 0);
+                    $st = (int)($m['statements'] ?? 0);
+                    $sc = (int)($m['coveredstatements'] ?? 0);
+                    if ($lv > 0 || $lcov > 0) {
+                        $lt = $lv;
+                        $lc = $lcov;
+                    } elseif ($st > 0 || $sc > 0) {
+                        $lt = $st;
+                        $lc = $sc;
+                    }
+                } else {
+                    foreach ($f->line ?? [] as $ln) {
+                        if ((string)$ln['type'] === 'stmt') {
+                            $lt++;
+                            if ((int)$ln['covered'] === 1 || (int)$ln['count'] > 0) {
+                                $lc++;
+                            }
+                        }
+                    }
+                }
+                $files[] = [
+                    'path' => $path,
+                    'lines_total' => $lt,
+                    'lines_covered' => $lc,
+                    'pct' => pct($lc, $lt),
+                ];
+            }
+
+            usort($files, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
+
+            $out = [
+                'source' => $source,
+                'generated_at' => date('c'),
+                'totals' => [
+                    'lines_total' => $total,
+                    'lines_covered' => $covered,
+                    'pct' => pct($covered, $total),
+                ],
+                'files' => $files,
+            ];
+        }
+    } else {
+        $raw = (string)file_get_contents($cand);
+        $data = json_decode($raw, true);
+        if (is_array($data)) {
+            $source = 'json';
+            $tot = $data['totals'] ?? [];
+            $lt = (int)($tot['lines_total'] ?? $tot['lines'] ?? 0);
+            $lc = (int)($tot['lines_covered'] ?? $tot['covered'] ?? 0);
+            $files = [];
+            foreach ($data['files'] ?? [] as $f) {
+                $path = (string)($f['path'] ?? ($f['file'] ?? ''));
+                $fl = (int)($f['lines_total'] ?? $f['lines'] ?? 0);
+                $fc = (int)($f['lines_covered'] ?? $f['covered'] ?? 0);
+                $files[] = [
+                    'path' => $path,
+                    'lines_total' => $fl,
+                    'lines_covered' => $fc,
+                    'pct' => pct($fc, $fl),
+                ];
+            }
+            usort($files, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
+            $out = [
+                'source' => $source,
+                'generated_at' => date('c'),
+                'totals' => [
+                    'lines_total' => $lt,
+                    'lines_covered' => $lc,
+                    'pct' => pct($lc, $lt),
+                ],
+                'files' => $files,
+            ];
+        }
+    }
+
+    if ($source !== 'none') {
+        break;
+    }
+}
+
+file_put_contents($target, json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION) . "\n");
+echo '[coverage-import] source=' . $source . ' pct=' . $out['totals']['pct'] . "\n";
 exit(0);
+

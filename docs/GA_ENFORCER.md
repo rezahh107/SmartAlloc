@@ -1,101 +1,59 @@
 # GA Enforcer
 
-The GA Enforcer evaluates QA artifacts and release signals against strict thresholds.
-By default it runs in advisory mode and never blocks the build. When enforcement is
-explicitly enabled it exits with a non‑zero status if any signal exceeds the
-configured limits.
-
-## Advisory vs enforce
-
-- **Advisory** – default behaviour. Always exits `0` and records counts/warnings.
-- **Enforce** – enabled with `RUN_ENFORCE=1` or the `--enforce` flag. Exits `1`
-  when a threshold is violated or version mismatch is detected.
-
-## Thresholds
-
-Thresholds are resolved with the following precedence:
-
-1. Baseline `scripts/.ga-enforce.json`.
-2. Profile selected via `--profile` (`rc`, `ga` or path).
-3. CLI flags overriding individual keys.
-
-Missing keys fall back to these internal defaults:
-
-```json
-{
-  "rest_permission_violations": 0,
-  "sql_prepare_violations": 0,
-  "secrets_findings": 0,
-  "license_denied": 0,
-  "i18n_domain_mismatches": 0,
-  "coverage_min_lines_pct": 0,
-  "require_manifest": true,
-  "require_sbom": true,
-  "version_mismatch_fatal": true,
-  "pot_min_entries": 10,
-  "dist_audit_max_errors": 0,
-  "wporg_lint_max_warnings": 0
-}
-```
-
-Edit the JSON file or supply a profile/CLI flag to override any limit.
-
-## Quick start
-
-```bash
-# advisory
-php scripts/ga-enforcer.php --profile=rc
-
-# enforce RC thresholds
-RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=rc --enforce --junit
-
-# enforce GA thresholds
-RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=ga --enforce --junit
-```
-
-The `--junit` flag writes `artifacts/ga/GA_ENFORCER.junit.xml` with one
-`<testcase>` per signal and a `<failure>` node when that signal exceeds its
-threshold.
+The GA Enforcer evaluates QA artifacts and release signals against configurable
+thresholds. It emits JSON/TXT/JUnit summaries under `artifacts/ga/` and only
+fails a build when enforcement is explicitly enabled.
 
 ## Coverage Import
 
-`scripts/coverage-import.php` normalizes coverage reports. It looks for
-`artifacts/coverage/clover.xml` first and falls back to an existing
-`coverage.json`. The importer emits a deterministic
-`artifacts/coverage/coverage.json` with totals, covered lines and percentage
-and is invoked automatically by the GA Enforcer when needed.
+`scripts/coverage-import.php` normalises coverage reports into
+`artifacts/coverage/coverage.json`.
 
-## Schema Validation (Advisory)
+**Search order**
 
-`scripts/artifact-schema-validate.php` inspects optional QA artifacts for basic
-shape and presence. Any mismatches are recorded as schema warnings and are
-advisory by default.
+1. `artifacts/coverage/clover.xml`
+2. `coverage.xml`
+3. `artifacts/coverage/coverage.json`
+4. `coverage.json`
 
-## Advisory CI Example
+The first existing file is consumed. Clover XML is parsed with
+`SimpleXMLElement`; JSON is re‑emitted. The output schema is:
 
-`docs/ci-examples/ga-enforcer-advisory.yml` shows a minimal GitHub Actions job
-that installs dependencies, imports coverage and runs the GA Enforcer in
-advisory mode. Teams can copy this into their own CI when ready. The enforcer
-continues to exit `0` unless `--enforce` or `RUN_ENFORCE=1` is supplied.
+```json
+{
+  "source": "clover|json|none",
+  "generated_at": "ISO8601",
+  "totals": { "lines_total": 0, "lines_covered": 0, "pct": 0.0 },
+  "files": [
+    { "path": "relative/path.php", "lines_total": 0, "lines_covered": 0, "pct": 0.0 }
+  ]
+}
+```
 
-## QA Plan mapping
+Files are sorted by path and percentages are rounded to two decimals for
+determinism. If no input is found the script writes a zeroed document with
+`"source": "none"`.
 
-| QA Plan stage | Artifact/Signal |
-| ------------- | ---------------- |
-| 2 | REST/SQL/Secrets/License scans |
-| 3 | `artifacts/dist/manifest.json`, `sbom.json`, dist-audit |
-| 4 | `scripts/version-coherence.php` |
-| 7 | `artifacts/i18n/pot-refresh.json` |
-| 9 | Coverage reports |
-| 14 | `artifacts/ga/GA_ENFORCER.{json,txt,junit.xml}` |
+## Artifact Schema Validation
 
-## Coverage import
+`scripts/artifact-schema-validate.php` scans for malformed or incomplete JSON
+artifacts. It inspects, when present:
 
-`php scripts/coverage-import.php` normalizes Clover XML or existing coverage JSON into `artifacts/coverage/coverage.json`. The GA Enforcer will invoke it automatically if coverage is missing.
+* `artifacts/coverage/coverage.json`
+* `artifacts/qa/*.json`
+* `artifacts/dist/*.json`
+* `artifacts/i18n/*.json`
 
-## Schema validation
+Each file is decoded and basic fields are verified (e.g. `totals.pct` in
+coverage, `entries` in a dist manifest). Results are written to
+`artifacts/schema/schema-validate.json`:
 
-`php scripts/artifact-schema-validate.php` scans `artifacts/` for malformed JSON. Warnings are recorded in `artifacts/schema/schema-validate.json` and surfaced by the GA Enforcer (TXT/JSON) and as `Artifacts.Schema` in JUnit.
+```json
+{ "warnings": 0, "items": [ { "path": "...", "issue": "Missing field", "field": "totals.pct" } ] }
+```
+
+This validator is advisory; warnings do not fail the build unless GA Enforcer is
+run in enforce mode with a `schema_warnings` threshold.
 
 ## Quick start
 
@@ -105,3 +63,32 @@ php scripts/artifact-schema-validate.php
 php scripts/ga-enforcer.php --profile=rc --junit
 RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=ga --enforce --junit
 ```
+
+## GitHub Actions (advisory)
+
+```yaml
+name: Advisory GA Enforcer
+on: [workflow_dispatch]
+jobs:
+  enforcer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', tools: composer }
+      - run: composer install --no-interaction --prefer-dist
+      - run: php scripts/coverage-import.php
+      - run: php scripts/artifact-schema-validate.php
+      - run: php scripts/ga-enforcer.php --profile=rc --junit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ga-enforcer
+          path: |
+            artifacts/coverage/coverage.json
+            artifacts/schema/schema-validate.json
+            artifacts/ga/GA_ENFORCER.*
+```
+
+The job above runs the enforcer in advisory mode and uploads the generated
+artifacts for inspection.
+

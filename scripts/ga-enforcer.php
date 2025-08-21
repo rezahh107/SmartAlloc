@@ -16,7 +16,8 @@ $configDefaults = [
     'secrets_findings'          => 0,
     'license_denied'            => 0,
     'i18n_domain_mismatches'    => 0,
-    'coverage_min_lines_pct'    => 0,
+    'coverage_pct_min'          => 0,
+    'schema_warnings'           => 0,
     'require_manifest'          => true,
     'require_sbom'              => true,
     'version_mismatch_fatal'    => true,
@@ -287,8 +288,14 @@ if (is_array($lintData)) {
 
 // schema validation
 @passthru(PHP_BINARY.' '.escapeshellarg(__DIR__.'/artifact-schema-validate.php'));
-$schema = @json_decode(@file_get_contents(__DIR__.'/../artifacts/schema/schema-validate.json'), true) ?: [];
-$schemaWarn = (int)($schema['count'] ?? 0);
+$schemaPath = $root . '/artifacts/schema/schema-validate.json';
+$schemaWarn = null;
+if (is_file($schemaPath)) {
+    $schemaData = json_decode((string)file_get_contents($schemaPath), true);
+    if (is_array($schemaData)) {
+        $schemaWarn = (int)($schemaData['warnings'] ?? 0);
+    }
+}
 $signals['schema_warnings'] = $schemaWarn;
 
 // Threshold checks
@@ -308,8 +315,11 @@ if ($signals['license_denied'] > (int)$config['license_denied']) {
 if ($signals['i18n_domain_mismatches'] > (int)$config['i18n_domain_mismatches']) {
     $failures[] = 'i18n_domain_mismatches';
 }
-if ($signals['coverage_percent'] !== null && $signals['coverage_percent'] < (float)$config['coverage_min_lines_pct']) {
-    $failures[] = 'coverage_min_lines_pct';
+if ($signals['coverage_percent'] !== null && $signals['coverage_percent'] < (float)$config['coverage_pct_min']) {
+    $failures[] = 'coverage_pct_min';
+}
+if ($signals['schema_warnings'] !== null && $signals['schema_warnings'] > (int)$config['schema_warnings']) {
+    $failures[] = 'schema_warnings';
 }
 if ($signals['pot_entries'] < (int)$config['pot_min_entries']) {
     $failures[] = 'pot_min_entries';
@@ -380,7 +390,7 @@ if ($wantJUnit) {
         'Version'       => 'version_mismatch',
         'Manifest'      => 'manifest_missing',
         'SBOM'          => 'sbom_missing',
-        'Coverage'      => 'coverage_min_lines_pct',
+        'Coverage'      => 'coverage_pct_min',
         'POT'           => 'pot_min_entries',
         'Dist-Audit'    => 'dist_audit_errors',
         'WP.org-Lint'   => 'wporg_lint_warnings',
@@ -399,7 +409,9 @@ if ($wantJUnit) {
     }
     $case = $suite->addChild('testcase');
     $case->addAttribute('name', 'Artifacts.Schema');
-    if ($schemaWarn > 0) {
+    if ($schemaWarn === null) {
+        $case->addChild('skipped');
+    } elseif ($schemaWarn > (int)$config['schema_warnings']) {
         if ($enforce) {
             $msg = 'schema warnings present';
             $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
