@@ -13,6 +13,9 @@ RUN_GA_REHEARSAL=1 vendor/bin/phpunit --filter GARehearsalSmokeTest
 RUN_ENFORCE=1 php scripts/ga-enforcer.php --enforce
 ```
 
+> **Note:** After rehearsal you may run the Enforcer with `--profile=rc` for an
+> advisory check or `RUN_ENFORCE=1 --profile=ga --enforce` for a hard gate.
+
 ## Artifact map
 
 | QA Plan stage | Artifact/Action |

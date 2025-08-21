@@ -18,3 +18,7 @@ missing. Outputs map to the GA checklist:
 
 Use the generated `GA_READY.txt` to review version, date, go/no-go summary and
 signal counts before performing the final tag dry run.
+
+> **Note:** After running the finalizer you may run the Enforcer with
+> `--profile=rc` for an advisory sweep or `RUN_ENFORCE=1 --profile=ga --enforce`
+> to enable a hard gate.

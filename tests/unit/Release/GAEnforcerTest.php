@@ -61,6 +61,8 @@ class GAEnforcerTest extends TestCase
             'require_manifest' => true,
             'require_sbom' => true,
             'version_mismatch_fatal' => false,
+            'dist_audit_max_errors' => 999,
+            'wporg_lint_max_warnings' => 999,
         ]));
         $this->write('artifacts/qa/qa-report.json', json_encode([
             'coverage_percent' => 100,
@@ -71,7 +73,7 @@ class GAEnforcerTest extends TestCase
         $this->write('artifacts/qa/sql-violations.json', json_encode([]));
         $this->write('artifacts/qa/secrets.json', json_encode([]));
         $this->write('artifacts/qa/licenses.json', json_encode(['summary' => ['denied' => 0]]));
-        $this->write('artifacts/i18n/pot-refresh.json', json_encode(['pot_entries' => 1, 'domain_mismatch' => 0]));
+        $this->write('artifacts/i18n/pot-refresh.json', json_encode(['pot_entries' => 10, 'domain_mismatch' => 0]));
         $this->write('artifacts/dist/manifest.json', '{}');
         $this->write('artifacts/dist/sbom.json', '{}');
 
@@ -92,6 +94,8 @@ class GAEnforcerTest extends TestCase
             'require_manifest' => true,
             'require_sbom' => true,
             'version_mismatch_fatal' => false,
+            'dist_audit_max_errors' => 999,
+            'wporg_lint_max_warnings' => 999,
         ]));
 
         $this->write('artifacts/qa/qa-report.json', json_encode([
@@ -103,7 +107,7 @@ class GAEnforcerTest extends TestCase
         $this->write('artifacts/qa/sql-violations.json', json_encode([]));
         $this->write('artifacts/qa/secrets.json', json_encode([]));
         $this->write('artifacts/qa/licenses.json', json_encode(['summary' => ['denied' => 0]]));
-        $this->write('artifacts/i18n/pot-refresh.json', json_encode(['pot_entries' => 1, 'domain_mismatch' => 0]));
+        $this->write('artifacts/i18n/pot-refresh.json', json_encode(['pot_entries' => 10, 'domain_mismatch' => 0]));
         $this->write('artifacts/dist/manifest.json', '{}');
         $this->write('artifacts/dist/sbom.json', '{}');
 

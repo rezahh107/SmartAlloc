@@ -2,32 +2,58 @@
 <?php
 declare(strict_types=1);
 
-if (php_sapi_name() !== 'cli') {
+if (PHP_SAPI !== 'cli') {
     echo "CLI only\n";
     exit(0);
 }
 
 $root = dirname(__DIR__);
-$opts = getopt('', ['enforce']);
-$enforce = getenv('RUN_ENFORCE') === '1' || isset($opts['enforce']);
 
+// Baseline defaults when a key is missing everywhere.
 $configDefaults = [
     'rest_permission_violations' => 0,
-    'sql_prepare_violations' => 0,
-    'secrets_findings' => 0,
-    'license_denied' => 0,
-    'i18n_domain_mismatches' => 0,
-    'coverage_min_lines_pct' => 0,
-    'require_manifest' => true,
-    'require_sbom' => true,
-    'version_mismatch_fatal' => true,
+    'sql_prepare_violations'    => 0,
+    'secrets_findings'          => 0,
+    'license_denied'            => 0,
+    'i18n_domain_mismatches'    => 0,
+    'coverage_min_lines_pct'    => 0,
+    'require_manifest'          => true,
+    'require_sbom'              => true,
+    'version_mismatch_fatal'    => true,
+    'pot_min_entries'           => 10,
+    'dist_audit_max_errors'     => 0,
+    'wporg_lint_max_warnings'   => 0,
 ];
 
-$configPath = $root . '/scripts/.ga-enforce.json';
-$config = $configDefaults;
+// Collect CLI options dynamically for overrides.
+$longOpts = ['enforce', 'profile:', 'junit'];
+foreach (array_keys($configDefaults) as $k) {
+    $longOpts[] = $k . ':';
+}
+$opts    = getopt('', $longOpts);
+$enforce = getenv('RUN_ENFORCE') === '1' || isset($opts['enforce']);
+$profile = $opts['profile'] ?? '';
+$wantJUnit = isset($opts['junit']);
+
+// Resolve profile file if provided.
+$profilePath = null;
+if ($profile !== '') {
+    if ($profile === 'rc') {
+        $profilePath = $root . '/scripts/.ga-enforce.rc.json';
+    } elseif ($profile === 'ga') {
+        $profilePath = $root . '/scripts/.ga-enforce.ga.json';
+    } else {
+        $profilePath = str_starts_with($profile, '/') ? $profile : $root . '/' . ltrim($profile, '/');
+    }
+}
+
 $warnings = [];
-if (is_file($configPath)) {
-    $data = json_decode((string)file_get_contents($configPath), true);
+
+// Load baseline file.
+$config = $configDefaults;
+$basePath = $root . '/scripts/.ga-enforce.json';
+if (is_file($basePath)) {
+    $data = json_decode((string)file_get_contents($basePath), true);
     if (is_array($data)) {
         $config = array_merge($config, $data);
     } else {
@@ -37,36 +63,38 @@ if (is_file($configPath)) {
     $warnings[] = '.ga-enforce.json missing, using defaults';
 }
 
+// Merge profile if any.
+if ($profilePath !== null) {
+    if (is_file($profilePath)) {
+        $data = json_decode((string)file_get_contents($profilePath), true);
+        if (is_array($data)) {
+            $config = array_merge($config, $data);
+        } else {
+            $warnings[] = basename($profilePath) . ' parse failed';
+        }
+    } else {
+        $warnings[] = basename($profilePath) . ' missing';
+    }
+}
+
+// CLI overrides.
+foreach ($configDefaults as $key => $def) {
+    if (isset($opts[$key])) {
+        $val = $opts[$key];
+        if (is_bool($def)) {
+            $config[$key] = filter_var($val, FILTER_VALIDATE_BOOLEAN);
+        } elseif (is_float($def)) {
+            $config[$key] = (float)$val;
+        } else {
+            $config[$key] = (int)$val;
+        }
+    }
+}
+
 $signals = [];
 
-$qaReportPath = $root . '/artifacts/qa/qa-report.json';
-$qaReport = [];
-if (is_file($qaReportPath)) {
-    $decoded = json_decode((string)file_get_contents($qaReportPath), true);
-    if (is_array($decoded)) {
-        $qaReport = $decoded;
-    } else {
-        $warnings[] = 'qa-report.json parse failed';
-    }
-} else {
-    $warnings[] = 'qa-report.json missing';
-}
-
-$signals['coverage_percent'] = isset($qaReport['coverage_percent']) ? (float) $qaReport['coverage_percent'] : 0.0;
-$signals['rest_permission_violations'] = isset($qaReport['rest_permission_violations']) ? (int) $qaReport['rest_permission_violations'] : 0;
-$signals['sql_prepare_violations'] = isset($qaReport['sql_prepare_violations']) ? (int) $qaReport['sql_prepare_violations'] : 0;
-
-$goNoGoPath = $root . '/artifacts/qa/go-no-go.json';
-if (is_file($goNoGoPath)) {
-    $tmp = json_decode((string)file_get_contents($goNoGoPath), true);
-    if (!is_array($tmp)) {
-        $warnings[] = 'go-no-go.json parse failed';
-    }
-} else {
-    $warnings[] = 'go-no-go.json missing';
-}
-
-function countFromFile(array $paths, string $label, array &$warnings): int
+// Helper functions.
+function jsonCount(array $paths, string $label, array &$warnings): int
 {
     foreach ($paths as $p) {
         if (is_file($p)) {
@@ -82,13 +110,13 @@ function countFromFile(array $paths, string $label, array &$warnings): int
     return 0;
 }
 
-function countLicense(array $paths, string $label, array &$warnings): int
+function jsonKeyCount(array $paths, string $label, string $key, array &$warnings): int
 {
     foreach ($paths as $p) {
         if (is_file($p)) {
             $data = json_decode((string)file_get_contents($p), true);
             if (is_array($data)) {
-                return (int) ($data['summary']['denied'] ?? 0);
+                return (int)($data['summary'][$key] ?? 0);
             }
             $warnings[] = $label . ' parse failed';
             return 0;
@@ -98,68 +126,65 @@ function countLicense(array $paths, string $label, array &$warnings): int
     return 0;
 }
 
-$scanners = [
-    'rest' => [
-        'script' => $root . '/scripts/scan-rest-permissions.php',
-        'paths'  => [$root . '/artifacts/qa/rest-violations.json', $root . '/rest-violations.json'],
-    ],
-    'sql' => [
-        'script' => $root . '/scripts/scan-sql-prepare.php',
-        'paths'  => [$root . '/artifacts/qa/sql-violations.json', $root . '/sql-violations.json'],
-    ],
-    'secrets' => [
-        'script' => $root . '/scripts/scan-secrets.php',
-        'paths'  => [$root . '/artifacts/qa/secrets.json', $root . '/secrets.json'],
-    ],
-    'license' => [
-        'script' => $root . '/scripts/license-audit.php',
-        'paths'  => [$root . '/artifacts/qa/licenses.json', $root . '/licenses.json'],
-    ],
-];
-
-foreach ($scanners as $key => $info) {
-    if (!is_file($info['script'])) {
-        $warnings[] = $key . ' scanner missing';
-    }
-}
-
-$signals['rest_permission_violations'] = countFromFile($scanners['rest']['paths'], 'rest violations', $warnings);
-$signals['sql_prepare_violations'] = countFromFile($scanners['sql']['paths'], 'sql violations', $warnings);
-$signals['secrets_findings'] = countFromFile($scanners['secrets']['paths'], 'secrets findings', $warnings);
-$signals['license_denied'] = countLicense($scanners['license']['paths'], 'license audit', $warnings);
-
-$potPath = $root . '/artifacts/i18n/pot-refresh.json';
-if (is_file($potPath)) {
-    $data = json_decode((string)file_get_contents($potPath), true);
-    if (is_array($data)) {
-        $signals['pot_entries'] = (int) ($data['pot_entries'] ?? 0);
-        $signals['i18n_domain_mismatches'] = (int) ($data['domain_mismatch'] ?? 0);
+function readJsonFile(string $path, string $label, array &$warnings): ?array
+{
+    if (is_file($path)) {
+        $data = json_decode((string)file_get_contents($path), true);
+        if (is_array($data)) {
+            return $data;
+        }
+        $warnings[] = $label . ' parse failed';
     } else {
-        $warnings[] = 'pot-refresh.json parse failed';
-        $signals['pot_entries'] = 0;
-        $signals['i18n_domain_mismatches'] = 0;
+        $warnings[] = $label . ' missing';
     }
-} else {
-    $warnings[] = 'pot-refresh.json missing';
-    $signals['pot_entries'] = 0;
-    $signals['i18n_domain_mismatches'] = 0;
+    return null;
 }
 
-$manifestPath = $root . '/artifacts/dist/manifest.json';
-$sbomPath = $root . '/artifacts/dist/sbom.json';
-$signals['manifest_present'] = is_file($manifestPath);
-$signals['sbom_present'] = is_file($sbomPath);
+// qa-report and go-no-go are advisory.
+readJsonFile($root . '/artifacts/qa/qa-report.json', 'qa-report.json', $warnings);
+readJsonFile($root . '/artifacts/qa/go-no-go.json', 'go-no-go.json', $warnings);
+
+// Scanner outputs
+$signals['rest_permission_violations'] = jsonCount([
+    $root . '/artifacts/qa/rest-violations.json',
+    $root . '/rest-violations.json'
+], 'rest violations', $warnings);
+
+$signals['sql_prepare_violations'] = jsonCount([
+    $root . '/artifacts/qa/sql-violations.json',
+    $root . '/sql-violations.json'
+], 'sql violations', $warnings);
+
+$signals['secrets_findings'] = jsonCount([
+    $root . '/artifacts/qa/secrets.json',
+    $root . '/secrets.json'
+], 'secrets findings', $warnings);
+
+$signals['license_denied'] = jsonKeyCount([
+    $root . '/artifacts/qa/licenses.json',
+    $root . '/licenses.json'
+], 'license audit', 'denied', $warnings);
+
+// i18n
+$pot = readJsonFile($root . '/artifacts/i18n/pot-refresh.json', 'pot-refresh.json', $warnings);
+$signals['pot_entries'] = (int)($pot['pot_entries'] ?? 0);
+$signals['i18n_domain_mismatches'] = (int)($pot['domain_mismatch'] ?? 0);
+
+// manifest & sbom presence
+$signals['manifest_present'] = is_file($root . '/artifacts/dist/manifest.json');
 if (!$signals['manifest_present']) {
     $warnings[] = 'manifest.json missing';
 }
+$signals['sbom_present'] = is_file($root . '/artifacts/dist/sbom.json');
 if (!$signals['sbom_present']) {
     $warnings[] = 'sbom.json missing';
 }
 
-$vcPath = $root . '/scripts/version-coherence.php';
+// version coherence
 $signals['version_mismatches'] = 0;
-if (is_file($vcPath)) {
-    $json = @shell_exec('php ' . escapeshellarg($vcPath));
+$vc = $root . '/scripts/version-coherence.php';
+if (is_file($vc)) {
+    $json = @shell_exec('php ' . escapeshellarg($vc));
     if ($json !== null) {
         $data = json_decode($json, true);
         if (is_array($data)) {
@@ -174,24 +199,128 @@ if (is_file($vcPath)) {
     $warnings[] = 'version coherence script missing';
 }
 
+// coverage
+$signals['coverage_percent'] = null;
+$covJson = $root . '/artifacts/coverage/coverage.json';
+$clover = $root . '/artifacts/coverage/clover.xml';
+if (is_file($covJson)) {
+    $data = json_decode((string)file_get_contents($covJson), true);
+    if (is_array($data)) {
+        if (isset($data['totals']['lines']['pct'])) {
+            $signals['coverage_percent'] = (float)$data['totals']['lines']['pct'];
+        } elseif (isset($data['lineCoverage'])) {
+            $signals['coverage_percent'] = (float)$data['lineCoverage'];
+        } else {
+            $warnings[] = 'coverage.json missing line pct';
+        }
+    } else {
+        $warnings[] = 'coverage.json parse failed';
+    }
+} elseif (is_file($clover)) {
+    $xml = @simplexml_load_file($clover);
+    if ($xml !== false && isset($xml->project->metrics['statements'], $xml->project->metrics['coveredstatements'])) {
+        $total = (int)$xml->project->metrics['statements'];
+        $covered = (int)$xml->project->metrics['coveredstatements'];
+        $signals['coverage_percent'] = $total > 0 ? round(($covered / $total) * 100, 2) : 0.0;
+    } else {
+        $warnings[] = 'clover.xml parse failed';
+    }
+} else {
+    $warnings[] = 'coverage missing';
+}
+
+// dist audit
+$signals['dist_audit_errors'] = null;
+$distArtifact = $root . '/artifacts/dist/dist-audit.json';
+$distScript   = $root . '/scripts/dist-audit.php';
+$distData = null;
+if (is_file($distArtifact)) {
+    $distData = json_decode((string)file_get_contents($distArtifact), true);
+} elseif (is_file($distScript)) {
+    $json = @shell_exec('php ' . escapeshellarg($distScript));
+    if ($json !== null) {
+        $distData = json_decode($json, true);
+    }
+}
+if (is_array($distData)) {
+    $signals['dist_audit_errors'] = (int)($distData['summary']['violations'] ?? 0);
+} else {
+    $warnings[] = 'dist audit missing';
+}
+
+// wp.org lint
+$signals['wporg_lint_warnings'] = null;
+$lintArtifact = $root . '/artifacts/qa/wporg-lint.json';
+$lintScript   = $root . '/scripts/wporg-lint.php';
+$lintData = null;
+if (is_file($lintArtifact)) {
+    $lintData = json_decode((string)file_get_contents($lintArtifact), true);
+} elseif (is_file($lintScript)) {
+    $json = @shell_exec('php ' . escapeshellarg($lintScript));
+    if ($json !== null) {
+        $lintData = json_decode($json, true);
+    }
+}
+if (is_array($lintData)) {
+    $count = 0;
+    $readme = $lintData['readme'] ?? [];
+    if (!empty($readme['missing'])) {
+        $count++;
+    }
+    $count += isset($readme['missing_headers']) && is_array($readme['missing_headers']) ? count($readme['missing_headers']) : 0;
+    if (isset($readme['short_description']) && !$readme['short_description']) {
+        $count++;
+    }
+    if (!empty($readme['sections']) && is_array($readme['sections'])) {
+        foreach ($readme['sections'] as $lines) {
+            if ($lines > 400) {
+                $count++;
+            }
+        }
+    }
+    $assets = $lintData['assets'] ?? [];
+    if (empty($assets['present'])) {
+        $count++;
+    } elseif (!empty($assets['files']) && is_array($assets['files'])) {
+        foreach ($assets['files'] as $info) {
+            if (!empty($info['missing']) || (isset($info['ok']) && !$info['ok'])) {
+                $count++;
+            }
+        }
+    }
+    $signals['wporg_lint_warnings'] = $count;
+} else {
+    $warnings[] = 'wporg lint missing';
+}
+
+// Threshold checks
 $failures = [];
-if ($signals['rest_permission_violations'] > (int) $config['rest_permission_violations']) {
+if ($signals['rest_permission_violations'] > (int)$config['rest_permission_violations']) {
     $failures[] = 'rest_permission_violations';
 }
-if ($signals['sql_prepare_violations'] > (int) $config['sql_prepare_violations']) {
+if ($signals['sql_prepare_violations'] > (int)$config['sql_prepare_violations']) {
     $failures[] = 'sql_prepare_violations';
 }
-if ($signals['secrets_findings'] > (int) $config['secrets_findings']) {
+if ($signals['secrets_findings'] > (int)$config['secrets_findings']) {
     $failures[] = 'secrets_findings';
 }
-if ($signals['license_denied'] > (int) $config['license_denied']) {
+if ($signals['license_denied'] > (int)$config['license_denied']) {
     $failures[] = 'license_denied';
 }
-if ($signals['i18n_domain_mismatches'] > (int) $config['i18n_domain_mismatches']) {
+if ($signals['i18n_domain_mismatches'] > (int)$config['i18n_domain_mismatches']) {
     $failures[] = 'i18n_domain_mismatches';
 }
-if ($signals['coverage_percent'] < (float) $config['coverage_min_lines_pct']) {
+if ($signals['coverage_percent'] !== null && $signals['coverage_percent'] < (float)$config['coverage_min_lines_pct']) {
     $failures[] = 'coverage_min_lines_pct';
+}
+if ($signals['pot_entries'] < (int)$config['pot_min_entries']) {
+    $failures[] = 'pot_min_entries';
+}
+if ($signals['dist_audit_errors'] !== null && $signals['dist_audit_errors'] > (int)$config['dist_audit_max_errors']) {
+    $failures[] = 'dist_audit_errors';
+}
+if ($signals['wporg_lint_warnings'] !== null && $signals['wporg_lint_warnings'] > (int)$config['wporg_lint_max_warnings']) {
+    $failures[] = 'wporg_lint_warnings';
 }
 if ($config['require_manifest'] && !$signals['manifest_present']) {
     $failures[] = 'manifest_missing';
@@ -199,7 +328,7 @@ if ($config['require_manifest'] && !$signals['manifest_present']) {
 if ($config['require_sbom'] && !$signals['sbom_present']) {
     $failures[] = 'sbom_missing';
 }
-if (!empty($signals['version_mismatches']) && !empty($config['version_mismatch_fatal'])) {
+if ($signals['version_mismatches'] > 0 && !empty($config['version_mismatch_fatal'])) {
     $failures[] = 'version_mismatch';
 }
 
@@ -213,10 +342,10 @@ if ($failures) {
 ksort($signals);
 ksort($config);
 $out = [
-    'signals' => $signals,
+    'signals'  => $signals,
     'failures' => $failures,
     'warnings' => $warnings,
-    'verdict' => $verdict,
+    'verdict'  => $verdict,
 ];
 ksort($out);
 
@@ -226,17 +355,53 @@ if (!is_dir($gaDir)) {
 }
 file_put_contents($gaDir . '/GA_ENFORCER.json', json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
-$txt  = "گزارش GA Enforcer\n";
-$txt .= "نتیجه: $verdict\n";
-$txt .= "تخطی‌های REST: {$signals['rest_permission_violations']}\n";
-$txt .= "تخطی‌های SQL: {$signals['sql_prepare_violations']}\n";
-$txt .= "رازهای یافت‌شده: {$signals['secrets_findings']}\n";
-$txt .= "مجوزهای ردشده: {$signals['license_denied']}\n";
-$txt .= "دامنه‌های i18n ناهماهنگ: {$signals['i18n_domain_mismatches']}\n";
-$txt .= "پوشش خطوط: {$signals['coverage_percent']}%\n";
-$txt .= "وجود manifest: " . ($signals['manifest_present'] ? 'بله' : 'خیر') . "\n";
-$txt .= "وجود SBOM: " . ($signals['sbom_present'] ? 'بله' : 'خیر') . "\n";
-$txt .= "ناسازگاری نسخه: {$signals['version_mismatches']}\n";
-file_put_contents($gaDir . '/GA_ENFORCER.txt', $txt);
+$txt = [];
+$txt[] = 'GA Enforcer Report';
+$txt[] = 'Verdict: ' . $verdict;
+$txt[] = 'REST violations: ' . $signals['rest_permission_violations'];
+$txt[] = 'SQL violations: ' . $signals['sql_prepare_violations'];
+$txt[] = 'Secrets findings: ' . $signals['secrets_findings'];
+$txt[] = 'License denied: ' . $signals['license_denied'];
+$txt[] = 'i18n mismatches: ' . $signals['i18n_domain_mismatches'];
+$txt[] = 'Coverage lines: ' . ($signals['coverage_percent'] ?? 'null');
+$txt[] = 'Manifest present: ' . ($signals['manifest_present'] ? 'yes' : 'no');
+$txt[] = 'SBOM present: ' . ($signals['sbom_present'] ? 'yes' : 'no');
+$txt[] = 'Version mismatches: ' . $signals['version_mismatches'];
+$txt[] = 'POT entries: ' . $signals['pot_entries'];
+$txt[] = 'Dist audit errors: ' . ($signals['dist_audit_errors'] ?? 'null');
+$txt[] = 'WP.org lint warnings: ' . ($signals['wporg_lint_warnings'] ?? 'null');
+file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
+
+if ($wantJUnit) {
+    $map = [
+        'REST'          => 'rest_permission_violations',
+        'SQL'           => 'sql_prepare_violations',
+        'Secrets'       => 'secrets_findings',
+        'License'       => 'license_denied',
+        'Version'       => 'version_mismatch',
+        'Manifest'      => 'manifest_missing',
+        'SBOM'          => 'sbom_missing',
+        'Coverage'      => 'coverage_min_lines_pct',
+        'POT'           => 'pot_min_entries',
+        'Dist-Audit'    => 'dist_audit_errors',
+        'WP.org-Lint'   => 'wporg_lint_warnings',
+        'i18n mismatches' => 'i18n_domain_mismatches',
+    ];
+
+    $suite = new SimpleXMLElement('<testsuite name="GA Enforcer"/>');
+    foreach ($map as $name => $key) {
+        $case = $suite->addChild('testcase');
+        $case->addAttribute('name', $name);
+        if (in_array($key, $failures, true)) {
+            $msg = $name . ' threshold exceeded';
+            $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+            $fail->addAttribute('message', $msg);
+        }
+    }
+    $dom = dom_import_simplexml($suite)->ownerDocument;
+    $dom->formatOutput = true;
+    file_put_contents($gaDir . '/GA_ENFORCER.junit.xml', $dom->saveXML());
+}
 
 exit($enforce && $verdict === 'FAIL' ? 1 : 0);
+
