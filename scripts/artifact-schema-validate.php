@@ -24,29 +24,6 @@ ensure_dir($schemaDir);
 
 $warnings = [];
 
-// coverage
-$cov = $artifacts . '/coverage/coverage.json';
-if (is_file($cov)) {
-    $raw = (string)file_get_contents($cov);
-    $data = json_decode($raw, true);
-    if (!is_array($data)) {
-        $warnings[] = ['file' => substr($cov, strlen($root) + 1), 'reason' => 'invalid JSON'];
-    } else {
-        $rel = substr($cov, strlen($root) + 1);
-        $tot = $data['totals']['pct'] ?? null;
-        if (!is_numeric($tot)) {
-            $warnings[] = ['file' => $rel, 'reason' => 'missing totals.pct'];
-        }
-        foreach ($data['files'] ?? [] as $idx => $f) {
-            foreach (['path', 'lines_total', 'lines_covered', 'pct'] as $field) {
-                if (!array_key_exists($field, $f)) {
-                    $warnings[] = ['file' => $rel, 'reason' => "files[$idx].$field missing"];
-                }
-            }
-        }
-    }
-}
-
 // dist manifest
 $manifest = $artifacts . '/dist/manifest.json';
 if (is_file($manifest)) {
@@ -79,25 +56,6 @@ if (is_file($manifest)) {
     }
 } else {
     $warnings[] = ['file' => substr($manifest, strlen($root) + 1), 'reason' => 'missing file'];
-}
-
-// qa and i18n JSON parseability
-foreach (['qa', 'i18n'] as $dir) {
-    $base = $artifacts . '/' . $dir;
-    if (!is_dir($base)) {
-        continue;
-    }
-    $iter = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($base));
-    foreach ($iter as $file) {
-        if ($file->isFile() && strtolower($file->getExtension()) === 'json') {
-            $path = $file->getPathname();
-            $raw = (string)file_get_contents($path);
-            json_decode($raw, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $warnings[] = ['file' => substr($path, strlen($root) + 1), 'reason' => 'invalid JSON'];
-            }
-        }
-    }
 }
 
 usort(

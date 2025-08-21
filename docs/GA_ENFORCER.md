@@ -58,22 +58,12 @@ legacy files[] present; use entries[] as canonical
 
 ## Artifact Schema Validation
 
-`scripts/artifact-schema-validate.php` scans for malformed or incomplete JSON
-artifacts. It inspects, when present:
-
-* `artifacts/coverage/coverage.json`
-* `artifacts/qa/*.json`
-* `artifacts/dist/*.json`
-* `artifacts/i18n/*.json`
-
-Coverage and dist artifacts receive structural checks. The manifest requires a
-canonical `entries[]` array where each entry has a `path`, `sha256` (hex), and
-`size`. A legacy `files[]` array triggers the warning above. Downstream CI can
-rely on the JUnit testcase `Artifacts.Schema` to surface these warnings; it is
-always emitted, skipped in advisory runs, and fails when thresholds are
-exceeded under enforcement. `artifacts/qa/**/*.json` and
-`artifacts/i18n/**/*.json` are parsed only to verify they are valid JSON.
-Results are written to `artifacts/schema/schema-validate.json`:
+`scripts/artifact-schema-validate.php` validates only the distribution manifest
+under `artifacts/dist/manifest.json`. The manifest must contain a canonical
+`entries[]` array where each object includes a `path`, 64‑character `sha256`, and
+integer `size`. Missing manifests, empty or malformed `entries`, or a legacy
+`files[]` array produce advisory warnings. All warnings are sorted for
+deterministic output in `artifacts/schema/schema-validate.json`:
 
 ```json
 {
@@ -84,11 +74,11 @@ Results are written to `artifacts/schema/schema-validate.json`:
 }
 ```
 
-This validator is advisory; it never exits non‑zero. GA Enforcer consumes the
-warning count and may enforce thresholds when run with `--enforce`. JUnit
-reports always include a testcase `Artifacts.Schema`; it is marked skipped in
-advisory runs and fails when schema warnings exceed thresholds under
-enforcement.
+The validator is advisory and always exits zero. GA Enforcer consumes the
+warning count and may enforce thresholds when run with `--enforce`. Its JUnit
+report always includes a testcase `Artifacts.Schema`; advisory runs mark it
+skipped, and GA enforcement fails the testcase when schema warnings exceed the
+configured threshold.
 
 ### Profiles
 

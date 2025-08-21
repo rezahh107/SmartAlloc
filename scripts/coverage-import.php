@@ -51,6 +51,7 @@ $candidates[] = $root . '/artifacts/coverage/clover.xml';
 $candidates[] = $root . '/coverage/clover.xml';
 $candidates[] = $root . '/clover.xml';
 $candidates[] = $root . '/artifacts/coverage/coverage.json';
+$candidates[] = $root . '/coverage/coverage.json';
 $candidates[] = $root . '/coverage.json';
 
 $out = [
