@@ -3,14 +3,7 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
-$pluginFile = $root . '/smart-alloc.php';
-$domain = '';
-if (is_file($pluginFile)) {
-    $content = (string) file_get_contents($pluginFile);
-    if (preg_match('/Text Domain:\s*(\S+)/i', $content, $m)) {
-        $domain = trim($m[1]);
-    }
-}
+$domain = 'smartalloc';
 
 $files = collectPhpFiles($root);
 $map = [
@@ -21,15 +14,13 @@ $map = [
     '_n' => ['singular' => 0, 'plural' => 1, 'domain' => 3],
     '_nx' => ['singular' => 0, 'plural' => 1, 'context' => 3, 'domain' => 4],
     'esc_html__' => ['singular' => 0, 'domain' => 1],
-    'esc_html_e' => ['singular' => 0, 'domain' => 1],
-    'esc_html_x' => ['singular' => 0, 'context' => 1, 'domain' => 2],
     'esc_attr__' => ['singular' => 0, 'domain' => 1],
-    'esc_attr_e' => ['singular' => 0, 'domain' => 1],
-    'esc_attr_x' => ['singular' => 0, 'context' => 1, 'domain' => 2],
+    'translate_nooped_plural' => ['noop' => 0, 'domain' => 2],
 ];
 
 $entries = [];
 $domainMismatch = 0;
+
 foreach ($files as $file) {
     $src = (string) file_get_contents($file);
     $tokens = token_get_all($src);
@@ -38,9 +29,32 @@ foreach ($files as $file) {
         $t = $tokens[$i];
         if (is_array($t) && $t[0] === T_STRING && isset($map[$t[1]])) {
             $call = extractCall($tokens, $i);
-            if ($call === null) { continue; }
+            if ($call === null) {
+                continue;
+            }
             $args = splitArgs($call['args']);
             $spec = $map[$t[1]];
+
+            if ($t[1] === 'translate_nooped_plural') {
+                $domainArg = $args[$spec['domain']] ?? null;
+                $domainVal = stringArg($domainArg);
+                if ($domainVal !== $domain) {
+                    $domainMismatch++;
+                    continue;
+                }
+                $noop = parseNooped($args[$spec['noop']] ?? null);
+                if ($noop === null) {
+                    continue;
+                }
+                $key = json_encode([$noop['context'], $noop['singular'], $noop['plural']]);
+                $entries[$key] = [
+                    'ctx' => $noop['context'],
+                    'msgid' => $noop['singular'],
+                    'plural' => $noop['plural'],
+                ];
+                continue;
+            }
+
             $domainArg = $args[$spec['domain']] ?? null;
             $domainVal = stringArg($domainArg);
             if ($domainVal !== $domain) {
@@ -48,7 +62,9 @@ foreach ($files as $file) {
                 continue;
             }
             $singular = stringArg($args[$spec['singular']] ?? null);
-            if ($singular === null) { continue; }
+            if ($singular === null) {
+                continue;
+            }
             $plural = isset($spec['plural']) ? stringArg($args[$spec['plural']] ?? null) : null;
             $context = isset($spec['context']) ? stringArg($args[$spec['context']] ?? null) : null;
             $key = json_encode([$context, $singular, $plural]);
@@ -64,8 +80,23 @@ $dir = $root . '/artifacts/i18n';
 $pot = [];
 $pot[] = 'msgid ""';
 $pot[] = 'msgstr ""';
-$pot[] = '"Content-Type: text/plain; charset=UTF-8\\n"';
-$pot[] = '"Plural-Forms: nplurals=2; plural=(n != 1);\\n"';
+$headers = [
+    'Project-Id-Version: SmartAlloc',
+    'Report-Msgid-Bugs-To: ',
+    'POT-Creation-Date: 2024-01-01 00:00+0000',
+    'PO-Revision-Date: 2024-01-01 00:00+0000',
+    'Last-Translator: ',
+    'Language-Team: ',
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: 8bit',
+    'Plural-Forms: nplurals=2; plural=(n != 1);',
+    'X-Generator: pot-refresh',
+    'X-Copyright: 2024',
+];
+foreach ($headers as $h) {
+    $pot[] = '"' . $h . '\\n"';
+}
 $pot[] = '';
 foreach ($entries as $e) {
     if ($e['ctx'] !== null) {
@@ -81,30 +112,31 @@ foreach ($entries as $e) {
     }
     $pot[] = '';
 }
-file_put_contents($dir . '/messages.pot', implode("\n", $pot));
+file_put_contents($dir . '/messages.pot', implode("\n", $pot) . "\n");
 
 $meta = [
     'pot_entries' => count($entries),
     'domain_mismatch' => $domainMismatch,
+    'files_scanned' => count($files),
 ];
 file_put_contents($dir . '/pot-refresh.json', json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
-echo 'pot-refresh: entries=' . count($entries) . ' domain_mismatch=' . $domainMismatch . PHP_EOL;
+echo 'pot-refresh: pot_entries=' . count($entries) . ' domain_mismatch=' . $domainMismatch . ' files_scanned=' . count($files) . PHP_EOL;
 exit(0);
 
-function collectPhpFiles(string $root): array
-{
+function collectPhpFiles(string $root): array {
     $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
     $out = [];
     foreach ($rii as $f) {
         if ($f->isFile() && str_ends_with($f->getFilename(), '.php')) {
             $path = $f->getPathname();
             if (
-                strpos($path, '/vendor/') !== false ||
-                strpos($path, '/node_modules/') !== false ||
-                strpos($path, '/dist/') !== false ||
-                strpos($path, '/tests/') !== false ||
-                strpos($path, '/artifacts/') !== false
+                str_contains($path, '/vendor/') ||
+                str_contains($path, '/node_modules/') ||
+                str_contains($path, '/dist/') ||
+                str_contains($path, '/artifacts/') ||
+                str_contains($path, '/tests/') ||
+                str_contains($path, '/.wordpress-org/')
             ) {
                 continue;
             }
@@ -115,8 +147,7 @@ function collectPhpFiles(string $root): array
     return $out;
 }
 
-function extractCall(array $tokens, int $idx): ?array
-{
+function extractCall(array $tokens, int $idx): ?array {
     $i = $idx + 1;
     $count = count($tokens);
     while ($i < $count && is_array($tokens[$i]) && $tokens[$i][0] === T_WHITESPACE) {
@@ -134,23 +165,24 @@ function extractCall(array $tokens, int $idx): ?array
             $depth++;
         } elseif ($tok === ')') {
             $depth--;
-            if ($depth === 0) { break; }
+            if ($depth === 0) {
+                break;
+            }
         }
     }
     return ['args' => substr($call, 1, -1)];
 }
 
-function splitArgs(string $args): array
-{
+function splitArgs(string $args): array {
     $out = [];
     $depth = 0;
     $current = '';
     $len = strlen($args);
     for ($i = 0; $i < $len; $i++) {
         $ch = $args[$i];
-        if ($ch === '(') {
+        if ($ch === '(' || $ch === '[') {
             $depth++;
-        } elseif ($ch === ')') {
+        } elseif ($ch === ')' || $ch === ']') {
             $depth--;
         } elseif ($ch === ',' && $depth === 0) {
             $out[] = trim($current);
@@ -165,9 +197,10 @@ function splitArgs(string $args): array
     return $out;
 }
 
-function stringArg(?string $arg): ?string
-{
-    if ($arg === null) { return null; }
+function stringArg(?string $arg): ?string {
+    if ($arg === null) {
+        return null;
+    }
     $arg = trim($arg);
     if (preg_match("/^['\"](.*)['\"]$/s", $arg, $m)) {
         return stripcslashes($m[1]);
@@ -175,7 +208,28 @@ function stringArg(?string $arg): ?string
     return null;
 }
 
-function potEscape(string $str): string
-{
+function parseNooped(?string $arg): ?array {
+    if ($arg === null) {
+        return null;
+    }
+    $arg = trim($arg);
+    if (str_starts_with($arg, '[') && str_ends_with($arg, ']')) {
+        $inner = substr($arg, 1, -1);
+    } elseif (str_starts_with(strtolower($arg), 'array(') && str_ends_with($arg, ')')) {
+        $inner = substr($arg, 6, -1);
+    } else {
+        return null;
+    }
+    $parts = splitArgs($inner);
+    $singular = stringArg($parts[0] ?? null);
+    $plural = stringArg($parts[1] ?? null);
+    $context = stringArg($parts[2] ?? null);
+    if ($singular === null || $plural === null) {
+        return null;
+    }
+    return ['singular' => $singular, 'plural' => $plural, 'context' => $context];
+}
+
+function potEscape(string $str): string {
     return addcslashes($str, "\0..\37\\\"");
 }

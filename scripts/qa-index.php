@@ -22,8 +22,6 @@ $files = [
     'i18n-lint.json',
     'pot-diff.json',
     'pot-diff.md',
-    'artifacts/i18n/messages.pot',
-    'artifacts/i18n/pot-refresh.json',
     'wporg-assets.json',
 ];
 
@@ -34,6 +32,15 @@ foreach ($files as $file) {
         $rel = '../../' . $file;
         $rows[] = '<tr><td><a href="' . htmlspecialchars($rel, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($file, ENT_QUOTES, 'UTF-8') . '</a></td></tr>';
     }
+}
+
+$pot = $root . '/artifacts/i18n/messages.pot';
+if (is_file($pot)) {
+    $rows[] = '<tr><td><a href="../i18n/messages.pot">artifacts/i18n/messages.pot</a></td></tr>';
+}
+$meta = $root . '/artifacts/i18n/pot-refresh.json';
+if (is_file($meta)) {
+    $rows[] = '<tr><td><a href="../i18n/pot-refresh.json">artifacts/i18n/pot-refresh.json</a></td></tr>';
 }
 
 $bundle = $outDir . '/qa-bundle.zip';

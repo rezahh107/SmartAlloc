@@ -53,6 +53,7 @@ pot_missing=0
 wporg_warn=0
 pot_entries=0
 pot_domain_mismatch=0
+pot_files_scanned=0
 if command -v php >/dev/null 2>&1; then
     mkdir -p "$ROOT/artifacts"
     if [ -f "$ROOT/scripts/i18n-lint.php" ]; then
@@ -65,6 +66,7 @@ if command -v php >/dev/null 2>&1; then
         if [ -f "$ROOT/artifacts/i18n/pot-refresh.json" ]; then
             pot_entries=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["pot_entries"]??0;' "$ROOT/artifacts/i18n/pot-refresh.json" 2>/dev/null || echo 0)
             pot_domain_mismatch=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["domain_mismatch"]??0;' "$ROOT/artifacts/i18n/pot-refresh.json" 2>/dev/null || echo 0)
+            pot_files_scanned=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["files_scanned"]??0;' "$ROOT/artifacts/i18n/pot-refresh.json" 2>/dev/null || echo 0)
         fi
     fi
     if [ -f "$ROOT/scripts/pot-diff.php" ]; then
