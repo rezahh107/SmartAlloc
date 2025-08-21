@@ -35,7 +35,10 @@ $go = is_file($goFile) ? json_decode((string)file_get_contents($goFile), true) :
 $checksums = [];
 if (is_file($manifest)) {
     $m = json_decode((string)file_get_contents($manifest), true);
-    $entries = $m['entries'] ?? ($m['files'] ?? []);
+    $entries = $m['entries'] ?? [];
+    if (empty($entries) && isset($m['files']) && is_array($m['files'])) {
+        $entries = $m['files'];
+    }
     if (is_array($entries)) {
         foreach ($entries as $f) {
             $checksums[] = [$f['path'] ?? '', $f['sha256'] ?? '', $f['size'] ?? ''];

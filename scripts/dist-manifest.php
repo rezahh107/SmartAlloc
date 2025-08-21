@@ -20,7 +20,7 @@ if ($path !== null) {
                 $files[] = [
                     'path' => $name,
                     'sha256' => hash('sha256', (string)$content),
-                    'size' => $stat['size'] ?? strlen((string)$content),
+                    'size' => (int)($stat['size'] ?? strlen((string)$content)),
                 ];
             }
             $zip->close();
@@ -35,12 +35,15 @@ if ($path !== null) {
                 $files[] = [
                     'path' => str_replace('\\', '/', $rel),
                     'sha256' => hash_file('sha256', $fileinfo->getPathname()),
-                    'size' => $fileinfo->getSize(),
+                    'size' => (int)$fileinfo->getSize(),
                 ];
             }
         }
     }
 }
+
+$files = array_values($files);
+usort($files, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
 
 $manifestDir = $root . '/artifacts/dist';
 if (!is_dir($manifestDir)) {
@@ -48,7 +51,11 @@ if (!is_dir($manifestDir)) {
 }
 file_put_contents(
     $manifestDir . '/manifest.json',
-    json_encode(['entries' => $files], JSON_PRETTY_PRINT)
+    json_encode([
+        'entries' => $files,
+        // legacy alias maintained for backward compatibility
+        'files' => $files,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
 );
 
 exit(0);

@@ -11,9 +11,11 @@ final class CoverageImportTest extends TestCase
             $this->markTestSkipped('opt-in');
         }
 
-        @mkdir(__DIR__ . '/../../../artifacts/coverage', 0777, true);
+        $covDir = __DIR__ . '/../../../artifacts/coverage';
+        @mkdir($covDir, 0777, true);
+        @unlink($covDir . '/coverage.json');
         $fixture = __DIR__ . '/../../fixtures/clover/minimal.xml';
-        putenv('COVERAGE_INPUT=' . $fixture);
+        copy($fixture, $covDir . '/clover.xml');
         $cmd = PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/../../../scripts/coverage-import.php');
         exec($cmd, $o, $rc);
         $this->assertSame(0, $rc);

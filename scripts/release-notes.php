@@ -48,7 +48,10 @@ if ($goNoGoFile) {
         $metrics['license'] = isset($inputs['licenses']['denied']) ? (int)$inputs['licenses']['denied'] : null;
         $metrics['secrets'] = isset($inputs['secrets']['count']) ? (int)$inputs['secrets']['count'] : null;
         $m = $inputs['manifest'] ?? [];
-        $entries = $m['entries'] ?? ($m['files'] ?? []);
+        $entries = $m['entries'] ?? [];
+        if (empty($entries) && isset($m['files']) && is_array($m['files'])) {
+            $entries = $m['files'];
+        }
         if (is_array($entries)) {
             $metrics['manifest'] = $entries;
         }
