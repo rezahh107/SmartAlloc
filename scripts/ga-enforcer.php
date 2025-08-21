@@ -202,28 +202,22 @@ if (is_file($vc)) {
 // coverage
 $signals['coverage_percent'] = null;
 $covJson = $root . '/artifacts/coverage/coverage.json';
-$clover = $root . '/artifacts/coverage/clover.xml';
+if (!is_file($covJson)) {
+    $importer = $root . '/scripts/coverage-import.php';
+    if (is_file($importer)) {
+        @shell_exec('php ' . escapeshellarg($importer));
+    }
+}
 if (is_file($covJson)) {
     $data = json_decode((string)file_get_contents($covJson), true);
     if (is_array($data)) {
-        if (isset($data['totals']['lines']['pct'])) {
-            $signals['coverage_percent'] = (float)$data['totals']['lines']['pct'];
-        } elseif (isset($data['lineCoverage'])) {
-            $signals['coverage_percent'] = (float)$data['lineCoverage'];
+        if (isset($data['lines_pct']) && $data['lines_pct'] !== null) {
+            $signals['coverage_percent'] = (float)$data['lines_pct'];
         } else {
             $warnings[] = 'coverage.json missing line pct';
         }
     } else {
         $warnings[] = 'coverage.json parse failed';
-    }
-} elseif (is_file($clover)) {
-    $xml = @simplexml_load_file($clover);
-    if ($xml !== false && isset($xml->project->metrics['statements'], $xml->project->metrics['coveredstatements'])) {
-        $total = (int)$xml->project->metrics['statements'];
-        $covered = (int)$xml->project->metrics['coveredstatements'];
-        $signals['coverage_percent'] = $total > 0 ? round(($covered / $total) * 100, 2) : 0.0;
-    } else {
-        $warnings[] = 'clover.xml parse failed';
     }
 } else {
     $warnings[] = 'coverage missing';
@@ -291,6 +285,34 @@ if (is_array($lintData)) {
     $signals['wporg_lint_warnings'] = $count;
 } else {
     $warnings[] = 'wporg lint missing';
+}
+
+// schema validation
+$schemaValidator = $root . '/scripts/validate-artifacts.php';
+$schemaWarnings = null;
+$schemaValidatorExists = is_file($schemaValidator);
+if ($schemaValidatorExists) {
+    @shell_exec('php ' . escapeshellarg($schemaValidator));
+    $schemaJson = $root . '/artifacts/qa/schema-validate.json';
+    if (is_file($schemaJson)) {
+        $svData = json_decode((string)file_get_contents($schemaJson), true);
+        if (is_array($svData)) {
+            $count = 0;
+            foreach ($svData as $row) {
+                if (empty($row['ok'])) {
+                    $count++;
+                }
+            }
+            $schemaWarnings = $count;
+        } else {
+            $schemaWarnings = 1;
+            $warnings[] = 'schema-validate.json parse failed';
+        }
+    } else {
+        $schemaWarnings = 1;
+        $warnings[] = 'schema-validate.json missing';
+    }
+    $signals['schema_warnings'] = $schemaWarnings;
 }
 
 // Threshold checks
@@ -370,6 +392,7 @@ $txt[] = 'Version mismatches: ' . $signals['version_mismatches'];
 $txt[] = 'POT entries: ' . $signals['pot_entries'];
 $txt[] = 'Dist audit errors: ' . ($signals['dist_audit_errors'] ?? 'null');
 $txt[] = 'WP.org lint warnings: ' . ($signals['wporg_lint_warnings'] ?? 'null');
+$txt[] = 'Schema warnings: ' . ($signals['schema_warnings'] ?? 'null');
 file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
 
 if ($wantJUnit) {
@@ -397,6 +420,15 @@ if ($wantJUnit) {
             $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
             $fail->addAttribute('message', $msg);
         }
+    }
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'Artifacts.Schema');
+    if (!$schemaValidatorExists) {
+        $case->addChild('skipped');
+    } elseif (($schemaWarnings ?? 0) > 0 && $enforce) {
+        $msg = 'schema warnings present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
     }
     $dom = dom_import_simplexml($suite)->ownerDocument;
     $dom->formatOutput = true;

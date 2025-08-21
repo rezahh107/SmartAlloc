@@ -57,6 +57,28 @@ The `--junit` flag writes `artifacts/ga/GA_ENFORCER.junit.xml` with one
 `<testcase>` per signal and a `<failure>` node when that signal exceeds its
 threshold.
 
+## Coverage Import
+
+`scripts/coverage-import.php` normalizes coverage reports. It looks for
+`artifacts/coverage/clover.xml` first and falls back to an existing
+`coverage.json`. The importer emits a deterministic
+`artifacts/coverage/coverage.json` with totals, covered lines and percentage
+and is invoked automatically by the GA Enforcer when needed.
+
+## Schema Validation (Advisory)
+
+`scripts/validate-artifacts.php` inspects optional QA artifacts for basic
+shape and presence. Any mismatches are recorded as schema warnings and are
+advisory by default. When the validator script is missing the GA Enforcer
+skips this step.
+
+## Advisory CI Example
+
+`docs/examples/ga-enforcer-advisory.yml` shows a minimal GitHub Actions job
+that installs dependencies, imports coverage and runs the GA Enforcer in
+advisory mode. Teams can copy this into their own CI when ready. The enforcer
+continues to exit `0` unless `--enforce` or `RUN_ENFORCE=1` is supplied.
+
 ## QA Plan mapping
 
 | QA Plan stage | Artifact/Signal |
