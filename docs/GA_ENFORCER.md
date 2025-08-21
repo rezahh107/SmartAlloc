@@ -67,14 +67,13 @@ and is invoked automatically by the GA Enforcer when needed.
 
 ## Schema Validation (Advisory)
 
-`scripts/validate-artifacts.php` inspects optional QA artifacts for basic
+`scripts/artifact-schema-validate.php` inspects optional QA artifacts for basic
 shape and presence. Any mismatches are recorded as schema warnings and are
-advisory by default. When the validator script is missing the GA Enforcer
-skips this step.
+advisory by default.
 
 ## Advisory CI Example
 
-`docs/examples/ga-enforcer-advisory.yml` shows a minimal GitHub Actions job
+`docs/ci-examples/ga-enforcer-advisory.yml` shows a minimal GitHub Actions job
 that installs dependencies, imports coverage and runs the GA Enforcer in
 advisory mode. Teams can copy this into their own CI when ready. The enforcer
 continues to exit `0` unless `--enforce` or `RUN_ENFORCE=1` is supplied.
@@ -89,3 +88,20 @@ continues to exit `0` unless `--enforce` or `RUN_ENFORCE=1` is supplied.
 | 7 | `artifacts/i18n/pot-refresh.json` |
 | 9 | Coverage reports |
 | 14 | `artifacts/ga/GA_ENFORCER.{json,txt,junit.xml}` |
+
+## Coverage import
+
+`php scripts/coverage-import.php` normalizes Clover XML or existing coverage JSON into `artifacts/coverage/coverage.json`. The GA Enforcer will invoke it automatically if coverage is missing.
+
+## Schema validation
+
+`php scripts/artifact-schema-validate.php` scans `artifacts/` for malformed JSON. Warnings are recorded in `artifacts/schema/schema-validate.json` and surfaced by the GA Enforcer (TXT/JSON) and as `Artifacts.Schema` in JUnit.
+
+## Quick start
+
+```bash
+php scripts/coverage-import.php
+php scripts/artifact-schema-validate.php
+php scripts/ga-enforcer.php --profile=rc --junit
+RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=ga --enforce --junit
+```
