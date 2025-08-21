@@ -77,6 +77,8 @@ artifacts/lighthouse/
 artifacts/qa/
 artifacts/i18n/
 artifacts/e2e/rtl/
+artifacts/wporg/
+artifacts/ga/
 *.lhreport.html
 # allow committed artifact templates
 !scripts/templates/artifacts/
