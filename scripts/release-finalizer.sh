@@ -46,6 +46,28 @@ fi
 run_php scripts/release-notes.php
 run_php scripts/final-checklist.php
 
+# Step 7 - advisory i18n/assets checks
+i18n_wrong=0
+i18n_placeholder=0
+pot_missing=0
+wporg_warn=0
+if command -v php >/dev/null 2>&1; then
+    mkdir -p "$ROOT/artifacts"
+    if [ -f "$ROOT/scripts/i18n-lint.php" ]; then
+        php "$ROOT/scripts/i18n-lint.php" > "$ROOT/artifacts/i18n-lint.json" 2>/dev/null || true
+        i18n_wrong=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo isset($d["wrong_domain"])?count($d["wrong_domain"]):0;' "$ROOT/artifacts/i18n-lint.json" 2>/dev/null || echo 0)
+        i18n_placeholder=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo isset($d["placeholder_mismatch"])?count($d["placeholder_mismatch"]):0;' "$ROOT/artifacts/i18n-lint.json" 2>/dev/null || echo 0)
+    fi
+    if [ -f "$ROOT/scripts/pot-diff.php" ]; then
+        php "$ROOT/scripts/pot-diff.php" > "$ROOT/artifacts/pot-diff.json" 2>/dev/null || true
+        pot_missing=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo ($d["pot_missing"]??false)?1:0;' "$ROOT/artifacts/pot-diff.json" 2>/dev/null || echo 0)
+    fi
+    if [ -f "$ROOT/scripts/wporg-assets-verify.php" ]; then
+        php "$ROOT/scripts/wporg-assets-verify.php" | tail -n 1 > "$ROOT/artifacts/wporg-assets.json" 2>/dev/null || true
+        wporg_warn=$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo isset($d["warnings"])?count($d["warnings"]):0;' "$ROOT/artifacts/wporg-assets.json" 2>/dev/null || echo 0)
+    fi
+fi
+
 # Summary
 mkdir -p "$ROOT/artifacts/ga"
 version="$(php -r 'echo preg_match("/Version:\s*([^\n]+)/", file_get_contents("smart-alloc.php"), $m) ? trim($m[1]) : "";' 2>/dev/null)"
@@ -81,5 +103,14 @@ fi
     printf 'Secrets: %s\n' "$secrets"
     [ "$coverage" != "N/A" ] && printf 'Coverage: %s\n' "$coverage" || true
 } > "$ROOT/artifacts/ga/GA_READY.txt"
+
+warn_lines=()
+[ "$i18n_wrong" -gt 0 ] && warn_lines+=("WARN i18n_wrong_domain=$i18n_wrong")
+[ "$i18n_placeholder" -gt 0 ] && warn_lines+=("WARN i18n_placeholder_mismatch=$i18n_placeholder")
+[ "$pot_missing" -gt 0 ] && warn_lines+=("WARN pot_missing=1")
+[ "$wporg_warn" -gt 0 ] && warn_lines+=("WARN wporg_asset_warnings=$wporg_warn")
+for w in "${warn_lines[@]}"; do
+    echo "$w" >> "$ROOT/artifacts/ga/GA_READY.txt"
+done
 
 exit 0
