@@ -1,0 +1,18 @@
+# Example GA Enforcer advisory job
+# Teams can copy this into their CI when ready.
+name: GA Enforcer Advisory
+
+on: [push]
+
+jobs:
+  ga-enforcer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: composer install --no-interaction
+      - run: php scripts/coverage-import.php
+      - run: php scripts/ga-enforcer.php --profile=rc --junit
+      - uses: actions/upload-artifact@v3
+        with:
+          name: GA_ENFORCER.junit.xml
+          path: artifacts/ga/GA_ENFORCER.junit.xml
