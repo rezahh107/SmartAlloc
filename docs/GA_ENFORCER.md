@@ -95,3 +95,19 @@ jobs:
 The job above runs the enforcer in advisory mode and uploads the generated
 artifacts for inspection.
 
+
+## CI quick start
+
+### Local advisory
+```bash
+php scripts/coverage-import.php
+php scripts/artifact-schema-validate.php
+php scripts/ga-enforcer.php --profile=rc --junit
+```
+
+### Manual enforce (GA threshold)
+```bash
+RUN_ENFORCE=1 php scripts/ga-enforcer.php --profile=ga --enforce --junit
+```
+
+See `.github/workflows/qa-advisory.yml` for advisory signals and `.github/workflows/ga-enforce.yml` for manual enforcement.

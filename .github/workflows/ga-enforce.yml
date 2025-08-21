@@ -1,0 +1,44 @@
+name: GA Enforce (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Threshold profile'
+        required: true
+        default: 'ga'
+        type: choice
+        options: [rc, ga]
+      junit:
+        description: 'Emit JUnit'
+        required: false
+        default: true
+        type: boolean
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring, xml, json
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist || true
+      - name: Import coverage (advisory)
+        run: php scripts/coverage-import.php || true
+      - name: Validate artifacts (advisory)
+        run: php scripts/artifact-schema-validate.php || true
+      - name: Enforce thresholds (blocking)
+        env:
+          RUN_ENFORCE: '1'
+        run: |
+          ARGS="--profile=${{ inputs.profile }} --enforce"
+          if [ "${{ inputs.junit }}" = "true" ]; then ARGS="$ARGS --junit"; fi
+          php scripts/ga-enforcer.php $ARGS
+      - name: Upload GA enforcer artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ga-enforcer-${{ inputs.profile }}
+          path: artifacts/ga/**
+          if-no-files-found: ignore

@@ -1,0 +1,44 @@
+name: QA Advisory (coverage + schema + GA Enforcer RC)
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring, xml, json
+          coverage: none
+
+      - name: Install Composer deps (no dev if project uses lock)
+        run: composer install --no-interaction --prefer-dist || true
+
+      - name: Coverage import (advisory)
+        run: php scripts/coverage-import.php || true
+
+      - name: Artifact schema validate (advisory)
+        run: php scripts/artifact-schema-validate.php || true
+
+      - name: GA Enforcer (RC profile, advisory)
+        run: php scripts/ga-enforcer.php --profile=rc --junit || true
+
+      - name: Upload QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-advisory-artifacts
+          path: |
+            artifacts/coverage/**
+            artifacts/schema/**
+            artifacts/ga/**
+            artifacts/qa/**
+            artifacts/dist/**
+          if-no-files-found: ignore
