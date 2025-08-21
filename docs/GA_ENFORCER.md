@@ -73,7 +73,10 @@ Results are written to `artifacts/schema/schema-validate.json`:
 ```
 
 This validator is advisory; it never exits non‑zero. GA Enforcer consumes the
-warning count and may enforce thresholds when run with `--enforce`.
+warning count and may enforce thresholds when run with `--enforce`. JUnit
+reports always include a testcase `Artifacts.Schema`; it is marked skipped in
+advisory runs and fails when schema warnings exceed thresholds under
+enforcement.
 
 ### Profiles
 

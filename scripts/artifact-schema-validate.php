@@ -58,6 +58,15 @@ if (is_file($manifest)) {
     } else {
         if (empty($data['entries']) || !is_array($data['entries'])) {
             $warnings[] = ['file' => $rel, 'reason' => 'missing entries'];
+            if (!empty($data['files']) && is_array($data['files'])) {
+                foreach ($data['files'] as $i => $entry) {
+                    foreach ([['path', 'is_string'], ['sha256', 'is_string'], ['size', 'is_int']] as [$field, $func]) {
+                        if (!array_key_exists($field, $entry) || !$func($entry[$field])) {
+                            $warnings[] = ['file' => $rel, 'reason' => "files[$i].$field missing"];
+                        }
+                    }
+                }
+            }
         } else {
             foreach ($data['entries'] as $i => $entry) {
                 foreach ([['path', 'is_string'], ['sha256', 'is_string'], ['size', 'is_int']] as [$field, $func]) {

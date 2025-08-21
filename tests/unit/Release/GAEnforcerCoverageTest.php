@@ -18,7 +18,7 @@ final class GAEnforcerCoverageTest extends TestCase
         $cov = [
             'source' => 'json',
             'generated_at' => date('c'),
-            'totals' => ['lines_total' => 100, 'lines_covered' => 55, 'pct' => 55.0],
+            'totals' => ['lines_total' => 100, 'lines_covered' => 70, 'pct' => 70.0],
             'files' => [],
         ];
         file_put_contents($rootArtifacts . '/coverage/coverage.json', json_encode($cov));
