@@ -409,12 +409,12 @@ if ($wantJUnit) {
     }
     $case = $suite->addChild('testcase');
     $case->addAttribute('name', 'Artifacts.Schema');
-    if ($schemaWarn !== null && $schemaWarn > (int)$config['schema_warnings'] && $enforce) {
+    if (!$enforce) {
+        $case->addChild('skipped');
+    } elseif ($schemaWarn !== null && $schemaWarn > (int)$config['schema_warnings']) {
         $msg = 'schema warnings present';
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);
-    } else {
-        $case->addChild('skipped');
     }
     $dom = dom_import_simplexml($suite)->ownerDocument;
     $dom->formatOutput = true;
