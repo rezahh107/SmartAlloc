@@ -14,14 +14,15 @@ if (!$hasDriver) {
     exit(1);
 }
 
-if (!is_dir('build')) {
-    mkdir('build', 0777, true);
+if (!is_dir('artifacts/coverage')) {
+    mkdir('artifacts/coverage', 0777, true);
 }
 
-passthru('vendor/bin/phpunit --coverage-clover build/coverage.xml', $code);
+passthru('vendor/bin/phpunit', $code);
 if ($code !== 0) {
     exit($code);
 }
 
-passthru('php tools/coverage-check.php build/coverage.xml', $code);
+$clover = 'artifacts/coverage/clover.xml';
+passthru('php tools/coverage-check.php ' . escapeshellarg($clover), $code);
 exit($code);

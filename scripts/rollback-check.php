@@ -38,10 +38,11 @@ if ($prev !== null) {
     $lines[] = 'Fetch previous GA artifact:';
     $lines[] = 'curl -LO https://downloads.wordpress.org/plugin/smart-alloc.' . $prev . '.zip';
     $lines[] = 'unzip -q smart-alloc.' . $prev . '.zip -d rollback-' . $prev;
-    if (!empty($manifest['files'])) {
-        $lines[] = 'cd rollback-' . $prev; 
+    $entries = $manifest['entries'] ?? ($manifest['files'] ?? []);
+    if (!empty($entries)) {
+        $lines[] = 'cd rollback-' . $prev;
         $lines[] = 'sha256sum --check <<\'EOF\'';
-        foreach ($manifest['files'] as $f) {
+        foreach ($entries as $f) {
             $path = $f['path'] ?? '';
             $sha = $f['sha256'] ?? '';
             if ($path !== '' && $sha !== '') {

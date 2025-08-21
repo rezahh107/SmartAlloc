@@ -46,7 +46,10 @@ $manifestDir = $root . '/artifacts/dist';
 if (!is_dir($manifestDir)) {
     mkdir($manifestDir, 0777, true);
 }
-file_put_contents($manifestDir . '/manifest.json', json_encode(['files' => $files], JSON_PRETTY_PRINT));
+file_put_contents(
+    $manifestDir . '/manifest.json',
+    json_encode(['entries' => $files], JSON_PRETTY_PRINT)
+);
 
 exit(0);
 

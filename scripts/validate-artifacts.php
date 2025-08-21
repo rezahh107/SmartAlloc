@@ -25,11 +25,18 @@ $defs = [
         return (is_array($data) && array_key_exists('verdict', $data)) ? [] : ['missing verdict'];
     }],
     ['artifacts/dist/manifest.json', function ($data) {
-        if (!is_array($data)) {
+        $entries = $data['entries'] ?? $data;
+        if (!is_array($entries)) {
             return ['not array'];
         }
-        foreach ($data as $i => $row) {
-            if (!is_array($row) || !isset($row['path'], $row['size'], $row['sha256']) || !is_string($row['path']) || !is_string($row['sha256']) || !is_int($row['size'])) {
+        foreach ($entries as $i => $row) {
+            if (
+                !is_array($row)
+                || !isset($row['path'], $row['size'], $row['sha256'])
+                || !is_string($row['path'])
+                || !is_string($row['sha256'])
+                || !is_int($row['size'])
+            ) {
                 return ['invalid entry at ' . $i];
             }
         }

@@ -75,8 +75,9 @@ $lines[] = '## Artifacts';
 $manifestPath = $distDir . '/manifest.json';
 if (is_file($manifestPath)) {
     $manifest = json_decode((string)file_get_contents($manifestPath), true);
-    if (isset($manifest['files']) && is_array($manifest['files'])) {
-        foreach ($manifest['files'] as $file) {
+    $entries = $manifest['entries'] ?? ($manifest['files'] ?? []);
+    if (is_array($entries)) {
+        foreach ($entries as $file) {
             $path = $file['path'] ?? '';
             $sha = $file['sha256'] ?? '';
             if ($path !== '' && $sha !== '') {

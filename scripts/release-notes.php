@@ -47,8 +47,10 @@ if ($goNoGoFile) {
         $metrics['sql'] = isset($inputs['sql']['count']) ? (int)$inputs['sql']['count'] : null;
         $metrics['license'] = isset($inputs['licenses']['denied']) ? (int)$inputs['licenses']['denied'] : null;
         $metrics['secrets'] = isset($inputs['secrets']['count']) ? (int)$inputs['secrets']['count'] : null;
-        if (isset($inputs['manifest']['files']) && is_array($inputs['manifest']['files'])) {
-            $metrics['manifest'] = $inputs['manifest']['files'];
+        $m = $inputs['manifest'] ?? [];
+        $entries = $m['entries'] ?? ($m['files'] ?? []);
+        if (is_array($entries)) {
+            $metrics['manifest'] = $entries;
         }
     }
 }
