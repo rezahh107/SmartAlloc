@@ -28,7 +28,21 @@ function pct(int $covered, int $total): float
     return $total > 0 ? round(($covered / $total) * 100, 2) : 0.0;
 }
 
-$target = __DIR__ . '/../artifacts/coverage/coverage.json';
+/**
+ * Reduce a path to repository-relative form.
+ */
+function rel_path(string $path, string $root): string
+{
+    $path = str_replace('\\', '/', $path);
+    $root = str_replace('\\', '/', $root);
+    if (str_starts_with($path, $root . '/')) {
+        return substr($path, strlen($root) + 1);
+    }
+    return ltrim($path, '/');
+}
+
+$root = dirname(__DIR__);
+$target = $root . '/artifacts/coverage/coverage.json';
 ensure_dir(dirname($target));
 
 $candidates = [];
@@ -37,10 +51,11 @@ if ($override && is_file($override)) {
     $candidates[] = $override;
 }
 $candidates = array_merge($candidates, [
-    __DIR__ . '/../artifacts/coverage/clover.xml',
-    __DIR__ . '/../coverage.xml',
-    __DIR__ . '/../artifacts/coverage/coverage.json',
-    __DIR__ . '/../coverage.json',
+    $root . '/artifacts/coverage/clover.xml',
+    $root . '/coverage.xml',
+    $root . '/clover.xml',
+    $root . '/artifacts/coverage/coverage.json',
+    $root . '/coverage.json',
 ]);
 
 $source = 'none';
@@ -80,7 +95,7 @@ foreach ($candidates as $cand) {
             }
 
             foreach ($xml->xpath('//file') as $f) {
-                $path = (string)$f['name'];
+                $path = rel_path((string)$f['name'], $root);
                 $m = $f->metrics ?? null;
                 $lt = 0;
                 $lc = 0;
@@ -137,7 +152,7 @@ foreach ($candidates as $cand) {
             $lc = (int)($tot['lines_covered'] ?? $tot['covered'] ?? 0);
             $files = [];
             foreach ($data['files'] ?? [] as $f) {
-                $path = (string)($f['path'] ?? ($f['file'] ?? ''));
+                $path = rel_path((string)($f['path'] ?? ($f['file'] ?? '')), $root);
                 $fl = (int)($f['lines_total'] ?? $f['lines'] ?? 0);
                 $fc = (int)($f['lines_covered'] ?? $f['covered'] ?? 0);
                 $files[] = [
