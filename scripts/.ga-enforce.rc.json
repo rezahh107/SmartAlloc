@@ -1,4 +1,4 @@
 {
-  "coverage_pct_min": 50,
-  "schema_warnings": 5
+  "coverage_pct_min": 60,
+  "schema_warnings": 3
 }

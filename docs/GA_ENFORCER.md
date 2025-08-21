@@ -14,7 +14,7 @@ search path.
 
 1. `COVERAGE_INPUT` (if set)
 2. `artifacts/coverage/clover.xml`
-3. `coverage.xml`
+3. `coverage/clover.xml`
 4. `clover.xml`
 5. `artifacts/coverage/coverage.json`
 6. `coverage.json`
@@ -33,7 +33,7 @@ The first existing file is consumed. Clover XML is parsed with
 }
 ```
 
-Files are sorted by path and percentages are rounded to two decimals for
+Files are sorted by path and percentages are rounded to one decimal for
 determinism. If no input is found the script writes a zeroed document with
 `"source": "none"`.
 
@@ -59,16 +59,26 @@ artifacts. It inspects, when present:
 * `artifacts/dist/*.json`
 * `artifacts/i18n/*.json`
 
-Each file is decoded and basic fields are verified (e.g. `totals.pct` in
-coverage, `entries[*].path/sha256/size` in a dist manifest). Results are written to
-`artifacts/schema/schema-validate.json`:
+Coverage and dist artifacts receive structural checks. `artifacts/qa/**/*.json`
+and `artifacts/i18n/**/*.json` are parsed only to verify they are valid JSON.
+Results are written to `artifacts/schema/schema-validate.json`:
 
 ```json
-{ "warnings": 0, "items": [ { "path": "...", "issue": "Missing field", "field": "totals.pct" } ] }
+{
+  "warnings": [
+    {"file":"path/to.json","reason":"missing totals.pct"}
+  ],
+  "count": 1
+}
 ```
 
 This validator is advisory; it never exits non‑zero. GA Enforcer consumes the
-warnings and may enforce thresholds when run with `--enforce`.
+warning count and may enforce thresholds when run with `--enforce`.
+
+### Profiles
+
+* RC: `coverage_pct_min` 60, `schema_warnings` ≤ 3
+* GA: `coverage_pct_min` 80, `schema_warnings` 0
 
 ## Quick start
 

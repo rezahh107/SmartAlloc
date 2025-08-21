@@ -293,7 +293,7 @@ $schemaWarn = null;
 if (is_file($schemaPath)) {
     $schemaData = json_decode((string)file_get_contents($schemaPath), true);
     if (is_array($schemaData)) {
-        $schemaWarn = (int)($schemaData['warnings'] ?? 0);
+        $schemaWarn = (int)($schemaData['count'] ?? 0);
     }
 }
 $signals['schema_warnings'] = $schemaWarn;
@@ -409,16 +409,12 @@ if ($wantJUnit) {
     }
     $case = $suite->addChild('testcase');
     $case->addAttribute('name', 'Artifacts.Schema');
-    if ($schemaWarn === null) {
+    if ($schemaWarn !== null && $schemaWarn > (int)$config['schema_warnings'] && $enforce) {
+        $msg = 'schema warnings present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    } else {
         $case->addChild('skipped');
-    } elseif ($schemaWarn > (int)$config['schema_warnings']) {
-        if ($enforce) {
-            $msg = 'schema warnings present';
-            $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
-            $fail->addAttribute('message', $msg);
-        } else {
-            $case->addChild('skipped');
-        }
     }
     $dom = dom_import_simplexml($suite)->ownerDocument;
     $dom->formatOutput = true;

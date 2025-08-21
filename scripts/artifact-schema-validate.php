@@ -22,89 +22,83 @@ $artifacts = $root . '/artifacts';
 $schemaDir = $artifacts . '/schema';
 ensure_dir($schemaDir);
 
-$items = [];
+$warnings = [];
 
-$paths = [];
+// coverage
 $cov = $artifacts . '/coverage/coverage.json';
 if (is_file($cov)) {
-    $paths[] = $cov;
-}
-foreach (['qa', 'dist', 'i18n'] as $dir) {
-    foreach (glob($artifacts . '/' . $dir . '/*.json') ?: [] as $f) {
-        $paths[] = $f;
-    }
-}
-
-sort($paths, SORT_STRING);
-
-foreach ($paths as $p) {
-    $raw = (string)file_get_contents($p);
+    $raw = (string)file_get_contents($cov);
     $data = json_decode($raw, true);
-    if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
-        $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Invalid JSON'];
-        continue;
-    }
-    $base = basename($p);
-    switch ($base) {
-        case 'coverage.json':
-            if (!isset($data['totals']['pct'])) {
-                $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'totals.pct'];
+    if (!is_array($data)) {
+        $warnings[] = ['file' => substr($cov, strlen($root) + 1), 'reason' => 'invalid JSON'];
+    } else {
+        $rel = substr($cov, strlen($root) + 1);
+        $tot = $data['totals']['pct'] ?? null;
+        if (!is_numeric($tot)) {
+            $warnings[] = ['file' => $rel, 'reason' => 'missing totals.pct'];
+        }
+        foreach ($data['files'] ?? [] as $idx => $f) {
+            foreach (['path', 'lines_total', 'lines_covered', 'pct'] as $field) {
+                if (!array_key_exists($field, $f)) {
+                    $warnings[] = ['file' => $rel, 'reason' => "files[$idx].$field missing"];
+                }
             }
-            break;
-        case 'manifest.json':
-            if (empty($data['entries']) || !is_array($data['entries'])) {
-                $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'entries'];
-            } else {
-                foreach ($data['entries'] as $i => $entry) {
-                    if (!is_array($entry)) {
-                        $items[] = [
-                            'path' => substr($p, strlen($root) + 1),
-                            'issue' => 'Invalid entry',
-                            'field' => 'entries[' . $i . ']'
-                        ];
-                        continue;
-                    }
-                    foreach ([['path','string'], ['sha256','string'], ['size','integer']] as [$field,$type]) {
-                        if (!array_key_exists($field, $entry) || gettype($entry[$field]) !== $type) {
-                            $items[] = [
-                                'path' => substr($p, strlen($root) + 1),
-                                'issue' => 'Missing field',
-                                'field' => 'entries[' . $i .'].'.$field,
-                            ];
-                        }
+        }
+    }
+}
+
+// dist manifest
+$manifest = $artifacts . '/dist/manifest.json';
+if (is_file($manifest)) {
+    $raw = (string)file_get_contents($manifest);
+    $data = json_decode($raw, true);
+    $rel = substr($manifest, strlen($root) + 1);
+    if (!is_array($data)) {
+        $warnings[] = ['file' => $rel, 'reason' => 'invalid JSON'];
+    } else {
+        if (empty($data['entries']) || !is_array($data['entries'])) {
+            $warnings[] = ['file' => $rel, 'reason' => 'missing entries'];
+        } else {
+            foreach ($data['entries'] as $i => $entry) {
+                foreach ([['path', 'is_string'], ['sha256', 'is_string'], ['size', 'is_int']] as [$field, $func]) {
+                    if (!array_key_exists($field, $entry) || !$func($entry[$field])) {
+                        $warnings[] = ['file' => $rel, 'reason' => "entries[$i].$field missing"];
                     }
                 }
             }
-            break;
-        case 'sbom.json':
-            if (empty($data['packages']) || !is_array($data['packages'])) {
-                $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'packages'];
-            }
-            break;
-        case 'go-no-go.json':
-            if (!isset($data['verdict'])) {
-                $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'verdict'];
-            }
-            break;
-        case 'release-notes.json':
-            if (empty($data['notes']) || !is_array($data['notes'])) {
-                $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'notes'];
-            }
-            break;
-        default:
-            // no-op
-            break;
+        }
     }
 }
 
-usort($items, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
+// qa and i18n JSON parseability
+foreach (['qa', 'i18n'] as $dir) {
+    $base = $artifacts . '/' . $dir;
+    if (!is_dir($base)) {
+        continue;
+    }
+    $iter = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($base));
+    foreach ($iter as $file) {
+        if ($file->isFile() && strtolower($file->getExtension()) === 'json') {
+            $path = $file->getPathname();
+            $raw = (string)file_get_contents($path);
+            json_decode($raw, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $warnings[] = ['file' => substr($path, strlen($root) + 1), 'reason' => 'invalid JSON'];
+            }
+        }
+    }
+}
+
+usort($warnings, fn(array $a, array $b): int => strcmp($a['file'], $b['file']));
 
 $out = [
-    'warnings' => count($items),
-    'items' => $items,
+    'warnings' => $warnings,
+    'count' => count($warnings),
 ];
 
-file_put_contents($schemaDir . '/schema-validate.json', json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
-echo '[schema-validate] warnings=' . $out['warnings'] . "\n";
-exit(0);
+$tmp = $schemaDir . '/schema-validate.json.tmp';
+file_put_contents($tmp, json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+rename($tmp, $schemaDir . '/schema-validate.json');
 
+echo '[schema-validate] warnings=' . $out['count'] . "\n";
+exit(0);

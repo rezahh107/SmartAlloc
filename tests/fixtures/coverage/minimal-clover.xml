@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage>
+  <project>
+    <file name="src/B.php">
+      <metrics lines-valid="3" lines-covered="1"/>
+    </file>
+    <file name="src/A.php">
+      <metrics lines-valid="4" lines-covered="3"/>
+    </file>
+  </project>
+</coverage>
