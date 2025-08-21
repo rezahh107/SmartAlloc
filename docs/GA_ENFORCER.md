@@ -66,9 +66,11 @@ artifacts. It inspects, when present:
 
 Coverage and dist artifacts receive structural checks. The manifest requires a
 canonical `entries[]` array where each entry has a `path`, `sha256` (hex), and
-`size`. A legacy `files[]` array triggers the warning above.
-`artifacts/qa/**/*.json` and `artifacts/i18n/**/*.json` are parsed only to verify
-they are valid JSON.
+`size`. A legacy `files[]` array triggers the warning above. Downstream CI can
+rely on the JUnit testcase `Artifacts.Schema` to surface these warnings; it is
+always emitted, skipped in advisory runs, and fails when thresholds are
+exceeded under enforcement. `artifacts/qa/**/*.json` and
+`artifacts/i18n/**/*.json` are parsed only to verify they are valid JSON.
 Results are written to `artifacts/schema/schema-validate.json`:
 
 ```json

@@ -44,8 +44,7 @@ final class GAEnforcerCoverageTest extends TestCase
         $junit = $rootArtifacts . '/ga/GA_ENFORCER.junit.xml';
         $this->assertFileExists($junit);
         $xml = (string)file_get_contents($junit);
-        $this->assertStringContainsString('<testcase name="Artifacts.Schema">', $xml);
-        $this->assertStringContainsString('<skipped', $xml);
+        $this->assertMatchesRegularExpression('/<testcase name="Artifacts\.Schema">\s*<skipped\/>/s', $xml);
 
         $bad = [
             'files' => [
@@ -61,7 +60,7 @@ final class GAEnforcerCoverageTest extends TestCase
         exec($cmd, $o2, $rc2);
         $this->assertNotSame(0, $rc2);
         $xml2 = (string)file_get_contents($junit);
-        $this->assertStringContainsString('<testcase name="Artifacts.Schema">', $xml2);
-        $this->assertStringContainsString('<failure', $xml2);
+        $this->assertMatchesRegularExpression('/<testcase name="Artifacts\.Schema">\s*<failure/s', $xml2);
+        $this->assertDoesNotMatchRegularExpression('/<testcase name="Artifacts\.Schema">\s*<skipped/s', $xml2);
     }
 }
