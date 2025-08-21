@@ -8,6 +8,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR" || exit 0
 
 summary=()
+i18n_wrong_domain=0
+i18n_placeholder_mismatch=0
+pot_missing=0
+wporg_asset_warnings=0
 
 run_step() {
     local label="$1"; shift
@@ -39,6 +43,31 @@ if [ -f scripts/license-audit.php ]; then
     run_step "License audit" "php scripts/license-audit.php > licenses.json"
 fi
 
+# I18N lint
+if [ -f scripts/i18n-lint.php ]; then
+    run_step "I18N lint" "php scripts/i18n-lint.php > i18n-lint.json"
+    if [ -f i18n-lint.json ]; then
+        i18n_wrong_domain=$(php -r '$d=json_decode(file_get_contents("i18n-lint.json"),true);echo isset($d["wrong_domain"]) ? count($d["wrong_domain"]) : 0;' 2>/dev/null || echo 0)
+        i18n_placeholder_mismatch=$(php -r '$d=json_decode(file_get_contents("i18n-lint.json"),true);echo isset($d["placeholder_mismatch"]) ? count($d["placeholder_mismatch"]) : 0;' 2>/dev/null || echo 0)
+    fi
+fi
+
+# POT diff
+if [ -f scripts/pot-diff.php ]; then
+    run_step "POT diff" "php scripts/pot-diff.php > pot-diff.json"
+    if [ -f pot-diff.json ]; then
+        pot_missing=$(php -r '$d=json_decode(file_get_contents("pot-diff.json"),true);echo ($d["pot_missing"]??false)?1:0;' 2>/dev/null || echo 0)
+    fi
+fi
+
+# WP.org assets verify
+if [ -f scripts/wporg-assets-verify.php ]; then
+    run_step "WP.org assets" "php scripts/wporg-assets-verify.php | tail -n 1 > wporg-assets.json"
+    if [ -f wporg-assets.json ]; then
+        wporg_asset_warnings=$(php -r '$d=json_decode(file_get_contents("wporg-assets.json"),true);echo isset($d["warnings"]) ? count($d["warnings"]) : 0;' 2>/dev/null || echo 0)
+    fi
+fi
+
 # QA report regeneration
 if [ -f scripts/qa-report.php ]; then
     run_step "QA report" "php scripts/qa-report.php"
@@ -58,6 +87,7 @@ echo "QA Orchestrator Summary:"
 for line in "${summary[@]}"; do
     echo " - $line"
 done
+echo "Counts: i18n_wrong_domain=$i18n_wrong_domain, i18n_placeholder_mismatch=$i18n_placeholder_mismatch, pot_missing=$pot_missing, wporg_asset_warnings=$wporg_asset_warnings"
 echo "Done."
 
 exit 0
