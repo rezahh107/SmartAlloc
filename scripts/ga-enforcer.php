@@ -151,10 +151,11 @@ $signals['rest_permission_violations'] = jsonCount([
     $root . '/rest-violations.json'
 ], 'rest violations', $warnings);
 
-$signals['sql_prepare_violations'] = jsonCount([
-    $root . '/artifacts/qa/sql-violations.json',
-    $root . '/sql-violations.json'
-], 'sql violations', $warnings);
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/scan-sql-prepare.php'));
+$sqlData = readJsonFile($root . '/artifacts/security/sql-prepare.json', 'sql-prepare.json', $warnings);
+$signals['sql_prepare_violations'] = (int)($sqlData['counts']['violations'] ?? 0);
+$signals['sql_prepare_allowlisted'] = (int)($sqlData['counts']['allowlisted'] ?? 0);
+$sqlViolationList = is_array($sqlData) ? ($sqlData['violations'] ?? []) : [];
 
 $signals['secrets_findings'] = jsonCount([
     $root . '/artifacts/qa/secrets.json',
@@ -386,7 +387,6 @@ file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
 if ($wantJUnit) {
     $map = [
         'REST'          => 'rest_permission_violations',
-        'SQL'           => 'sql_prepare_violations',
         'Secrets'       => 'secrets_findings',
         'License'       => 'license_denied',
         'Version'       => 'version_mismatch',
@@ -415,6 +415,23 @@ if ($wantJUnit) {
         $case->addChild('skipped');
     } elseif ($schemaWarn !== null && $schemaWarn > (int)$config['schema_warnings']) {
         $msg = 'schema warnings present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'SQL.Prepare');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'violations=' . $signals['sql_prepare_violations'] . ' allowlisted=' . $signals['sql_prepare_allowlisted'];
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif ($signals['sql_prepare_violations'] > 0) {
+        $preview = [];
+        foreach (array_slice($sqlViolationList, 0, 5) as $v) {
+            if (isset($v['file'], $v['line'])) {
+                $preview[] = $v['file'] . ':' . $v['line'];
+            }
+        }
+        $msg = 'unprepared SQL in ' . implode(', ', $preview);
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);
     }

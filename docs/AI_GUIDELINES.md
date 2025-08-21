@@ -39,3 +39,11 @@ warnings.
 skipped; GA enforcement (`--profile=ga --enforce`) fails the testcase when
 schema warnings exceed configured thresholds.
 
+Before committing tooling or tests, run the SQL prepare scanner locally:
+
+```bash
+php scripts/scan-sql-prepare.php
+```
+
+Review and justify any allowlist entries in `tools/sql-allowlist.json`.
+
