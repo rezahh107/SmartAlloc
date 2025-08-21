@@ -12,7 +12,7 @@ final class CoverageImportTest extends TestCase
         }
 
         @mkdir(__DIR__ . '/../../../artifacts/coverage', 0777, true);
-        $fixture = __DIR__ . '/../../fixtures/clover/minimal-clover.xml';
+        $fixture = __DIR__ . '/../../fixtures/clover/minimal.xml';
         putenv('COVERAGE_INPUT=' . $fixture);
         $cmd = PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/../../../scripts/coverage-import.php');
         exec($cmd, $o, $rc);
@@ -24,6 +24,7 @@ final class CoverageImportTest extends TestCase
         $this->assertSame('clover', $j['source']);
         $this->assertSame(7, $j['totals']['lines_total']);
         $this->assertSame(4, $j['totals']['lines_covered']);
+        $this->assertIsFloat($j['totals']['pct']);
         $this->assertSame(57.14, $j['totals']['pct']);
         $this->assertSame('src/A.php', $j['files'][0]['path']);
         $this->assertSame('src/B.php', $j['files'][1]['path']);

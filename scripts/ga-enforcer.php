@@ -201,17 +201,17 @@ if (is_file($vc)) {
 }
 
 // coverage
-$signals['coverage_percent'] = null;
+$signals['coverage_pct'] = null;
 $covJson = $root . '/artifacts/coverage/coverage.json';
 if (!is_file($covJson)) {
-    @passthru(PHP_BINARY.' '.escapeshellarg(__DIR__.'/coverage-import.php'));
+    @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/coverage-import.php'));
 }
 if (is_file($covJson)) {
     $data = json_decode((string)file_get_contents($covJson), true);
     if (is_array($data)) {
         $pct = $data['totals']['pct'] ?? null;
         if ($pct !== null) {
-            $signals['coverage_percent'] = (float)$pct;
+            $signals['coverage_pct'] = (float)$pct;
         } else {
             $warnings[] = 'coverage.json missing totals.pct';
         }
@@ -315,7 +315,7 @@ if ($signals['license_denied'] > (int)$config['license_denied']) {
 if ($signals['i18n_domain_mismatches'] > (int)$config['i18n_domain_mismatches']) {
     $failures[] = 'i18n_domain_mismatches';
 }
-if ($signals['coverage_percent'] !== null && $signals['coverage_percent'] < (float)$config['coverage_pct_min']) {
+if ($signals['coverage_pct'] !== null && $signals['coverage_pct'] < (float)$config['coverage_pct_min']) {
     $failures[] = 'coverage_pct_min';
 }
 if ($signals['schema_warnings'] !== null && $signals['schema_warnings'] > (int)$config['schema_warnings']) {
@@ -371,7 +371,7 @@ $txt[] = 'SQL violations: ' . $signals['sql_prepare_violations'];
 $txt[] = 'Secrets findings: ' . $signals['secrets_findings'];
 $txt[] = 'License denied: ' . $signals['license_denied'];
 $txt[] = 'i18n mismatches: ' . $signals['i18n_domain_mismatches'];
-$txt[] = 'Coverage lines: ' . ($signals['coverage_percent'] ?? 'null');
+$txt[] = 'Coverage pct: ' . ($signals['coverage_pct'] ?? 'null');
 $txt[] = 'Manifest present: ' . ($signals['manifest_present'] ? 'yes' : 'no');
 $txt[] = 'SBOM present: ' . ($signals['sbom_present'] ? 'yes' : 'no');
 $txt[] = 'Version mismatches: ' . $signals['version_mismatches'];

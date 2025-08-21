@@ -7,14 +7,17 @@ fails a build when enforcement is explicitly enabled.
 ## Coverage Import
 
 `scripts/coverage-import.php` normalises coverage reports into
-`artifacts/coverage/coverage.json`.
+`artifacts/coverage/coverage.json`. Set `COVERAGE_INPUT` to override the
+search path.
 
 **Search order**
 
-1. `artifacts/coverage/clover.xml`
-2. `coverage.xml`
-3. `artifacts/coverage/coverage.json`
-4. `coverage.json`
+1. `COVERAGE_INPUT` (if set)
+2. `artifacts/coverage/clover.xml`
+3. `coverage.xml`
+4. `clover.xml`
+5. `artifacts/coverage/coverage.json`
+6. `coverage.json`
 
 The first existing file is consumed. Clover XML is parsed with
 `SimpleXMLElement`; JSON is re‑emitted. The output schema is:

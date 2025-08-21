@@ -20,11 +20,16 @@ final class GAEnforcerCoverageTest extends TestCase
         ];
         file_put_contents(__DIR__ . '/../../../artifacts/coverage/coverage.json', json_encode($cov));
 
-        $cmd = 'RUN_ENFORCE=1 ' . PHP_BINARY . ' ' .
-            escapeshellarg(__DIR__ . '/../../../scripts/ga-enforcer.php') .
-            ' --profile=ga --enforce --junit';
+        $cmd = 'RUN_ENFORCE=1 ' . PHP_BINARY . ' '
+            . escapeshellarg(__DIR__ . '/../../../scripts/ga-enforcer.php')
+            . ' --profile=ga --enforce --junit';
         exec($cmd, $o, $rc);
         $this->assertNotSame(0, $rc, 'GA enforcement should fail when coverage below GA threshold');
+
+        $junit = __DIR__ . '/../../../artifacts/ga/GA_ENFORCER.junit.xml';
+        $this->assertFileExists($junit);
+        $xml = (string)file_get_contents($junit);
+        $this->assertStringContainsString('<testcase name="Artifacts.Schema"', $xml);
     }
 }
 

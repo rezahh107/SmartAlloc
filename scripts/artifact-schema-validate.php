@@ -17,11 +17,6 @@ function ensure_dir(string $dir): void
     }
 }
 
-function iso(): string
-{
-    return date('c');
-}
-
 $root = dirname(__DIR__);
 $artifacts = $root . '/artifacts';
 $schemaDir = $artifacts . '/schema';
@@ -39,6 +34,8 @@ foreach (['qa', 'dist', 'i18n'] as $dir) {
         $paths[] = $f;
     }
 }
+
+sort($paths, SORT_STRING);
 
 foreach ($paths as $p) {
     $raw = (string)file_get_contents($p);
@@ -69,14 +66,20 @@ foreach ($paths as $p) {
                 $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'verdict'];
             }
             break;
+        case 'release-notes.json':
+            if (empty($data['notes']) || !is_array($data['notes'])) {
+                $items[] = ['path' => substr($p, strlen($root) + 1), 'issue' => 'Missing field', 'field' => 'notes'];
+            }
+            break;
         default:
             // no-op
             break;
     }
 }
 
+usort($items, fn(array $a, array $b): int => strcmp($a['path'], $b['path']));
+
 $out = [
-    'generated_at' => iso(),
     'warnings' => count($items),
     'items' => $items,
 ];
