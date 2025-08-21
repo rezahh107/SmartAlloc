@@ -4,7 +4,8 @@
   "secrets_findings": 0,
   "license_denied": 0,
   "i18n_domain_mismatches": 0,
-  "coverage_min_lines_pct": 0,
+  "coverage_pct_min": 0,
+  "schema_warnings": 0,
   "require_manifest": true,
   "require_sbom": true,
   "version_mismatch_fatal": true
