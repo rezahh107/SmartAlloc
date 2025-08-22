@@ -15,7 +15,15 @@ final class DlqServiceTest extends TestCase
             public int $lastId = 0;
             public function query($sql){ /* no-op for START/COMMIT */ }
             public function insert($table, $data){ $data['id'] = $this->auto++; $this->rows[] = $data; }
-            public function prepare($sql,...$args){ $this->lastId=(int)($args[0]??0); return $sql; }
+            public function prepare($sql,...$args){
+                $params = is_array($args[0] ?? null) ? $args[0] : $args;
+                if (isset($params[0])) { $this->lastId = (int)$params[0]; }
+                foreach ($params as $p) {
+                    $sql = preg_replace('/%d/', (string)(int)$p, $sql, 1);
+                    $sql = preg_replace('/%s/', "'".$p."'", $sql, 1);
+                }
+                return $sql;
+            }
             public function get_results($sql,$mode){ return $this->rows; }
             public function get_row($sql,$mode){ foreach($this->rows as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
             public function delete($t,$w){ foreach($this->rows as $i=>$r){ if($r['id']==$w['id']){ unset($this->rows[$i]); } } }

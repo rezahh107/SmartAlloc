@@ -24,7 +24,15 @@ final class DlqRoutesTest extends TestCase
             public string $prefix='wp_';
             public array $dlq=[[ 'id'=>1,'event_name'=>'e','payload'=>'{"x":1}','error_text'=>'e','attempts'=>1,'created_at'=>'2020'],[ 'id'=>2,'event_name'=>'e','payload'=>'bad','error_text'=>'e','attempts'=>1,'created_at'=>'2020']];
             private int $lastId=0;
-            public function prepare($sql,...$args){ if(isset($args[0])){$this->lastId=(int)$args[0];} return $sql; }
+            public function prepare($sql,...$args){
+                $params = is_array($args[0] ?? null) ? $args[0] : $args;
+                if (isset($params[0])) { $this->lastId = (int)$params[0]; }
+                foreach ($params as $p) {
+                    $sql = preg_replace('/%d/', (string)(int)$p, $sql, 1);
+                    $sql = preg_replace('/%s/', "'".$p."'", $sql, 1);
+                }
+                return $sql;
+            }
             public function get_results($sql,$mode){ return $this->dlq; }
             public function get_row($sql,$mode){ foreach($this->dlq as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
             public function delete($t,$w){ foreach($this->dlq as $i=>$r){ if($r['id']==$w['id']){ unset($this->dlq[$i]); }} }

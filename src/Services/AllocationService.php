@@ -8,6 +8,7 @@ use WP_Error;
 use SmartAlloc\Domain\Allocation\AllocationResult;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\ScoringAllocatorInterface;
+use SmartAlloc\Services\DbSafe;
 
 /**
  * Core allocation engine implementing guarded commits and scoring.
@@ -70,7 +71,7 @@ class AllocationService
             $params[] = $student['group_code'];
         }
         $sql = "SELECT mentor_id, gender, center, group_code, capacity, assigned FROM {$table} WHERE {$where} ORDER BY mentor_id ASC LIMIT 50";
-        $query = $wpdb->prepare($sql, $params);
+        $query = DbSafe::mustPrepare($sql, $params);
         // @security-ok-sql
         $rows = $wpdb->get_results($query, ARRAY_A);
         return $rows ?: [];
@@ -85,16 +86,10 @@ class AllocationService
     {
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_mentors';
-        $sql = $wpdb->prepare(
+        $sql = DbSafe::mustPrepare(
             "UPDATE {$table} SET assigned = assigned + 1 WHERE mentor_id = %d AND assigned < capacity",
-            $mentorId
+            [$mentorId]
         );
-        // Some test doubles don't substitute placeholders; ensure the mentor id
-        // is present for those environments while still using a prepared
-        // statement in production.
-        if (str_contains($sql, '%d')) {
-            $sql = sprintf("UPDATE {$table} SET assigned = assigned + 1 WHERE mentor_id = %d AND assigned < capacity", $mentorId);
-        }
         // @security-ok-sql
         $wpdb->query($sql);
         if ($wpdb->rows_affected !== 1) {

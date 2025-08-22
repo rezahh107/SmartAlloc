@@ -30,7 +30,15 @@ class AllocationServiceConcurrencyTest extends TestCase
             public function get_results($sql, $mode) { return array_values($this->mentors); }
             public function query($sql) { if ($this->mentors[1]['assigned'] < $this->mentors[1]['capacity']) { $this->mentors[1]['assigned']++; $this->rows_affected=1; } else { $this->rows_affected=0; } }
             public function insert($table, $data) {}
-            public function prepare($sql,$id){ return $sql; }
+            public function prepare($sql, ...$args){
+                $params = is_array($args[0] ?? null) ? $args[0] : $args;
+                foreach ($params as $p) {
+                    $sql = preg_replace('/%d/', (string)(int)$p, $sql, 1);
+                    $sql = preg_replace('/%s/', "'".$p."'", $sql, 1);
+                    $sql = preg_replace('/%f/', (string)(float)$p, $sql, 1);
+                }
+                return $sql;
+            }
         };
         $logger = new Logging();
         $eventStore = new class implements EventStoreInterface {
