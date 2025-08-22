@@ -158,15 +158,15 @@ $signals['sql_prepare_violations'] = (int)($sqlData['counts']['violations'] ?? 0
 $signals['sql_prepare_allowlisted'] = (int)($sqlData['counts']['allowlisted'] ?? 0);
 $sqlViolationList = is_array($sqlData) ? ($sqlData['violations'] ?? []) : [];
 
-$signals['secrets_findings'] = jsonCount([
-    $root . '/artifacts/qa/secrets.json',
-    $root . '/secrets.json'
-], 'secrets findings', $warnings);
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/scan-secrets.php'));
+$secData = readJsonFile($root . '/artifacts/security/secrets.json', 'secrets.json', $warnings);
+$signals['secrets_findings'] = (int)($secData['counts']['violations'] ?? 0);
+$signals['secrets_allowlisted'] = (int)($secData['counts']['allowlisted'] ?? 0);
 
-$signals['license_denied'] = jsonKeyCount([
-    $root . '/artifacts/qa/licenses.json',
-    $root . '/licenses.json'
-], 'license audit', 'denied', $warnings);
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/license-audit.php'));
+$licData = readJsonFile($root . '/artifacts/compliance/license-audit.json', 'license-audit.json', $warnings);
+$packages = is_array($licData) ? ($licData['packages'] ?? []) : [];
+$signals['license_denied'] = count(array_filter($packages, static fn($p) => empty($p['approved'])));
 
 // i18n
 $pot = readJsonFile($root . '/artifacts/i18n/pot-refresh.json', 'pot-refresh.json', $warnings);
@@ -374,7 +374,7 @@ $txt[] = 'GA Enforcer Report';
 $txt[] = 'Verdict: ' . $verdict;
 $txt[] = 'REST warnings: mutating=' . $signals['rest_mutating_warnings'] . ' readonly=' . $signals['rest_readonly_warnings'];
 $txt[] = 'SQL violations: ' . $signals['sql_prepare_violations'];
-$txt[] = 'Secrets findings: ' . $signals['secrets_findings'];
+$txt[] = 'Secrets findings: ' . $signals['secrets_findings'] . ' allowlisted=' . $signals['secrets_allowlisted'];
 $txt[] = 'License denied: ' . $signals['license_denied'];
 $txt[] = 'i18n mismatches: ' . $signals['i18n_domain_mismatches'];
 $txt[] = 'Coverage pct: ' . ($signals['coverage_pct'] ?? 'null');
@@ -389,8 +389,6 @@ file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
 
 if ($wantJUnit) {
     $map = [
-        'Secrets'       => 'secrets_findings',
-        'License'       => 'license_denied',
         'Version'       => 'version_mismatch',
         'Manifest'      => 'manifest_missing',
         'SBOM'          => 'sbom_missing',
@@ -413,6 +411,31 @@ if ($wantJUnit) {
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);
     }
+
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'Security.Secrets');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'violations=' . $signals['secrets_findings'] . ' allowlisted=' . $signals['secrets_allowlisted'];
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif ($signals['secrets_findings'] > 0) {
+        $msg = 'secrets violations present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
+
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'Compliance.License');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'unapproved=' . $signals['license_denied'];
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif ($signals['license_denied'] > 0) {
+        $msg = 'unapproved license found';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
+
     foreach ($map as $name => $key) {
         $case = $suite->addChild('testcase');
         $case->addAttribute('name', $name);
@@ -422,6 +445,7 @@ if ($wantJUnit) {
             $fail->addAttribute('message', $msg);
         }
     }
+
     $case = $suite->addChild('testcase');
     $case->addAttribute('name', 'Artifacts.Schema');
     if (!$enforce) {
@@ -431,6 +455,7 @@ if ($wantJUnit) {
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);
     }
+
     $case = $suite->addChild('testcase');
     $case->addAttribute('name', 'SQL.Prepare');
     if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {

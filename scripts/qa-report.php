@@ -56,13 +56,38 @@ function qa_report(string $root, string $outDir): array
         $notes[] = 'sql prepare missing';
     }
 
-    ksort($rest); ksort($sql);
+    $secrets = ['violations' => null, 'allowlisted' => null];
+    $secFile = $root . '/artifacts/security/secrets.json';
+    if (is_file($secFile)) {
+        $data = json_decode((string)file_get_contents($secFile), true);
+        if (is_array($data) && isset($data['counts'])) {
+            $secrets['violations'] = (int)($data['counts']['violations'] ?? 0);
+            $secrets['allowlisted'] = (int)($data['counts']['allowlisted'] ?? 0);
+        }
+    } else {
+        $notes[] = 'secrets report missing';
+    }
+
+    $license = ['unapproved' => null];
+    $licFile = $root . '/artifacts/compliance/license-audit.json';
+    if (is_file($licFile)) {
+        $data = json_decode((string)file_get_contents($licFile), true);
+        if (is_array($data) && isset($data['counts'])) {
+            $license['unapproved'] = (int)($data['counts']['unapproved'] ?? 0);
+        }
+    } else {
+        $notes[] = 'license audit missing';
+    }
+
+    ksort($rest); ksort($sql); ksort($secrets); ksort($license);
 
     $summary = [
         'coverage_pct' => $coverage,
         'schema_warnings' => $schemaWarnings,
         'rest_permissions' => $rest,
         'sql_prepare' => $sql,
+        'secrets'     => $secrets,
+        'license'     => $license,
     ];
     ksort($summary);
 
@@ -87,6 +112,8 @@ function qa_report(string $root, string $outDir): array
     $html .= '<li>REST mutating warnings: ' . ($rest['mutating_warnings'] ?? 'N/A') . '</li>';
     $html .= '<li>REST read-only warnings: ' . ($rest['readonly_warnings'] ?? 'N/A') . '</li>';
     $html .= '<li>SQL violations: ' . ($sql['violations'] ?? 'N/A') . ', allowlisted: ' . ($sql['allowlisted'] ?? 'N/A') . '</li>';
+    $html .= '<li>Secret violations: ' . ($secrets['violations'] ?? 'N/A') . ', allowlisted: ' . ($secrets['allowlisted'] ?? 'N/A') . '</li>';
+    $html .= '<li>Unapproved licenses: ' . ($license['unapproved'] ?? 'N/A') . '</li>';
     if ($notes) {
         $html .= '<li>Notes<ul>';
         foreach ($notes as $n) {
