@@ -56,6 +56,11 @@
         "docs": "@php bin/docs_build.php --in=docs/Docs-Bundle.md --out=docs/Docs-Bundle.compiled.md || exit 0",
         "dist": "composer docs && php tools/build-dist.php",
         "release:check": "composer cs && composer phpstan && composer psalm && composer test && composer test:security && composer preflight",
+        "bump": "php scripts/version-bump.php",
+        "changelog": "php scripts/changelog-from-commits.php",
+        "release:notes": "php scripts/release-notes.php",
+        "release:rc": "php scripts/tag-release.php --enforce=false",
+        "release:ga": "php scripts/tag-release.php --enforce=true",
         "sec:semgrep": "if command -v docker >/dev/null; then docker run --rm -v $PWD:/src returntocorp/semgrep --config=auto --timeout 120 --sarif --output semgrep.sarif /src; else echo 'Docker not installed, skipping Semgrep'; fi",
         "sec:wp": "if [ -x vendor/bin/patchstack ]; then vendor/bin/patchstack scan --format=json --output build/patchstack.json || true; else echo 'Patchstack unavailable'; fi",
         "post-install-cmd": [
