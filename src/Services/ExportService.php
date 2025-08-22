@@ -222,17 +222,21 @@ final class ExportService
         foreach ($normalize as $rule) {
             switch ($rule) {
                 case 'digits_10':
-                    $value = $this->normalizeDigits($value);
+                    $value = $this->normalizeDigits((string) $value, 10);
                     break;
-                    
+
+                case 'digits_16':
+                    $value = $this->normalizeDigits((string) $value, 16);
+                    break;
+
                 case 'mobile_ir':
-                    $value = $this->normalizeMobileIran($value);
+                    $value = $this->normalizeMobileIran((string) $value);
                     break;
-                    
+
                 case 'text_or_empty':
                     $value = empty($value) ? '' : (string) $value;
                     break;
-                    
+
                 case 'trim':
                     $value = trim((string) $value);
                     break;
@@ -489,16 +493,21 @@ final class ExportService
     /**
      * Normalize digits (Persian/Arabic to English)
      */
-    private function normalizeDigits(string $value): string
+    private function normalizeDigits(string $value, int $limit = 0): string
     {
         $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         $arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
         $english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-        
+
         $value = str_replace($persian, $english, $value);
         $value = str_replace($arabic, $english, $value);
-        
-        return preg_replace('/\D/', '', $value);
+        $value = preg_replace('/\D/', '', $value);
+
+        if ($limit > 0) {
+            $value = substr($value, 0, $limit);
+        }
+
+        return $value;
     }
 
     /**
@@ -506,7 +515,7 @@ final class ExportService
      */
     private function normalizeMobileIran(string $value): string
     {
-        $value = $this->normalizeDigits($value);
+        $value = $this->normalizeDigits($value, 11);
         
         // Remove country code if present
         if (str_starts_with($value, '98')) {

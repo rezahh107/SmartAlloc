@@ -42,18 +42,19 @@ final class PriorityRulesTest extends BaseTestCase
 
     public function test_reg_status_clears_hakmat_fields(): void
     {
+        $mapper = new SabtEntryMapper();
         $entry = [
             '75' => '2',
+            '20' => '09123456789',
+            '76' => '1234567890123456',
             'hakmat_code' => 'ABC',
             'hakmat_name' => 'Foo',
         ];
 
-        if (($entry['75'] ?? '') !== '3') {
-            $entry['hakmat_code'] = '';
-            $entry['hakmat_name'] = '';
-        }
-
-        $this->assertSame('', $entry['hakmat_code']);
-        $this->assertSame('', $entry['hakmat_name']);
+        $result = $mapper->mapEntry($entry);
+        $this->assertTrue($result['ok']);
+        $student = $result['student'];
+        $this->assertSame('', $student['hakmat_code']);
+        $this->assertSame('', $student['hakmat_name']);
     }
 }

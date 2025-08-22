@@ -26,7 +26,13 @@ final class ExportPage
         $table   = $wpdb->prefix . 'smartalloc_exports';
         // @security-ok-sql
         $exports = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d", 20),
+            $wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d", 5),
+            ARRAY_A
+        );
+
+        $logTable = $wpdb->prefix . 'salloc_export_log';
+        $logs = $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM {$logTable} ORDER BY created_at DESC LIMIT %d", 5),
             ARRAY_A
         );
 
@@ -103,6 +109,29 @@ final class ExportPage
         echo '<tr><td colspan="7">' . esc_html__('No exports found.', 'smartalloc') . '</td></tr>';
         }
 
+        echo '</tbody></table>';
+
+        echo '<h2>' . esc_html__('Logs', 'smartalloc') . '</h2>';
+        echo '<table class="wp-list-table widefat striped">';
+        echo '<thead><tr>';
+        echo '<th>' . esc_html__('Filename', 'smartalloc') . '</th>';
+        echo '<th>' . esc_html__('Rows', 'smartalloc') . '</th>';
+        echo '<th>' . esc_html__('Failures', 'smartalloc') . '</th>';
+        echo '<th>' . esc_html__('Duration (ms)', 'smartalloc') . '</th>';
+        echo '<th>' . esc_html__('Created', 'smartalloc') . '</th>';
+        echo '</tr></thead><tbody>';
+        foreach ($logs as $log) {
+            echo '<tr>';
+            echo '<td>' . esc_html($log['file_name']) . '</td>';
+            echo '<td>' . esc_html((string) ($log['rows_total'] ?? 0)) . '</td>';
+            echo '<td>' . esc_html((string) ($log['rows_failed'] ?? 0)) . '</td>';
+            echo '<td>' . esc_html((string) ($log['duration_ms'] ?? 0)) . '</td>';
+            echo '<td>' . esc_html($log['created_at'] ?? '') . '</td>';
+            echo '</tr>';
+        }
+        if (empty($logs)) {
+            echo '<tr><td colspan="5">' . esc_html__('No logs found.', 'smartalloc') . '</td></tr>';
+        }
         echo '</tbody></table>';
         echo '</div></div>';
     }
