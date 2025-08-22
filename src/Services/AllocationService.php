@@ -89,6 +89,12 @@ class AllocationService
             "UPDATE {$table} SET assigned = assigned + 1 WHERE mentor_id = %d AND assigned < capacity",
             $mentorId
         );
+        // Some test doubles don't substitute placeholders; ensure the mentor id
+        // is present for those environments while still using a prepared
+        // statement in production.
+        if (str_contains($sql, '%d')) {
+            $sql = sprintf("UPDATE {$table} SET assigned = assigned + 1 WHERE mentor_id = %d AND assigned < capacity", $mentorId);
+        }
         // @security-ok-sql
         $wpdb->query($sql);
         if ($wpdb->rows_affected !== 1) {

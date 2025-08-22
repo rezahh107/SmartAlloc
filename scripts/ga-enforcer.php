@@ -7,6 +7,9 @@ if (PHP_SAPI !== 'cli') {
     exit(0);
 }
 
+// Patchwork may be loaded by the autoloader; disable it for isolated runs.
+putenv('PATCHWORK_DISABLE=1');
+
 $root = dirname(__DIR__);
 
 // Baseline defaults when a key is missing everywhere.
@@ -339,17 +342,31 @@ if ($preJson !== null) {
 }
 
 // schema validation
+$schemaRootPaths = [
+    $root . '/artifacts/schema/schema-validate.json',
+    dirname($root) . '/artifacts/schema/schema-validate.json',
+];
+foreach ($schemaRootPaths as $p) {
+    @unlink($p);
+}
 @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/artifact-schema-validate.php'));
-$schemaPath = $root . '/artifacts/schema/schema-validate.json';
+$schemaPaths = [
+    $root . '/artifacts/schema/schema-validate.json',
+    dirname($root) . '/artifacts/schema/schema-validate.json',
+];
 $schemaWarn = null;
-if (is_file($schemaPath)) {
-    $schemaData = json_decode((string)file_get_contents($schemaPath), true);
-    if (is_array($schemaData)) {
-        $schemaWarn = (int)($schemaData['count'] ?? 0);
-    } else {
-        $warnings[] = 'schema-validate.json parse failed';
+foreach ($schemaPaths as $schemaPath) {
+    if (is_file($schemaPath)) {
+        $schemaData = json_decode((string)file_get_contents($schemaPath), true);
+        if (is_array($schemaData)) {
+            $schemaWarn = (int)($schemaData['count'] ?? 0);
+        } else {
+            $warnings[] = 'schema-validate.json parse failed';
+        }
+        break;
     }
-} else {
+}
+if ($schemaWarn === null) {
     $warnings[] = 'schema-validate.json missing';
 }
 $signals['schema_warnings'] = $schemaWarn;
@@ -564,7 +581,11 @@ if ($wantJUnit) {
     $case->addAttribute('name', 'Artifacts.Schema');
     if (!$enforce) {
         $case->addChild('skipped');
-    } elseif ($schemaWarn !== null && $schemaWarn > (int)$config['schema_warnings']) {
+    } elseif ($schemaWarn === null) {
+        $msg = 'schema warnings unknown';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    } elseif ($schemaWarn > (int)$config['schema_warnings']) {
         $msg = 'schema warnings present';
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);

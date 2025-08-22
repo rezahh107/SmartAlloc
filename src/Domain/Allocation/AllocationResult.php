@@ -25,4 +25,12 @@ final class AllocationResult
     {
         return $this->data;
     }
+
+    /**
+     * Retrieve a value by key.
+     */
+    public function get(string $key): mixed
+    {
+        return $this->data[$key] ?? null;
+    }
 }

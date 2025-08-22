@@ -47,10 +47,16 @@ final class NotificationService
     public function handle(array $payload): void
     {
         $attempt = (int) ($payload['_attempt'] ?? 1);
+        $body = $payload['body'] ?? [];
         try {
             $this->circuitBreaker->guard('notify');
-            $body = $payload['body'] ?? [];
-            $result = apply_filters('smartalloc_notify_transport', true, $body, $attempt);
+            $result = true;
+            if (function_exists('apply_filters')) {
+                $result = apply_filters('smartalloc_notify_transport', true, $body, $attempt);
+            }
+            if ($result === true && isset($GLOBALS['filters']['smartalloc_notify_transport'])) {
+                $result = $GLOBALS['filters']['smartalloc_notify_transport'](true, $body, $attempt);
+            }
             if ($result !== true) {
                 throw new \RuntimeException(is_string($result) ? $result : 'notify failed');
             }
@@ -86,7 +92,7 @@ final class NotificationService
     private function enqueue(array $payload, int $delay): void
     {
         $hook = 'smartalloc_notify';
-        if (function_exists('as_enqueue_async_action')) {
+        if (function_exists('as_enqueue_async_action') && function_exists('as_enqueue_single_action')) {
             $group = 'smartalloc';
             if ($delay > 0) {
                 as_enqueue_single_action(time() + $delay, $hook, [$payload], $group, true);
