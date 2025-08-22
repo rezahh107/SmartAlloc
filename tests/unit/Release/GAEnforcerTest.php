@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Release;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class GAEnforcerTest extends TestCase
+class GAEnforcerTest extends BaseTestCase
 {
     /** @var array<string> */
     private array $files = [];

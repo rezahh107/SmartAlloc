@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\AllocationRules;
 use SmartAlloc\Tests\Fixtures\{MentorFactory, StudentFactory, CrosswalkFactory};
 use SmartAlloc\Utils\Fuzzy;
 
-final class FuzzySchoolMatchTest extends TestCase
+final class FuzzySchoolMatchTest extends BaseTestCase
 {
     public function test_similarity_decisions(): void
     {

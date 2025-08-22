@@ -18,8 +18,10 @@ if (!function_exists('stub_header')) {
     }
 }
 
+use SmartAlloc\Tests\BaseTestCase;
+
 if (!class_exists('HttpTest')) {
-    abstract class HttpTest extends \PHPUnit\Framework\TestCase {
+    abstract class HttpTest extends BaseTestCase {
         /**
          * Run callback within an output buffer and ensure cleanup.
          */

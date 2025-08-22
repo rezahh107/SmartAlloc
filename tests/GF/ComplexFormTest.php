@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class ComplexFormTest extends TestCase
+final class ComplexFormTest extends BaseTestCase
 {
     public function test_large_form_with_nested_conditionals_is_rendered_or_skip(): void
     {

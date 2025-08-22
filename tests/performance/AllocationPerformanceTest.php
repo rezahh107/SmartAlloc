@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class AllocationPerformanceTest extends TestCase {
+final class AllocationPerformanceTest extends BaseTestCase {
     public function test_throughput_p95_and_memory_budget_or_skip(): void {
         if (getenv('RUN_PERFORMANCE_TESTS') !== '1') {
             $this->markTestSkipped('performance tests opt-in');

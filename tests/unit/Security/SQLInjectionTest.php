@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class SQLInjectionTest extends TestCase
+final class SQLInjectionTest extends BaseTestCase
 {
     public function test_wpdb_usage_is_prepared_or_allowlisted(): void
     {

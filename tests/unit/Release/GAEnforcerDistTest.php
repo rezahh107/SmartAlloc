@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class GAEnforcerDistTest extends TestCase
+final class GAEnforcerDistTest extends BaseTestCase
 {
     private string $origReadme = '';
 

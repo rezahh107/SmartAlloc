@@ -1,7 +1,7 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class I18nLintTest extends TestCase
+class I18nLintTest extends BaseTestCase
 {
     private string $fixture;
 

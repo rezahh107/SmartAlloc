@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\SecurityAdvanced;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use Brain\Monkey\Functions;
 use SmartAlloc\Security\RateLimiter;
 use SmartAlloc\Logging\Logger;
@@ -13,7 +13,7 @@ use SmartAlloc\Http\Rest\MetricsController;
 use WP_Error;
 use WP_REST_Request;
 
-class SecurityAdvancedTest extends TestCase
+class SecurityAdvancedTest extends BaseTestCase
 {
     protected function setUp(): void
     {

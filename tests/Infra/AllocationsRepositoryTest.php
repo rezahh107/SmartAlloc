@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Contracts\LoggerInterface;
 use SmartAlloc\Domain\Allocation\AllocationStatus;
 use SmartAlloc\Infra\Repository\AllocationsRepository;
 
-final class AllocationsRepositoryTest extends TestCase
+final class AllocationsRepositoryTest extends BaseTestCase
 {
     protected function setUp(): void
     {

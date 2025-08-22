@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\DlqService;
 
-final class DlqServiceTest extends TestCase
+final class DlqServiceTest extends BaseTestCase
 {
     private function setupDb(): void
     {

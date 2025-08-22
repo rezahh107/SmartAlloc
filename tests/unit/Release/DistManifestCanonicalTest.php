@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class DistManifestCanonicalTest extends TestCase
+final class DistManifestCanonicalTest extends BaseTestCase
 {
     public function test_manifest_only_has_canonical_entries(): void
     {

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class DistManifestTest extends TestCase
+final class DistManifestTest extends BaseTestCase
 {
     public function test_manifest_entries_sorted_and_shaped(): void
     {

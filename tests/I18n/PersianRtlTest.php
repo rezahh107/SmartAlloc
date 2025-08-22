@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class PersianRtlTest extends TestCase
+final class PersianRtlTest extends BaseTestCase
 {
     public function test_persian_digits_rendering_and_not_corrupted_in_exports(): void
     {

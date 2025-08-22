@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Performance;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Perf\Stopwatch;
 use SmartAlloc\Perf\QueryCounter;
 use SmartAlloc\Tests\Fixtures\BulkDatasetBuilder;
 
-final class AllocationPerfTest extends TestCase
+final class AllocationPerfTest extends BaseTestCase
 {
     /**
      * @dataProvider provideScales

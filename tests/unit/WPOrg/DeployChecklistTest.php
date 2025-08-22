@@ -1,7 +1,7 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class DeployChecklistTest extends TestCase
+class DeployChecklistTest extends BaseTestCase
 {
     private string $dir;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class FlowPerksIntegrationTest extends TestCase
+final class FlowPerksIntegrationTest extends BaseTestCase
 {
     public function test_flow_perks_loops_and_conditional_routing_or_skip(): void
     {

@@ -2,13 +2,13 @@
 declare(strict_types=1);
 
 use Brain\Monkey\Functions;
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Http\Rest\ReportsMetricsController;
 use SmartAlloc\Infra\Export\ExcelExporter;
 use SmartAlloc\Tests\Helpers\WpdbSpy as Spy;
 use SmartAlloc\Tests\Helpers\EnvReset as Env;
 
-final class BudgetTest extends TestCase
+final class BudgetTest extends BaseTestCase
 {
     protected function setUp(): void
     {

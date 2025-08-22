@@ -1,8 +1,8 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class WpDebugTest extends TestCase
+class WpDebugTest extends BaseTestCase
 {
     public function test_wp_debug_and_display_errors(): void
     {

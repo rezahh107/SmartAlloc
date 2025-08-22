@@ -3,7 +3,7 @@ declare(strict_types=1);
 if (!class_exists('WP_Error')) { class WP_Error { public function __construct(public string $code = '', public string $message = '', public array $data = []) {} public function get_error_data(): array { return $this->data; } } }
 
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\AllocationService;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\ScoringAllocator;
@@ -12,7 +12,7 @@ use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\EventStoreInterface;
 use SmartAlloc\Domain\Allocation\AllocationResult;
 
-class AllocationServiceConcurrencyTest extends TestCase
+class AllocationServiceConcurrencyTest extends BaseTestCase
 {
     private function makeService(&$wpdb): AllocationService
     {

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\NotificationService;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
@@ -15,7 +15,7 @@ if (!function_exists('wp_next_scheduled')) { function wp_next_scheduled($h,$a){ 
 if (!function_exists('as_enqueue_async_action')) { function as_enqueue_async_action(){ return false; } }
 if (!function_exists('as_next_scheduled_action')) { function as_next_scheduled_action(){ return false; } }
 
-final class NotificationRetryDlqTest extends TestCase
+final class NotificationRetryDlqTest extends BaseTestCase
 {
     public function testRetriesThenSucceeds(): void
     {

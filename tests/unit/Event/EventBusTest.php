@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\{EventStoreInterface,ListenerInterface,LoggerInterface};
 
-final class EventBusTest extends TestCase
+final class EventBusTest extends BaseTestCase
 {
     public function testDuplicateDispatchAndFailureLogging(): void
     {

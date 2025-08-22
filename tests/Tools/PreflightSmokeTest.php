@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Tools;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class PreflightSmokeTest extends TestCase
+final class PreflightSmokeTest extends BaseTestCase
 {
     public function testPreflight(): void
     {

@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\DbSafe;
 
-final class DbSafeTest extends TestCase
+final class DbSafeTest extends BaseTestCase
 {
     public function test_mismatch_throws(): void
     {

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class RequestBudgetTest extends TestCase
+final class RequestBudgetTest extends BaseTestCase
 {
     public function test_request_budget_opt_in(): void
     {

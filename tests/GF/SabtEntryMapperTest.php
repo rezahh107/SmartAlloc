@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Infra\GF\SabtEntryMapper;
 
-final class SabtEntryMapperTest extends TestCase
+final class SabtEntryMapperTest extends BaseTestCase
 {
     private SabtEntryMapper $mapper;
 

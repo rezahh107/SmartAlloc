@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class BlockEditorSmokeTest extends TestCase
+final class BlockEditorSmokeTest extends BaseTestCase
 {
     public function test_block_json_api_v3_or_skip(): void
     {

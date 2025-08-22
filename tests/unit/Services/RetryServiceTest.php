@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\RetryService;
 
-final class RetryServiceTest extends TestCase
+final class RetryServiceTest extends BaseTestCase
 {
     public function testBackoffMonotonicAndBounded(): void
     {

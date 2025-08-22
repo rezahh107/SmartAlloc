@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class RedisOutageTest extends TestCase {
+final class RedisOutageTest extends BaseTestCase {
     protected function setUp(): void {
         if (getenv('RUN_FAILURE_TESTS') !== '1') {
             $this->markTestSkipped('failure tests opt-in');

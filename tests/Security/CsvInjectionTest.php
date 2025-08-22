@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
 require_once dirname(__DIR__) . '/Support/DataProviders.php';
 
-final class CsvInjectionTest extends TestCase
+final class CsvInjectionTest extends BaseTestCase
 {
     /**
      * Run CSV export with given value.

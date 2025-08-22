@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
 require_once dirname(__DIR__, 3) . '/scripts/headers-guard.php';
 
@@ -10,7 +10,7 @@ require_once dirname(__DIR__, 3) . '/scripts/headers-guard.php';
  * Test is advisory and skipped if the plugin does not expose the
  * expected hook/function.
  */
-final class HeadersGuardTest extends TestCase
+final class HeadersGuardTest extends BaseTestCase
 {
     public function test_security_headers_present(): void
     {

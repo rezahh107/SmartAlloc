@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class ChangelogGuardTest extends TestCase {
+final class ChangelogGuardTest extends BaseTestCase {
     public function test_changelog_guard(): void {
         if (getenv('RUN_RELEASE_GATES') !== '1') {
             $this->markTestSkipped('release gates opt-in');

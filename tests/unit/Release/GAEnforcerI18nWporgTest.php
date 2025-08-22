@@ -1,7 +1,7 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class GAEnforcerI18nWporgTest extends TestCase
+class GAEnforcerI18nWporgTest extends BaseTestCase
 {
     private string $badFile;
     private string $wporgDir;

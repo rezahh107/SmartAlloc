@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
-final class ReportsCsvInjectionTest extends TestCase
+final class ReportsCsvInjectionTest extends BaseTestCase
 {
     private $hMetrics;
     private $hHeader;

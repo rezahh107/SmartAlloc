@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class GFSecurityHooksTest extends TestCase
+final class GFSecurityHooksTest extends BaseTestCase
 {
     protected function setUp(): void
     {

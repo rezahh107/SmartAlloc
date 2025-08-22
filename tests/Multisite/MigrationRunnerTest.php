@@ -5,8 +5,9 @@ declare(strict_types=1);
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use SmartAlloc\Infra\Upgrade\MigrationRunner;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class MigrationRunnerTest extends \PHPUnit\Framework\TestCase
+final class MigrationRunnerTest extends BaseTestCase
 {
     protected function setUp(): void
     {

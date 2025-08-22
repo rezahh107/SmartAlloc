@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\{AllocationRules, ScoringAllocator};
 use SmartAlloc\Tests\Fixtures\{MentorFactory, StudentFactory};
 
-final class AllocationInvariantsTest extends TestCase
+final class AllocationInvariantsTest extends BaseTestCase
 {
     public function test_assigned_never_exceeds_capacity(): void
     {

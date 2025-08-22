@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\AllocationService;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
@@ -24,7 +24,7 @@ if (!class_exists('WP_Error')) {
 
 // wpdb stub provided by tests bootstrap
 
-final class AllocationContractTest extends TestCase
+final class AllocationContractTest extends BaseTestCase
 {
     use AssertArrayShape;
 

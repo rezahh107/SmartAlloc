@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class WebhookSignatureTest extends TestCase
+final class WebhookSignatureTest extends BaseTestCase
 {
     public function test_placeholder(): void
     {

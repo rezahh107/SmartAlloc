@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Integration\GravityForms\Form150;
 
-final class Form150ValidationTest extends TestCase
+final class Form150ValidationTest extends BaseTestCase
 {
     public function testNationalCodeAlgorithm(): void
     {

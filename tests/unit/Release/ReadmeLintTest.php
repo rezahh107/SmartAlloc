@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class ReadmeLintTest extends TestCase
+final class ReadmeLintTest extends BaseTestCase
 {
     public function test_valid_readme(): void
     {

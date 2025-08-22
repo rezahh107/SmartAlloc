@@ -1,10 +1,10 @@
 <?php
 namespace SmartAlloc\Tests\DataQuality;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use function SmartAlloc\Testing\Support\gini;
 
-final class DataQualityTest extends TestCase
+final class DataQualityTest extends BaseTestCase
 {
     private array $students;
     private array $mentors;

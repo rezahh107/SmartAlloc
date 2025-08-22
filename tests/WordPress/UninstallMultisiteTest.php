@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class UninstallMultisiteTest extends TestCase
+final class UninstallMultisiteTest extends BaseTestCase
 {
     protected function setUp(): void
     {

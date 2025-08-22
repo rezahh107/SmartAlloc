@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Regression;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Perf\QueryCounter;
 use SmartAlloc\Tests\Fixtures\BulkDatasetBuilder;
 
-final class QueryPlanGuardTest extends TestCase
+final class QueryPlanGuardTest extends BaseTestCase
 {
     public function test_allocation_does_not_exhibit_n_plus_1(): void
     {

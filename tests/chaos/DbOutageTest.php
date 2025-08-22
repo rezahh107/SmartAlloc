@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Testing\TestFilters;
 use SmartAlloc\Services\Db;
 
 
-final class DbOutageTest extends TestCase
+final class DbOutageTest extends BaseTestCase
 {
     protected function tearDown(): void
     {

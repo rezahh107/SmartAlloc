@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\AllocationRules;
 use SmartAlloc\Services\ScoringAllocator;
 use SmartAlloc\Tests\Fixtures\{MentorFactory, StudentFactory, CrosswalkFactory};
 
-final class AllocationRulesTest extends TestCase
+final class AllocationRulesTest extends BaseTestCase
 {
     public function test_filters_and_ranking_with_default_capacity(): void
     {

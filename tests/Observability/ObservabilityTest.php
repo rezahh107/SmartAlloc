@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Observability;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\StatsService;
 use SmartAlloc\Logging\Logger;
 use SmartAlloc\Observability\Tracer;
 use SmartAlloc\Observability\AlertService;
 
-class ObservabilityTest extends TestCase
+class ObservabilityTest extends BaseTestCase
 {
     protected function setUp(): void
     {

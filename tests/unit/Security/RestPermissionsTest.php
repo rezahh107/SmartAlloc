@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class RestPermissionsTest extends TestCase
+final class RestPermissionsTest extends BaseTestCase
 {
     public function test_rest_routes_have_permissions(): void
     {

@@ -1,9 +1,9 @@
 <?php
 namespace Release;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class GARehearsalSmokeTest extends TestCase
+class GARehearsalSmokeTest extends BaseTestCase
 {
     public function testRun(): void
     {

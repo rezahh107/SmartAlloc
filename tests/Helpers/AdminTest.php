@@ -102,8 +102,10 @@ if (!function_exists('renderPage')) {
     }
 }
 
+use SmartAlloc\Tests\BaseTestCase;
+
 if (!class_exists('AdminTest')) {
-    class AdminTest extends \PHPUnit\Framework\TestCase {
+    class AdminTest extends BaseTestCase {
         public function test_placeholder(): void {
             $this->assertTrue(true);
         }

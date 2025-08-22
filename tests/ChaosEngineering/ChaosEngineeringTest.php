@@ -1,11 +1,11 @@
 <?php
 namespace SmartAlloc\Tests\ChaosEngineering;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Testing\Chaos\FaultFlags;
 require_once __DIR__ . '/ChaosTestHelpers.php';
 
-final class ChaosEngineeringTest extends TestCase
+final class ChaosEngineeringTest extends BaseTestCase
 {
     protected function setUp(): void
     {

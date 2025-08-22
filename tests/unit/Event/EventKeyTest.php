@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Event\EventKey;
 
-final class EventKeyTest extends TestCase
+final class EventKeyTest extends BaseTestCase
 {
     public function testFormatAndOverride(): void
     {

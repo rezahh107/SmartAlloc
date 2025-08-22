@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class PersianValidatorTest extends TestCase
+final class PersianValidatorTest extends BaseTestCase
 {
     public function test_national_id_and_card_validation_or_skip(): void
     {
