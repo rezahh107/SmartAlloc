@@ -91,7 +91,51 @@ function qa_report(string $root, string $outDir): array
         $notes[] = 'license audit missing';
     }
 
-    ksort($rest); ksort($sql); ksort($secrets); ksort($headers); ksort($license);
+    $exporter = ['errors' => null, 'warnings' => null];
+    $expFile = $root . '/artifacts/exporter/validate.json';
+    if (is_file($expFile)) {
+        $data = json_decode((string)file_get_contents($expFile), true);
+        if (is_array($data) && isset($data['counts'])) {
+            $exporter['errors'] = (int)($data['counts']['errors'] ?? 0);
+            $exporter['warnings'] = (int)($data['counts']['warnings'] ?? 0);
+        }
+    } else {
+        $notes[] = 'exporter validation missing';
+    }
+
+    $validation = [
+        'national_id_checksum'   => null,
+        'mobile_prefix_09'       => null,
+        'landline_eq_mobile'     => null,
+        'duplicate_liaison_phone'=> null,
+        'postal_code_fuzzy'      => ['accept' => null, 'manual' => null, 'reject' => null],
+        'hikmat_tracking_sentinel' => null,
+    ];
+    $valFile = $root . '/artifacts/validation/form150.json';
+    if (is_file($valFile)) {
+        $data = json_decode((string)file_get_contents($valFile), true);
+        if (is_array($data) && isset($data['violations'])) {
+            $v = $data['violations'];
+            $validation['national_id_checksum']    = isset($v['national_id_checksum']) ? (int)$v['national_id_checksum'] : 0;
+            $validation['mobile_prefix_09']        = isset($v['mobile_prefix_09']) ? (int)$v['mobile_prefix_09'] : 0;
+            $validation['landline_eq_mobile']      = isset($v['landline_eq_mobile']) ? (int)$v['landline_eq_mobile'] : 0;
+            $validation['duplicate_liaison_phone'] = isset($v['duplicate_liaison_phone']) ? (int)$v['duplicate_liaison_phone'] : 0;
+            if (isset($v['postal_code_fuzzy']) && is_array($v['postal_code_fuzzy'])) {
+                $pc = $v['postal_code_fuzzy'];
+                $validation['postal_code_fuzzy'] = [
+                    'accept' => (int)($pc['accept'] ?? 0),
+                    'manual' => (int)($pc['manual'] ?? 0),
+                    'reject' => (int)($pc['reject'] ?? 0),
+                ];
+            }
+            $validation['hikmat_tracking_sentinel'] = isset($v['hikmat_tracking_sentinel']) ? (int)$v['hikmat_tracking_sentinel'] : 0;
+        }
+    } else {
+        $notes[] = 'form150 validation missing';
+    }
+
+    ksort($rest); ksort($sql); ksort($secrets); ksort($headers); ksort($license); ksort($exporter); ksort($validation);
+    ksort($validation['postal_code_fuzzy']);
 
     $summary = [
         'coverage_pct' => $coverage,
@@ -101,13 +145,15 @@ function qa_report(string $root, string $outDir): array
         'secrets'     => $secrets,
         'headers'     => $headers,
         'license'     => $license,
+        'exporter'    => $exporter,
+        'validation'  => $validation,
     ];
     ksort($summary);
 
     sort($notes);
 
     $report = [
-        'generated_at_utc' => gmdate('Y-m-d\TH:i:s\Z'),
+        'timestamp_utc' => gmdate('Y-m-d\TH:i:s\Z'),
         'summary' => $summary,
         'notes' => $notes,
     ];
@@ -128,6 +174,15 @@ function qa_report(string $root, string $outDir): array
     $html .= '<li>Secret violations: ' . ($secrets['violations'] ?? 'N/A') . ', allowlisted: ' . ($secrets['allowlisted'] ?? 'N/A') . '</li>';
     $html .= '<li>Headers missing: ' . ($headers['missing'] ?? 'N/A') . ', allowlisted: ' . ($headers['allowlisted'] ?? 'N/A') . '</li>';
     $html .= '<li>Unapproved licenses: ' . ($license['unapproved'] ?? 'N/A') . '</li>';
+    $html .= '<li>Exporter errors: ' . ($exporter['errors'] ?? 'N/A') . ', warnings: ' . ($exporter['warnings'] ?? 'N/A') . '</li>';
+    $html .= '<li>Validation<ul>';
+    $html .= '<li>National ID checksum: ' . ($validation['national_id_checksum'] ?? 'N/A') . '</li>';
+    $html .= '<li>Mobile 09 prefix: ' . ($validation['mobile_prefix_09'] ?? 'N/A') . '</li>';
+    $html .= '<li>Landline equals mobile: ' . ($validation['landline_eq_mobile'] ?? 'N/A') . '</li>';
+    $html .= '<li>Duplicate liaison phone: ' . ($validation['duplicate_liaison_phone'] ?? 'N/A') . '</li>';
+    $html .= '<li>Postal code fuzzy accept: ' . ($validation['postal_code_fuzzy']['accept'] ?? 'N/A') . ', manual: ' . ($validation['postal_code_fuzzy']['manual'] ?? 'N/A') . ', reject: ' . ($validation['postal_code_fuzzy']['reject'] ?? 'N/A') . '</li>';
+    $html .= '<li>حکمة sentinel: ' . ($validation['hikmat_tracking_sentinel'] ?? 'N/A') . '</li>';
+    $html .= '</ul></li>';
     if ($notes) {
         $html .= '<li>Notes<ul>';
         foreach ($notes as $n) {
