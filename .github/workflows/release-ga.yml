@@ -1,0 +1,21 @@
+name: Release GA
+on:
+  push:
+    tags:
+      - 'v*'
+      - '!v*-rc.*'
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - run: composer install --no-interaction --prefer-dist --no-progress || true
+      - run: composer release:ga -- --tag=${GITHUB_REF_NAME}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-ga-artifacts
+          path: artifacts/release/**
+          if-no-files-found: error

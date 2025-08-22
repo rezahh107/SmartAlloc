@@ -22,6 +22,7 @@ $metrics = [
     'license' => null,
     'secrets' => null,
     'manifest' => [],
+    'i18n' => [],
 ];
 
 $goNoGoFile = null;
@@ -58,6 +59,23 @@ if ($goNoGoFile) {
     }
 }
 
+$i18nLint = $root . '/artifacts/i18n-lint.json';
+if (is_file($i18nLint)) {
+    $data = json_decode((string)file_get_contents($i18nLint), true);
+    if (is_array($data)) {
+        $metrics['i18n']['wrong_domain'] = isset($data['wrong_domain']) ? count((array)$data['wrong_domain']) : 0;
+        $metrics['i18n']['placeholder_mismatch'] = isset($data['placeholder_mismatch']) ? count((array)$data['placeholder_mismatch']) : 0;
+    }
+}
+$potRefresh = $root . '/artifacts/i18n/pot-refresh.json';
+if (is_file($potRefresh)) {
+    $data = json_decode((string)file_get_contents($potRefresh), true);
+    if (is_array($data)) {
+        $metrics['i18n']['pot_entries'] = $data['pot_entries'] ?? 0;
+        $metrics['i18n']['domain_mismatch'] = $data['domain_mismatch'] ?? 0;
+    }
+}
+
 $lines = [];
 $lines[] = '<div dir="rtl">';
 $lines[] = '# Release Notes' . ($version !== '' ? ' ' . $version : '');
@@ -74,8 +92,11 @@ foreach (['coverage','rest','sql','license','secrets'] as $k) {
         break;
     }
 }
+if (!$hasSignals && !empty($metrics['i18n'])) {
+    $hasSignals = true;
+}
 
-if ($hasSignals || !empty($metrics['manifest'])) {
+if ($hasSignals || !empty($metrics['manifest']) || !empty($metrics['i18n'])) {
     $lines[] = '## QA Signals';
     if ($metrics['coverage'] !== null) {
         $lines[] = '- Coverage: ' . $metrics['coverage'] . '%';
@@ -104,6 +125,13 @@ if ($hasSignals || !empty($metrics['manifest'])) {
         $total = count($metrics['manifest']);
         if ($total > count($files)) {
             $lines[] = '- ... (' . $total . ' files)';
+        }
+        $lines[] = '';
+    }
+    if (!empty($metrics['i18n'])) {
+        $lines[] = '### I18N';
+        foreach ($metrics['i18n'] as $k => $v) {
+            $lines[] = '- ' . $k . ': ' . $v;
         }
         $lines[] = '';
     }
