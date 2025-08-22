@@ -4,6 +4,11 @@
  * PHPUnit bootstrap file for SmartAlloc tests
  */
 
+// 1) Start a top-level buffer very early to prevent "headers already sent"
+if (\ob_get_level() === 0) {
+    \ob_start();
+}
+
 define('PHPUNIT_RUNNING', true);
 
 // Load Composer autoloader
@@ -226,6 +231,7 @@ if (!function_exists('rgar')) {
 
 // Load wpdb stub and ensure global is available
 require_once __DIR__ . '/TestDoubles/WordPress/WpdbStub.php';
+require_once __DIR__ . '/TestDoubles/GravityForms/GFAPIStub.php';
 global $wpdb;
 if (!isset($wpdb) || !($wpdb instanceof wpdb)) {
     $wpdb = new wpdb();
@@ -256,6 +262,9 @@ if (!defined('SMARTALLOC_UPLOAD_DIR')) {
 if (!defined('SMARTALLOC_TEST_MODE')) {
     define('SMARTALLOC_TEST_MODE', true);
 }
+\defined('DONOTCACHEPAGE') || \define('DONOTCACHEPAGE', true);
+\defined('DONOTCACHEOBJECT') || \define('DONOTCACHEOBJECT', true);
+\defined('DONOTCACHEDB') || \define('DONOTCACHEDB', true);
 // === SMARTALLOC TEST FOUNDATION START ===
 if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
     define('SMARTALLOC_TEST_FOUNDATION', true);
@@ -286,3 +295,12 @@ if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
     set_error_handler($GLOBALS['sa_test_error_handler']);
 }
 // === SMARTALLOC TEST FOUNDATION END ===
+if (getenv('SMARTALLOC_TESTS') === '1') {
+    require_once __DIR__ . '/TestDoubles/WordPress/PluggablesShim.php';
+}
+
+\register_shutdown_function(static function (): void {
+    while (\ob_get_level() > 1) {
+        \ob_end_clean();
+    }
+});

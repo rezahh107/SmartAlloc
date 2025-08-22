@@ -70,8 +70,12 @@
         ]
     },
     "autoload-dev": {
-        "psr-4": {"SmartAlloc\\Tests\\": "tests/"},
-        "files": ["tests/bootstrap.php"]
+        "psr-4": {
+            "SmartAlloc\\Tests\\": "tests/"
+        },
+        "files": [
+            "stubs/wp-stubs.php"
+        ]
     },
     "config": {
         "allow-plugins": {

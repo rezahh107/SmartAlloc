@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\GFAdvanced;
 
-require_once dirname(__DIR__) . '/bootstrap.gf.php';
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
