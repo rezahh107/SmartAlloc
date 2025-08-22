@@ -86,19 +86,28 @@ add_action('plugins_loaded', function () {
 
     // Set container in AdminController
     SmartAlloc\Http\Admin\AdminController::setContainer(SmartAlloc\Bootstrap::container());
-    \SmartAlloc\Cron\RetentionTasks::register();
-    \SmartAlloc\Cron\ExportRetention::register();
-    (new \SmartAlloc\Http\Rest\WebhookController())->register_routes();
-    \SmartAlloc\Infra\GF\HookBootstrap::registerEnabledForms();
-});
+      \SmartAlloc\Cron\RetentionTasks::register();
+      \SmartAlloc\Cron\ExportRetention::register();
+      (new \SmartAlloc\Http\Rest\WebhookController())->register_routes();
+      \SmartAlloc\Infra\GF\HookBootstrap::registerEnabledForms();
+
+      add_action('rest_api_init', function() {
+          $container = \SmartAlloc\Bootstrap::container();
+          $controller = new \SmartAlloc\REST\Controllers\AllocationController(
+              $container->get(\SmartAlloc\Services\AllocationService::class),
+              $container->get(\SmartAlloc\Infra\DB\TableResolver::class)
+          );
+          $controller->register();
+      });
+  });
 
 // Run migrations on admin init
 add_action('admin_init', ['SmartAlloc\\Infra\\Upgrade\\MigrationRunner', 'maybeRun']);
 
 // WP-CLI Commands Registration
-if (defined('WP_CLI') && WP_CLI) {
-    require_once __DIR__ . '/src/Infra/CLI/Commands.php';
-    WP_CLI::add_command('smartalloc', \SmartAlloc\Infra\CLI\Commands::class);
+  if (defined('WP_CLI') && WP_CLI) {
+      require_once __DIR__ . '/src/Infra/CLI/Commands.php';
+      WP_CLI::add_command('smartalloc', \SmartAlloc\Infra\CLI\Commands::class);
     require_once __DIR__ . '/src/Cli/ExportCommand.php';
     require_once __DIR__ . '/src/Cli/AllocateCommand.php';
     require_once __DIR__ . '/src/Cli/ReviewCommand.php';
@@ -110,8 +119,10 @@ if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('smartalloc review', \SmartAlloc\Cli\ReviewCommand::class);
     WP_CLI::add_command('smartalloc doctor', \SmartAlloc\Cli\DoctorCommand::class);
     WP_CLI::add_command('smartalloc debug pack', \SmartAlloc\Cli\DebugCommand::class);
-    WP_CLI::add_command('smartalloc gf', \SmartAlloc\Cli\GFCommand::class);
-}
+      WP_CLI::add_command('smartalloc gf', \SmartAlloc\Cli\GFCommand::class);
+      require_once __DIR__ . '/src/CLI/Commands.php';
+      WP_CLI::add_command('smartalloc run', \SmartAlloc\CLI\Commands::class);
+  }
 
 // Persian Admin Menu
 add_action('admin_menu', function () {

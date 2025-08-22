@@ -30,5 +30,9 @@
     <testsuite name="Meta">
       <directory>tests/Meta</directory>
     </testsuite>
+    <testsuite name="Admin"><directory>tests/Admin</directory></testsuite>
+    <testsuite name="Infra"><directory>tests/Infra</directory></testsuite>
+    <testsuite name="Integration"><directory>tests/Integration</directory></testsuite>
+    <testsuite name="REST"><directory>tests/REST</directory></testsuite>
   </testsuites>
 </phpunit>
