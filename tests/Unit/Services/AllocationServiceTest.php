@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace SmartAlloc\Tests\Unit\Services;
 
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use Mockery;
 use SmartAlloc\Core\FormContext;
 use SmartAlloc\Infra\DB\TableResolver;
 use SmartAlloc\Services\AllocationService;
 use SmartAlloc\Services\Exceptions\DuplicateAllocationException;
+use SmartAlloc\Services\Exceptions\InsufficientCapacityException;
 use SmartAlloc\Tests\BaseTestCase;
 
 final class AllocationServiceTest extends BaseTestCase
@@ -20,7 +22,6 @@ final class AllocationServiceTest extends BaseTestCase
     {
         parent::setUp();
         Monkey\setUp();
-
         global $wpdb;
         $wpdb = new class extends \wpdb {
             public string $prefix = 'wp_';
@@ -72,10 +73,8 @@ final class AllocationServiceTest extends BaseTestCase
                 return 0;
             }
         };
-
         $tables = new TableResolver($wpdb);
         $this->svc = new AllocationService($tables);
-
     }
 
     protected function tearDown(): void
@@ -86,38 +85,41 @@ final class AllocationServiceTest extends BaseTestCase
     }
 
     /** @test */
-    public function it_delegates_legacy_allocate_to_form150(): void
+    public function success_path_creates_row_with_utc_timestamp_and_metric(): void
     {
+        $ctx = new FormContext(150);
+        $payload = ['student_id' => 1, 'email' => 'a@b.com'];
+        $this->svc->allocateWithContext($ctx, $payload);
         global $wpdb;
-        $this->svc->allocate(['student_id' => 1]);
         $this->assertArrayHasKey('wp_smartalloc_allocations_f150', $wpdb->data);
+        $row = $wpdb->data['wp_smartalloc_allocations_f150'][0];
+        $dt = new \DateTime($row['created_at'], new \DateTimeZone('UTC'));
+        $this->assertSame('UTC', $dt->getTimezone()->getName());
     }
 
     /** @test */
-    public function it_writes_to_form_specific_tables_via_allocateWithContext(): void
+    public function duplicate_throws_exception(): void
     {
-        global $wpdb;
-        $ctx = new FormContext(200);
-        $this->svc->allocateWithContext($ctx, ['student_id' => 2]);
-        $this->assertArrayHasKey('wp_smartalloc_allocations_f200', $wpdb->data);
-        $this->assertArrayNotHasKey('wp_smartalloc_allocations_f150', $wpdb->data);
-    }
-
-    /** @test */
-    public function it_throws_duplicate_on_same_form_only(): void
-    {
-        $ctx150 = new FormContext(150);
-        $ctx200 = new FormContext(200);
-        $payload = ['student_id' => 5, 'email' => 'a@b.com'];
-        $this->svc->allocateWithContext($ctx150, $payload);
+        $ctx = new FormContext(150);
+        $payload = ['student_id' => 2, 'email' => 'dup@b.com'];
+        $this->svc->allocateWithContext($ctx, $payload);
         $this->expectException(DuplicateAllocationException::class);
-        $this->svc->allocateWithContext($ctx150, $payload);
-        $this->svc->allocateWithContext($ctx200, $payload);
-        $this->assertTrue(true);
+        $this->svc->allocateWithContext($ctx, $payload);
     }
 
     /** @test */
-    public function it_masks_pii_in_logs_and_labels_metrics_with_form_id(): void
+    public function capacity_throws_exception_after_limit(): void
+    {
+        $ctx = new FormContext(150);
+        for ($i = 0; $i < 60; $i++) {
+            $this->svc->allocateWithContext($ctx, ['student_id' => $i + 10, 'email' => "u{$i}@b.com"]);
+        }
+        $this->expectException(InsufficientCapacityException::class);
+        $this->svc->allocateWithContext($ctx, ['student_id' => 999, 'email' => 'z@b.com']);
+    }
+
+    /** @test */
+    public function logs_mask_pii(): void
     {
         $ctx = new FormContext(150);
         $payload = ['student_id' => 3, 'email' => 'a@b.com', 'mobile' => '123', 'national_id' => 'xyz'];

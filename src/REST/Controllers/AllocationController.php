@@ -19,7 +19,7 @@ final class AllocationController
         $cb = function () {
             register_rest_route('smartalloc/v1', '/allocate/(?P<form_id>\d+)', [
                 'methods'             => 'POST',
-                'permission_callback' => static fn() => true,
+                'permission_callback' => static fn() => current_user_can('manage_smartalloc'),
                 'callback'            => function (\WP_REST_Request $request) {
                     if (!current_user_can('manage_smartalloc')) {
                         return new \WP_REST_Response(['error' => 'forbidden'], 403);
@@ -27,14 +27,15 @@ final class AllocationController
 
                     $formRaw = filter_input(INPUT_POST, 'form_id', FILTER_SANITIZE_NUMBER_INT);
                     $formRaw = $formRaw ?? $request->get_param('form_id');
-                    $formId  = (int) wp_unslash((string) $formRaw);
+                    $formId  = absint(wp_unslash((string) $formRaw));
                     if ($formId <= 0) {
                         return new \WP_REST_Response(['error' => 'invalid_form_id'], 400);
                     }
 
-                    $nonceRaw = filter_input(INPUT_POST, '_wpnonce', FILTER_DEFAULT);
-                    $nonceRaw = $nonceRaw ?? $request->get_param('_wpnonce');
-                    $nonce    = wp_unslash((string) $nonceRaw);
+                    $nonceRaw = filter_input(INPUT_POST, 'wpnonce', FILTER_DEFAULT);
+                    $nonceRaw = $nonceRaw ?? filter_input(INPUT_POST, '_wpnonce', FILTER_DEFAULT);
+                    $nonceRaw = $nonceRaw ?? $request->get_param('wpnonce') ?? $request->get_param('_wpnonce');
+                    $nonce    = sanitize_text_field(wp_unslash((string) $nonceRaw));
                     if (!wp_verify_nonce($nonce, 'smartalloc_allocate_' . $formId)) {
                         return new \WP_REST_Response(['error' => 'forbidden'], 403);
                     }
