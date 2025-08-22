@@ -4,6 +4,14 @@ The GA Enforcer evaluates QA artifacts and release signals against configurable
 thresholds. It emits JSON/TXT/JUnit summaries under `artifacts/ga/` and only
 fails a build when enforcement is explicitly enabled.
 
+## Rehearsal flow
+
+`scripts/ga-rehearsal.sh` runs all scanners in advisory mode. Each step is
+skip‑safe; missing tools simply mark the step skipped. A short summary is
+written to `artifacts/ga/GA_REHEARSAL.txt` with a matching JUnit file
+`artifacts/ga/GA_REHEARSAL.junit.xml` containing a top‑level testcase
+`GA.Rehearsal` marked skipped. Composer exposes this via `composer qa:advisory`.
+
 ## Coverage Import
 
 `scripts/coverage-import.php` normalises coverage reports into
@@ -113,6 +121,19 @@ warnings or when read‑only warnings exceed the configured
 
 * RC: `coverage_pct_min` 60, `schema_warnings` ≤ 3
 * GA: `coverage_pct_min` 80, `schema_warnings` 0
+
+Local overrides may be provided in `configs/ga-profiles.local.yaml` using a
+simple profile map:
+
+```yaml
+rc:
+  coverage_pct_min: 55
+ga:
+  schema_warnings: 1
+```
+
+The file is optional and ignored by git. Values override the built‑in profile
+JSON thresholds.
 
 ## Quick start
 

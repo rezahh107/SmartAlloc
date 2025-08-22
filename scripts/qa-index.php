@@ -48,6 +48,15 @@ if (is_file($bundle)) {
     $rows[] = '<tr><td><a href="' . htmlspecialchars('qa-bundle.zip', ENT_QUOTES, 'UTF-8') . '">qa-bundle.zip</a></td></tr>';
 }
 
+$gaTxt = $root . '/artifacts/ga/GA_REHEARSAL.txt';
+if (is_file($gaTxt)) {
+    $rows[] = '<tr><td><a href="../ga/GA_REHEARSAL.txt">artifacts/ga/GA_REHEARSAL.txt</a></td></tr>';
+}
+$gaJUnit = $root . '/artifacts/ga/GA_REHEARSAL.junit.xml';
+if (is_file($gaJUnit)) {
+    $rows[] = '<tr><td><a href="../ga/GA_REHEARSAL.junit.xml">artifacts/ga/GA_REHEARSAL.junit.xml</a></td></tr>';
+}
+
 if (!$rows) {
     $rows[] = '<tr><td>No artifacts found</td></tr>';
 }

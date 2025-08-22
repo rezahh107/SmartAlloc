@@ -83,6 +83,8 @@ artifacts/schema/
 artifacts/dist/
 artifacts/ga/
 *.lhreport.html
+# Local GA profile overrides
+configs/ga-profiles.local.yaml
 # allow committed artifact templates
 !scripts/templates/artifacts/
 !scripts/templates/artifacts/index.template.html
