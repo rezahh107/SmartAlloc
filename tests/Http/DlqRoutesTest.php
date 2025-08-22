@@ -29,7 +29,7 @@ final class DlqRoutesTest extends TestCase
             public function prepare($sql,...$args){ if(isset($args[0])){$this->lastId=(int)$args[0];} return $sql; }
             public function get_results($sql,$mode){ return $this->dlq; }
             public function get_row($sql,$mode){ foreach($this->dlq as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
-            public function update($t,$d,$w){ foreach($this->dlq as &$r){ if($r['id']==$w['id']){ $r=array_merge($r,$d); }} }
+            public function delete($t,$w){ foreach($this->dlq as $i=>$r){ if($r['id']==$w['id']){ unset($this->dlq[$i]); }} }
         };
     }
 
@@ -48,7 +48,7 @@ final class DlqRoutesTest extends TestCase
         $this->setupWpdb();
         $GLOBALS['can']=true;
         $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
-        $resp=$controller->list(new WP_REST_Request(['limit'=>10,'offset'=>0]));
+        $resp=$controller->list(new WP_REST_Request());
         $this->assertInstanceOf(WP_REST_Response::class,$resp);
         $this->assertSame(200,$resp->get_status());
         $this->assertCount(2,$resp->get_data());

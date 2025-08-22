@@ -58,7 +58,8 @@ final class NotificationService
             $this->logger->warning('notify.fail', ['error' => $e->getMessage(), 'attempt' => $attempt]);
             if ($attempt < 5) {
                 $this->metrics->inc('notify_retry_total');
-                $delay = (int) pow(2, $attempt) + rand(0, 3);
+                $delay = min(60, (int) pow(2, $attempt - 1));
+                $delay += random_int(0, 3);
                 $this->enqueue($payload, $attempt + 1, $delay);
                 return;
             }

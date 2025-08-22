@@ -28,7 +28,7 @@ final class HealthController
                     array(
                         'methods'             => 'GET',
                         'permission_callback' => function (): bool {
-                            return current_user_can('read');
+                            return current_user_can(SMARTALLOC_CAP);
                         },
                         'callback'            => array($this, 'handle'),
                     )
@@ -44,6 +44,10 @@ final class HealthController
      */
     public function handle(WP_REST_Request $request)
     {
+        if (!current_user_can(SMARTALLOC_CAP)) {
+            return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
+        }
+
         global $wpdb;
 
         $db_ok = false;

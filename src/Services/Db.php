@@ -42,10 +42,61 @@ class Db
             event_name VARCHAR(100) NOT NULL,
             dedup_key VARCHAR(191) NOT NULL,
             payload_json LONGTEXT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'started',
+            error_text TEXT NULL,
+            duration_ms INT UNSIGNED NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            finished_at DATETIME NULL,
             UNIQUE KEY uniq_dedup (dedup_key),
-            INDEX(event_name),
-            INDEX(created_at)
+            KEY idx_event (event_name),
+            KEY idx_created (created_at)
+        ) $charset";
+
+        $sql[] = "CREATE TABLE {$prefix}salloc_event_listener_log (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            event_log_id BIGINT UNSIGNED NOT NULL,
+            listener VARCHAR(191) NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'started',
+            error_text TEXT NULL,
+            duration_ms INT UNSIGNED NULL,
+            started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            finished_at DATETIME NULL,
+            KEY idx_event (event_log_id),
+            KEY idx_listener (listener)
+        ) $charset";
+
+        $sql[] = "CREATE TABLE {$prefix}salloc_alloc_history (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            student_id BIGINT UNSIGNED NOT NULL,
+            prev_mentor_id BIGINT UNSIGNED NULL,
+            new_mentor_id BIGINT UNSIGNED NOT NULL,
+            performed_by VARCHAR(50) NOT NULL,
+            created_at_utc DATETIME NOT NULL,
+            KEY idx_student (student_id),
+            KEY idx_new_mentor (new_mentor_id)
+        ) $charset";
+
+        $sql[] = "CREATE TABLE {$prefix}salloc_mentors (
+            mentor_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+            gender VARCHAR(10) NOT NULL,
+            center VARCHAR(50) NOT NULL,
+            group_code VARCHAR(50) NULL,
+            capacity INT UNSIGNED NOT NULL DEFAULT 0,
+            assigned INT UNSIGNED NOT NULL DEFAULT 0,
+            active TINYINT(1) NOT NULL DEFAULT 1,
+            KEY idx_center_gender (center, gender),
+            KEY idx_group (group_code)
+        ) $charset";
+
+        $sql[] = "CREATE TABLE {$prefix}salloc_dlq (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            payload_json LONGTEXT NOT NULL,
+            last_error TEXT NULL,
+            attempts INT UNSIGNED NOT NULL DEFAULT 0,
+            status VARCHAR(20) NOT NULL DEFAULT 'ready',
+            created_at_utc DATETIME NOT NULL,
+            KEY idx_status (status),
+            KEY idx_created (created_at_utc)
         ) $charset";
 
         $sql[] = "CREATE TABLE {$prefix}salloc_export_log (

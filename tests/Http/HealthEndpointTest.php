@@ -41,6 +41,7 @@ final class HealthEndpointTest extends BaseTestCase
             public function prepare($q) { return $q; }
             public function get_var($q) { return 1; }
         };
+        Functions\expect('current_user_can')->once()->with(SMARTALLOC_CAP)->andReturn(true);
     }
 
     protected function tearDown(): void

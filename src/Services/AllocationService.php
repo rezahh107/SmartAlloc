@@ -7,17 +7,18 @@ namespace SmartAlloc\Services;
 use WP_Error;
 use SmartAlloc\Domain\Allocation\AllocationResult;
 use SmartAlloc\Event\EventBus;
+use SmartAlloc\Contracts\ScoringAllocatorInterface;
 
 /**
  * Core allocation engine implementing guarded commits and scoring.
  */
-final class AllocationService
+class AllocationService
 {
     public function __construct(
         private Logging $logger,
         private EventBus $eventBus,
         private Metrics $metrics,
-        private ScoringAllocator $scorer,
+        private ScoringAllocatorInterface $scorer,
     ) {
     }
 
@@ -34,26 +35,12 @@ final class AllocationService
             return new WP_Error('no_candidate', 'No mentors available', ['status' => 404]);
         }
 
-        $ranked = $this->scorer->rank($candidates);
+        $ranked = $this->scorer->rank($candidates, $student);
         foreach ($ranked as $idx => $mentor) {
-            if ($this->reserve($mentor['mentor_id'])) {
-                $this->persistHistory($mentor['mentor_id'], (int) $student['id']);
-
-                $payload = [
-                    'student_id' => (int) $student['id'],
-                    'mentor_id'  => (int) $mentor['mentor_id'],
-                    'ts_utc'     => gmdate('Y-m-d H:i:s'),
-                    'dedupe_key' => 'alloc:' . (int) $student['id'] . ':v1',
-                ];
-                if (!empty($_SERVER['HTTP_X_TRACE_ID'])) {
-                    $payload['trace_id'] = sanitize_text_field((string) $_SERVER['HTTP_X_TRACE_ID']);
-                }
-                $this->eventBus->dispatch('MentorAssigned', $payload, 'v1');
-                $this->eventBus->dispatch('AllocationCommitted', $payload, 'v1');
-
-                $this->metrics->inc('allocations_committed_total');
+            $commit = $this->commit((int) $mentor['mentor_id'], (int) $student['id']);
+            if ($commit['committed']) {
                 return new AllocationResult([
-                    'mentor_id' => (int) $mentor['mentor_id'],
+                    'mentor_id' => $commit['mentor_id'],
                     'score'     => (float) $mentor['score'],
                     'attempt'   => $idx + 1,
                 ]);
@@ -71,64 +58,70 @@ final class AllocationService
     {
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_mentors';
-        $sql   = "SELECT * FROM {$table} WHERE active = 1 AND assigned < capacity";
+
+        $where = ['active = 1', 'assigned < capacity'];
+        $params = [];
+        if (!empty($student['gender'])) {
+            $where[] = 'gender = %s';
+            $params[] = $student['gender'];
+        }
+        if (!empty($student['center'])) {
+            $where[] = 'center = %s';
+            $params[] = $student['center'];
+        }
+        if (!empty($student['group_code'])) {
+            $where[] = 'group_code = %s';
+            $params[] = $student['group_code'];
+        }
+        $sql = "SELECT mentor_id, gender, center, group_code, capacity, assigned FROM {$table} WHERE " . implode(' AND ', $where) . " ORDER BY mentor_id ASC LIMIT 50";
+        $query = $wpdb->prepare($sql, $params);
         // @security-ok-sql
-        $rows = $wpdb->get_results($sql, ARRAY_A) ?: [];
-
-        $filtered = array_values(array_filter($rows, function (array $m) use ($student): bool {
-            if (($m['gender'] ?? '') !== ($student['gender'] ?? '')) {
-                return false;
-            }
-            if (!empty($student['group']) && ($m['group_code'] ?? '') !== $student['group']) {
-                return false;
-            }
-            if (!empty($student['grade']) && ($m['grade'] ?? '') !== $student['grade']) {
-                return false;
-            }
-            if (!empty($student['school_id']) && !empty($m['school_id']) && $m['school_id'] != $student['school_id']) {
-                return false;
-            }
-            if (!empty($student['center_id']) && ($m['center_id'] ?? null) != $student['center_id']) {
-                return false;
-            }
-            if (!empty($student['target_manager_id']) && ($m['manager_id'] ?? null) != $student['target_manager_id']) {
-                return false;
-            }
-            return true;
-        }));
-
-        return $filtered;
+        $rows = $wpdb->get_results($query, ARRAY_A);
+        return $rows ?: [];
     }
 
-    private function reserve(int $mentorId): bool
+    /**
+     * Attempt to commit allocation to a mentor.
+     *
+     * @return array{mentor_id:int,committed:bool}
+     */
+    private function commit(int $mentorId, int $studentId): array
     {
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_mentors';
-        $attempts = 0;
-        do {
-            $attempts++;
-            $sql = $wpdb->prepare(
-                "UPDATE {$table} SET assigned = assigned + 1 WHERE mentor_id = %d AND active = 1 AND capacity > assigned",
-                $mentorId
-            );
-            // @security-ok-sql
-            $wpdb->query($sql);
-            if ($wpdb->rows_affected === 1) {
-                return true;
-            }
-            usleep(random_int(5, 20) * 1000);
-        } while ($attempts < 3);
-        return false;
-    }
+        $sql = $wpdb->prepare(
+            "UPDATE {$table} SET assigned = assigned + 1 WHERE mentor_id = %d AND assigned < capacity",
+            $mentorId
+        );
+        // @security-ok-sql
+        $wpdb->query($sql);
+        if ($wpdb->rows_affected !== 1) {
+            return ['mentor_id' => 0, 'committed' => false];
+        }
 
-    private function persistHistory(int $mentorId, int $studentId): void
-    {
-        global $wpdb;
-        $table = $wpdb->prefix . 'salloc_allocation_history';
-        $wpdb->insert($table, [
-            'mentor_id'      => $mentorId,
+        $history = $wpdb->prefix . 'salloc_alloc_history';
+        $wpdb->insert($history, [
             'student_id'     => $studentId,
+            'prev_mentor_id' => null,
+            'new_mentor_id'  => $mentorId,
+            'performed_by'   => 'system',
             'created_at_utc' => gmdate('Y-m-d H:i:s'),
         ]);
+
+        $payload = [
+            'student_id' => $studentId,
+            'mentor_id'  => $mentorId,
+            'ts_utc'     => gmdate('Y-m-d H:i:s'),
+            'dedupe_key' => 'alloc:' . $studentId . ':v1',
+        ];
+        if (!empty($_SERVER['HTTP_X_TRACE_ID'])) {
+            $payload['trace_id'] = sanitize_text_field((string) $_SERVER['HTTP_X_TRACE_ID']);
+        }
+        $this->eventBus->dispatch('MentorAssigned', $payload, 'v1');
+        $this->eventBus->dispatch('AllocationCommitted', $payload, 'v1');
+
+        $this->metrics->inc('allocations_committed_total');
+
+        return ['mentor_id' => $mentorId, 'committed' => true];
     }
 }
