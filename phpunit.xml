@@ -32,6 +32,12 @@
         <testsuite name="PropertyBased">
             <directory>tests/Property</directory>
         </testsuite>
+        <testsuite name="Performance">
+            <directory>tests/Performance</directory>
+        </testsuite>
+        <testsuite name="Regression">
+            <directory>tests/Regression</directory>
+        </testsuite>
     </testsuites>
     <coverage>
         <include>
