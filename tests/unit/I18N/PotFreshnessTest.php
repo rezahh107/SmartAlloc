@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class PotFreshnessTest extends TestCase {
+final class PotFreshnessTest extends BaseTestCase {
     public function test_pot_refresh_or_skip(): void {
         if (getenv('RUN_I18N_POT') !== '1') {
             $this->markTestSkipped('pot refresh opt-in');

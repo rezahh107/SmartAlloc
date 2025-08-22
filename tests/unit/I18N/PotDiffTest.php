@@ -1,7 +1,7 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-class PotDiffTest extends TestCase
+class PotDiffTest extends BaseTestCase
 {
     private string $dir;
 

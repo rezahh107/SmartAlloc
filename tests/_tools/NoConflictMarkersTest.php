@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Tools;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class NoConflictMarkersTest extends TestCase
+final class NoConflictMarkersTest extends BaseTestCase
 {
     public function test_no_conflict_markers_left(): void
     {

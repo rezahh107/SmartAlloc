@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class TagReleaseTest extends TestCase
+final class TagReleaseTest extends BaseTestCase
 {
     private string $root;
 

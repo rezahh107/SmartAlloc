@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class QAOrchestratorTest extends TestCase
+final class QAOrchestratorTest extends BaseTestCase
 {
     public function test_index_generated_with_rtl(): void
     {

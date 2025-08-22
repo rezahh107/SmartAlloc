@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Release;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class RehearsalScriptTest extends TestCase
+final class RehearsalScriptTest extends BaseTestCase
 {
     private string $root;
 

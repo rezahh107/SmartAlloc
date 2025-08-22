@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class FinalizerSmokeTest extends TestCase {
+final class FinalizerSmokeTest extends BaseTestCase {
     public function test_release_finalizer_artifacts_exist(): void {
         if (getenv('RUN_RELEASE_FINAL') !== '1') {
             $this->markTestSkipped('release finalizer opt-in');

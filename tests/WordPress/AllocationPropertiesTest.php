@@ -9,10 +9,10 @@ use SmartAlloc\Services\Metrics;
 use SmartAlloc\Services\ScoringAllocator;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\EventStoreInterface;
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
 if (!class_exists('WP_UnitTestCase')) {
-    abstract class WP_UnitTestCase extends TestCase {}
+    abstract class WP_UnitTestCase extends BaseTestCase {}
 }
 
 final class AllocationPropertiesTest extends WP_UnitTestCase

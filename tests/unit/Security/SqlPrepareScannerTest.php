@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use org\bovigo\vfs\vfsStream;
 
 require_once dirname(__DIR__, 3) . '/scripts/scan-sql-prepare.php';
 
-final class SqlPrepareScannerTest extends TestCase
+final class SqlPrepareScannerTest extends BaseTestCase
 {
     /** Mirror vfs directory to real filesystem for CLI execution. */
     private function mirror(string $src, string $dst): void

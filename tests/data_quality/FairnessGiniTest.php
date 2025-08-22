@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\StatsService;
 
-final class FairnessGiniTest extends TestCase
+final class FairnessGiniTest extends BaseTestCase
 {
     public function testBalancedLoadsHaveLowGini(): void
     {

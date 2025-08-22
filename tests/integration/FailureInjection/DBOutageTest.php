@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class FailureDBOutageTest extends TestCase {
+final class FailureDBOutageTest extends BaseTestCase {
     public function test_db_error_on_allocate_is_graceful_or_skip(): void {
         if (getenv('RUN_FAILURE_TESTS') !== '1') {
             $this->markTestSkipped('failure tests opt-in');

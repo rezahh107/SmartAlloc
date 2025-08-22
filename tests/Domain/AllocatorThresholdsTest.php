@@ -6,10 +6,10 @@ namespace SmartAlloc\Tests\Domain;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Domain\Allocation\StudentAllocator;
 
-final class AllocatorThresholdsTest extends TestCase
+final class AllocatorThresholdsTest extends BaseTestCase
 {
     protected function setUp(): void
     {

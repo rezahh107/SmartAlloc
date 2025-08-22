@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class DistBuildTest extends TestCase
+final class DistBuildTest extends BaseTestCase
 {
     public function test_build_excludes_and_normalises(): void
     {

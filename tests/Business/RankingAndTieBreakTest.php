@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\ScoringAllocator;
 use SmartAlloc\Tests\Fixtures\{MentorFactory, StudentFactory};
 
-final class RankingAndTieBreakTest extends TestCase
+final class RankingAndTieBreakTest extends BaseTestCase
 {
     public function test_tie_breaking_by_allocations_new_then_id(): void
     {

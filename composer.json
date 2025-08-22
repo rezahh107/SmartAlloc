@@ -30,7 +30,8 @@
         "wp-phpunit/wp-phpunit": "^5.7",
         "mikey179/vfsstream": "^1.6",
         "infection/infection": "^0.27",
-        "giorgiosironi/eris": "^1.0"
+        "giorgiosironi/eris": "^1.0",
+        "nikic/php-parser": "^4.18"
     },
     "suggest": {
         "patchstack/security-scanner": "Run composer update when you have access to Patchstack repo to enable local scanning"

@@ -10,8 +10,9 @@ use SmartAlloc\Infra\GF\SabtEntryMapper;
 use SmartAlloc\Infra\GF\SabtSubmissionHandler;
 use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Services\AllocationService;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class SabtSubmissionHandlerTest extends \PHPUnit\Framework\TestCase
+final class SabtSubmissionHandlerTest extends BaseTestCase
 {
     private array $options;
 

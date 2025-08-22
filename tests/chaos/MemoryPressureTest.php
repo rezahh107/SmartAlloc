@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Testing\TestFilters;
 use SmartAlloc\Services\AllocationService;
 use SmartAlloc\Services\Logging;
@@ -12,7 +12,7 @@ use SmartAlloc\Contracts\EventStoreInterface;
 use SmartAlloc\Contracts\ScoringAllocatorInterface;
 
 
-final class MemoryPressureTest extends TestCase
+final class MemoryPressureTest extends BaseTestCase
 {
     protected function tearDown(): void
     {

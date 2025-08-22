@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class GAEnforcerCoverageTest extends TestCase
+final class GAEnforcerCoverageTest extends BaseTestCase
 {
     public function test_artifacts_schema_junit_behavior(): void
     {

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class MultiStagePriorityTest extends TestCase {
+final class MultiStagePriorityTest extends BaseTestCase {
     public function test_multistage_gender_then_fallback_or_skip(): void {
         if (getenv('RUN_ALLOC_SCENARIOS') !== '1') {
             $this->markTestSkipped('alloc scenarios opt-in');

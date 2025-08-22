@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class GAEnforcerSchemaTest extends TestCase
+final class GAEnforcerSchemaTest extends BaseTestCase
 {
     protected function setUp(): void
     {

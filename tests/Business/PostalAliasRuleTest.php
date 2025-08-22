@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Infra\GF\SabtEntryMapper;
 use SmartAlloc\Services\ExportService;
 use org\bovigo\vfs\vfsStream;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
-final class PostalAliasRuleTest extends TestCase
+final class PostalAliasRuleTest extends BaseTestCase
 {
     protected function setUp(): void
     {

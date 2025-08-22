@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use org\bovigo\vfs\vfsStream;
 
 require_once dirname(__DIR__, 3) . '/scripts/license-audit.php';
 
-final class LicenseAuditTest extends TestCase
+final class LicenseAuditTest extends BaseTestCase
 {
     private function mirror(string $src, string $dst): void
     {

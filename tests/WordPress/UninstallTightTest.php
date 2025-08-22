@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class UninstallTightTest extends TestCase
+final class UninstallTightTest extends BaseTestCase
 {
     protected function setUp(): void
     {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class GFDateExportTest extends TestCase
+final class GFDateExportTest extends BaseTestCase
 {
     public function test_gf_date_export_or_skip(): void
     {

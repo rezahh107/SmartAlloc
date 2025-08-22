@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class DomainLoadTest extends \PHPUnit\Framework\TestCase
+final class DomainLoadTest extends BaseTestCase
 {
     protected function setUp(): void
     {

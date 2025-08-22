@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class VersionReadmeCoherenceTest extends TestCase
+final class VersionReadmeCoherenceTest extends BaseTestCase
 {
     public function test_mismatch_emits_warning(): void
     {

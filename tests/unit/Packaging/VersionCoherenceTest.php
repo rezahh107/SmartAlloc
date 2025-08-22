@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class VersionCoherenceTest extends TestCase {
+final class VersionCoherenceTest extends BaseTestCase {
     public function test_version_coherence(): void {
         if (getenv('RUN_RELEASE_GATES') !== '1') {
             $this->markTestSkipped('release gates opt-in');

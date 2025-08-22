@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
 require_once dirname(__DIR__, 3) . '/scripts/scan-sql-prepare.php';
 
-final class SQLPrepareGuardTest extends TestCase
+final class SQLPrepareGuardTest extends BaseTestCase
 {
     public function test_sql_queries_are_prepared(): void
     {

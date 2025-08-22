@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use SmartAlloc\Infra\Export\ExcelExporter;
@@ -9,7 +9,7 @@ use SmartAlloc\Infra\Export\CountersRepository;
 
 require_once dirname(__DIR__) . '/Support/DataProviders.php';
 
-final class SpreadsheetInjectionTest extends TestCase
+final class SpreadsheetInjectionTest extends BaseTestCase
 {
     private function createExporter(): ExcelExporter
     {

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class DistAuditTest extends TestCase {
+final class DistAuditTest extends BaseTestCase {
     public function test_dist_package_audit(): void {
         if (getenv('RUN_DIST_AUDIT') !== '1') {
             $this->markTestSkipped('dist audit opt-in');

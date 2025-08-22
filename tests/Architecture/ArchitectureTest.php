@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class ArchitectureTest extends TestCase
+final class ArchitectureTest extends BaseTestCase
 {
     private function scanFiles(string $path, callable $filter): array
     {

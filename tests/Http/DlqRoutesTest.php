@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Http\Rest\DlqController;
 use SmartAlloc\Services\DlqService;
 
@@ -16,7 +16,7 @@ if (!function_exists('do_action')) { function do_action($h,$a){ if(isset($GLOBAL
 }
 if (!function_exists('current_user_can')) { function current_user_can($cap){ return $GLOBALS['can']??false; } }
 
-final class DlqRoutesTest extends TestCase
+final class DlqRoutesTest extends BaseTestCase
 {
     private function setupWpdb(): void
     {

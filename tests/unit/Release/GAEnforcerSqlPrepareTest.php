@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Release;
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\{AllocationService,Logging,Metrics,ScoringAllocator,DlqService,EventStoreWp};
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\EventStoreInterface;
 
-final class GAEnforcerSqlPrepareTest extends TestCase
+final class GAEnforcerSqlPrepareTest extends BaseTestCase
 {
     private string $dir;
 

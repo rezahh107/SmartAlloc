@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\AllocationService;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\ScoringAllocator;
@@ -10,7 +10,7 @@ use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\EventStoreInterface;
 use SmartAlloc\Domain\Allocation\AllocationResult;
 
-final class AllocationServiceTest extends TestCase
+final class AllocationServiceTest extends BaseTestCase
 {
     /**
      * @return array{0:AllocationService,1:object}

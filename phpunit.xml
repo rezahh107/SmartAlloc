@@ -27,6 +27,8 @@
     <testsuite name="Regression">
       <directory>tests/Regression</directory>
     </testsuite>
-    <!-- existing suites (SecurityAdvanced, Observability, BusinessLogic, PropertyBased, etc.) -->
+    <testsuite name="Meta">
+      <directory>tests/Meta</directory>
+    </testsuite>
   </testsuites>
 </phpunit>

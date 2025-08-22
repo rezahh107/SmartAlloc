@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 
-final class CoverageImportTest extends TestCase
+final class CoverageImportTest extends BaseTestCase
 {
     public function test_import_normalizes_clover_fixture(): void
     {
