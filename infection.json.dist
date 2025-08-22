@@ -1,0 +1,12 @@
+{
+  "source": { "directories": ["src"] },
+  "logs": {
+    "text": "build/infection.log",
+    "html": "build/infection.html"
+  },
+  "mutators": { "@default": true },
+  "testFramework": "phpunit",
+  "bootstrap": "./tests/bootstrap.php",
+  "minMsi": 80,
+  "minCoveredMsi": 85
+}
