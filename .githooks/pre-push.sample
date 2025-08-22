@@ -1,0 +1,14 @@
+#!/bin/sh
+php scripts/scan-rest-permissions.php --q
+php scripts/qa-report.php --q
+if [ -f artifacts/security/rest-permissions.json ]; then
+    WARN=$(php -r 'echo json_decode(file_get_contents("artifacts/security/rest-permissions.json"), true)["summary"]["warnings"] ?? 0;')
+    if [ "$WARN" -gt 0 ]; then
+        echo "REST permission warnings: $WARN"
+        if [ "${RUN_ENFORCE:-0}" = "1" ]; then
+            echo "Push blocked. Set RUN_ENFORCE=0 to bypass."
+            exit 1
+        fi
+    fi
+fi
+exit 0

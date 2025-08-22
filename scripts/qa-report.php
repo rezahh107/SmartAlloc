@@ -1,113 +1,112 @@
+#!/usr/bin/env php
 <?php
 declare(strict_types=1);
 
-if (php_sapi_name() !== 'cli') {
-    echo "CLI only\n";
-    exit(0);
-}
+/**
+ * Aggregate QA signals into deterministic JSON/HTML summaries.
+ * Advisory by default; always exits 0.
+ */
 
-$root = dirname(__DIR__);
-$coverageFile = $root . '/coverage-unit/index.xml';
-$coverage = null;
-$notes = [];
+function qa_report(string $root, string $outDir): array
+{
+    $notes = [];
 
-if (is_file($coverageFile)) {
-    $xml = @simplexml_load_file($coverageFile);
-    if ($xml !== false && isset($xml['line-rate'])) {
-        $coverage = round(((float) $xml['line-rate']) * 100, 2);
+    $coverage = null;
+    $covFile = $root . '/artifacts/coverage/coverage.json';
+    if (is_file($covFile)) {
+        $data = json_decode((string)file_get_contents($covFile), true);
+        $coverage = (float)($data['totals']['lines']['pct'] ?? 0);
     } else {
-        $notes[] = 'coverage parse failed';
+        $notes[] = 'coverage missing';
     }
-} else {
-    $notes[] = 'coverage missing';
-}
 
-$env = [
-    'RUN_SECURITY_TESTS'    => getenv('RUN_SECURITY_TESTS') === '1',
-    'RUN_PERFORMANCE_TESTS' => getenv('RUN_PERFORMANCE_TESTS') === '1',
-    'E2E'                   => getenv('E2E') === '1',
-];
-
-$testFiles = 0;
-$rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/tests'));
-foreach ($rii as $file) {
-    if ($file->isFile() && substr($file->getFilename(), -8) === 'Test.php') {
-        $testFiles++;
-    }
-}
-
-$restViolations = null;
-$scanner = $root . '/scripts/scan-rest-permissions.php';
-if (is_file($scanner)) {
-    $json = @shell_exec('php ' . escapeshellarg($scanner));
-    if ($json !== null) {
-        $decoded = json_decode($json, true);
-        if (is_array($decoded)) {
-            $restViolations = count($decoded);
-        } else {
-            $notes[] = 'rest permission scan parse failed';
+    $schemaWarnings = null;
+    $schemaFile = $root . '/artifacts/schema/schema-validate.json';
+    if (is_file($schemaFile)) {
+        $data = json_decode((string)file_get_contents($schemaFile), true);
+        if (is_array($data)) {
+            $schemaWarnings = (int)($data['count'] ?? 0);
         }
     } else {
-        $notes[] = 'rest permission scan failed';
+        $notes[] = 'schema report missing';
     }
-} else {
-    $notes[] = 'rest permission scanner missing';
-}
 
-$sqlCounts = null;
-$sqlReport = $root . '/artifacts/security/sql-prepare.json';
-if (is_file($sqlReport)) {
-    $data = json_decode((string)file_get_contents($sqlReport), true);
-    if (is_array($data) && isset($data['counts'])) {
-        $sqlCounts = [
-            'violations' => (int)($data['counts']['violations'] ?? 0),
-            'allowlisted' => (int)($data['counts']['allowlisted'] ?? 0),
-        ];
-        ksort($sqlCounts);
+    $rest = ['routes' => null, 'mutating_warnings' => null, 'readonly_warnings' => null];
+    $restFile = $root . '/artifacts/security/rest-permissions.json';
+    if (is_file($restFile)) {
+        $data = json_decode((string)file_get_contents($restFile), true);
+        if (is_array($data) && isset($data['summary'])) {
+            $rest['routes'] = (int)($data['summary']['routes'] ?? 0);
+            $rest['mutating_warnings'] = (int)($data['summary']['mutating_warnings'] ?? 0);
+            $rest['readonly_warnings'] = (int)($data['summary']['readonly_warnings'] ?? 0);
+        }
     } else {
-        $notes[] = 'sql prepare report parse failed';
+        $notes[] = 'rest permissions missing';
     }
-} else {
-    $notes[] = 'sql prepare report missing';
+
+    $sql = ['violations' => null, 'allowlisted' => null];
+    $sqlFile = $root . '/artifacts/security/sql-prepare.json';
+    if (is_file($sqlFile)) {
+        $data = json_decode((string)file_get_contents($sqlFile), true);
+        if (is_array($data) && isset($data['counts'])) {
+            $sql['violations'] = (int)($data['counts']['violations'] ?? 0);
+            $sql['allowlisted'] = (int)($data['counts']['allowlisted'] ?? 0);
+        }
+    } else {
+        $notes[] = 'sql prepare missing';
+    }
+
+    ksort($rest); ksort($sql);
+
+    $summary = [
+        'coverage_pct' => $coverage,
+        'schema_warnings' => $schemaWarnings,
+        'rest_permissions' => $rest,
+        'sql_prepare' => $sql,
+    ];
+    ksort($summary);
+
+    sort($notes);
+
+    $report = [
+        'generated_at_utc' => gmdate('Y-m-d\TH:i:s\Z'),
+        'summary' => $summary,
+        'notes' => $notes,
+    ];
+    ksort($report);
+
+    if (!is_dir($outDir)) {
+        @mkdir($outDir, 0777, true);
+    }
+    file_put_contents($outDir . '/qa-report.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+
+    $html = '<!DOCTYPE html><html dir="rtl"><meta charset="utf-8"><title>QA Report</title><body>';
+    $html .= '<h1>QA Report</h1><ul>';
+    $html .= '<li>Coverage: ' . ($coverage === null ? 'N/A' : $coverage) . '</li>';
+    $html .= '<li>Schema warnings: ' . ($schemaWarnings === null ? 'N/A' : $schemaWarnings) . '</li>';
+    $html .= '<li>REST mutating warnings: ' . ($rest['mutating_warnings'] ?? 'N/A') . '</li>';
+    $html .= '<li>REST read-only warnings: ' . ($rest['readonly_warnings'] ?? 'N/A') . '</li>';
+    $html .= '<li>SQL violations: ' . ($sql['violations'] ?? 'N/A') . ', allowlisted: ' . ($sql['allowlisted'] ?? 'N/A') . '</li>';
+    if ($notes) {
+        $html .= '<li>Notes<ul>';
+        foreach ($notes as $n) {
+            $html .= '<li>' . htmlspecialchars($n, ENT_QUOTES, 'UTF-8') . '</li>';
+        }
+        $html .= '</ul></li>';
+    }
+    $html .= '</ul></body></html>';
+    file_put_contents($outDir . '/qa-report.html', $html);
+
+    return $report;
 }
 
-$data = [
-    'coverage_percent' => $coverage,
-    'env' => $env,
-    'test_files' => $testFiles,
-    'rest_permission_violations' => $restViolations,
-    'sql_prepare' => $sqlCounts,
-    'notes' => $notes,
-];
-ksort($data);
-
-$jsonOut = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
-file_put_contents($root . '/qa-report.json', $jsonOut);
-@mkdir($root . '/artifacts/qa', 0777, true);
-file_put_contents($root . '/artifacts/qa/qa-report.json', $jsonOut);
-file_put_contents($root . '/artifacts/qa/report.json', $jsonOut);
-
-$html  = '<!DOCTYPE html><html dir="rtl"><meta charset="utf-8"><title>QA Report</title><body>';
-$html .= '<h1>QA Report</h1><ul>';
-$html .= '<li>Coverage: ' . ($coverage !== null ? $coverage . '%' : 'N/A') . '</li>';
-$html .= '<li>Test files: ' . $testFiles . '</li>';
-$html .= '<li>REST permission violations: ' . ($restViolations !== null ? $restViolations : 'N/A') . '</li>';
-$html .= '<li>SQL prepare: ';
-if ($sqlCounts !== null) {
-    $html .= 'violations=' . $sqlCounts['violations'] . ', allowlisted=' . $sqlCounts['allowlisted'];
-} else {
-    $html .= 'N/A';
+if (PHP_SAPI === 'cli' && realpath($argv[0]) === __FILE__) {
+    $root = dirname(__DIR__);
+    $opts = getopt('', ['output::','q']);
+    $outDir = $opts['output'] ?? ($root . '/artifacts/qa');
+    $rep = qa_report($root, $outDir);
+    if (!isset($opts['q'])) {
+        echo json_encode($rep, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    }
+    exit(0);
 }
-$html .= '</li>';
-$html .= '<li>Env toggles:<ul>';
-foreach ($env as $k => $v) {
-    $html .= '<li>' . htmlspecialchars($k, ENT_QUOTES, 'UTF-8') . ': ' . ($v ? 'on' : 'off') . '</li>';
-}
-$html .= '</ul></li>';
-if ($notes) {
-    $html .= '<li>Notes: ' . htmlspecialchars(implode(', ', $notes), ENT_QUOTES, 'UTF-8') . '</li>';
-}
-$html .= '</ul></body></html>';
-file_put_contents($root . '/qa-report.html', $html);
-
-exit(0);

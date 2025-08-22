@@ -146,10 +146,11 @@ readJsonFile($root . '/artifacts/qa/qa-report.json', 'qa-report.json', $warnings
 readJsonFile($root . '/artifacts/qa/go-no-go.json', 'go-no-go.json', $warnings);
 
 // Scanner outputs
-$signals['rest_permission_violations'] = jsonCount([
-    $root . '/artifacts/qa/rest-violations.json',
-    $root . '/rest-violations.json'
-], 'rest violations', $warnings);
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/scan-rest-permissions.php') . ' --q');
+$restData = readJsonFile($root . '/artifacts/security/rest-permissions.json', 'rest-permissions.json', $warnings);
+$signals['rest_mutating_warnings'] = (int)($restData['summary']['mutating_warnings'] ?? 0);
+$signals['rest_readonly_warnings'] = (int)($restData['summary']['readonly_warnings'] ?? 0);
+$signals['rest_permission_violations'] = (int)($restData['summary']['warnings'] ?? 0);
 
 @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/scan-sql-prepare.php'));
 $sqlData = readJsonFile($root . '/artifacts/security/sql-prepare.json', 'sql-prepare.json', $warnings);
@@ -301,9 +302,11 @@ if (is_file($schemaPath)) {
 }
 $signals['schema_warnings'] = $schemaWarn;
 
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/qa-report.php') . ' --q');
+
 // Threshold checks
 $failures = [];
-if ($signals['rest_permission_violations'] > (int)$config['rest_permission_violations']) {
+if ($signals['rest_mutating_warnings'] > 0 || $signals['rest_readonly_warnings'] > (int)$config['rest_permission_violations']) {
     $failures[] = 'rest_permission_violations';
 }
 if ($signals['sql_prepare_violations'] > (int)$config['sql_prepare_violations']) {
@@ -369,7 +372,7 @@ file_put_contents($gaDir . '/GA_ENFORCER.json', json_encode($out, JSON_PRETTY_PR
 $txt = [];
 $txt[] = 'GA Enforcer Report';
 $txt[] = 'Verdict: ' . $verdict;
-$txt[] = 'REST violations: ' . $signals['rest_permission_violations'];
+$txt[] = 'REST warnings: mutating=' . $signals['rest_mutating_warnings'] . ' readonly=' . $signals['rest_readonly_warnings'];
 $txt[] = 'SQL violations: ' . $signals['sql_prepare_violations'];
 $txt[] = 'Secrets findings: ' . $signals['secrets_findings'];
 $txt[] = 'License denied: ' . $signals['license_denied'];
@@ -386,7 +389,6 @@ file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
 
 if ($wantJUnit) {
     $map = [
-        'REST'          => 'rest_permission_violations',
         'Secrets'       => 'secrets_findings',
         'License'       => 'license_denied',
         'Version'       => 'version_mismatch',
@@ -400,6 +402,17 @@ if ($wantJUnit) {
     ];
 
     $suite = new SimpleXMLElement('<testsuite name="GA Enforcer"/>');
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'REST.Permissions');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'mutating=' . $signals['rest_mutating_warnings'] . ' readonly=' . $signals['rest_readonly_warnings'];
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif ($signals['rest_mutating_warnings'] > 0 || $signals['rest_readonly_warnings'] > (int)$config['rest_permission_violations']) {
+        $msg = 'mutating=' . $signals['rest_mutating_warnings'] . ' readonly=' . $signals['rest_readonly_warnings'];
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
     foreach ($map as $name => $key) {
         $case = $suite->addChild('testcase');
         $case->addAttribute('name', $name);
