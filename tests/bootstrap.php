@@ -242,10 +242,11 @@ if (!function_exists('absint')) {
     }
 }
 
+$GLOBALS['sa_rest_routes'] = [];
 if (!function_exists('register_rest_route')) {
     function register_rest_route($namespace, $route, $args = []) {
-        if (defined('PHPUNIT_RUNNING') && PHPUNIT_RUNNING && isset($args['callback'])) {
-            $GLOBALS['__rest_cb'] = $args['callback'];
+        if (defined('PHPUNIT_RUNNING') && PHPUNIT_RUNNING) {
+            $GLOBALS['sa_rest_routes'][$namespace . ' ' . $route] = $args;
         }
         return true;
     }

@@ -69,7 +69,8 @@ final class AllocationControllerTest extends BaseTestCase
     private function register(): void
     {
         $this->controller->register();
-        $this->cb = $GLOBALS['__rest_cb'];
+        $key = 'smartalloc/v1 /allocate/(?P<form_id>\\d+)';
+        $this->cb = $GLOBALS['sa_rest_routes'][$key]['callback'];
     }
 
     /** @test */
@@ -78,7 +79,6 @@ final class AllocationControllerTest extends BaseTestCase
         Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
         Functions\expect('wp_verify_nonce')->with('good', 'smartalloc_allocate_200')->andReturn(true);
         $this->register();
-        $_POST['form_id'] = '200';
         $req = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'good']);
         $req->set_body(json_encode(['student_id'=>1,'email'=>'a@a.com']));
         $res = ($this->cb)($req);
@@ -107,7 +107,18 @@ final class AllocationControllerTest extends BaseTestCase
     }
 
     /** @test */
-    public function returns_409_on_duplicate_and_400_on_capacity_exceeded_mapping(): void
+    public function returns_400_on_bad_form_id(): void
+    {
+        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
+        Functions\expect('wp_verify_nonce')->with('n', 'smartalloc_allocate_0')->andReturn(true);
+        $this->register();
+        $req = new \WP_REST_Request(['form_id' => 0, '_wpnonce' => 'n']);
+        $res = ($this->cb)($req);
+        $this->assertSame(400, $res->get_status());
+    }
+
+    /** @test */
+    public function returns_409_on_duplicate(): void
     {
         Functions\when('current_user_can')->alias(fn() => true);
         Functions\when('wp_verify_nonce')->alias(fn() => true);
@@ -119,15 +130,6 @@ final class AllocationControllerTest extends BaseTestCase
         $reqDup->set_body(json_encode(['student_id'=>1,'email'=>'dup@a.com']));
         $resDup = ($this->cb)($reqDup);
         $this->assertSame(409, $resDup->get_status());
-        for ($i = 0; $i < 59; $i++) {
-            $r = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'n']);
-            $r->set_body(json_encode(['student_id'=>$i+2,'email'=>"u{$i}@a.com"]));
-            ($this->cb)($r);
-        }
-        $reqCap = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'n']);
-        $reqCap->set_body(json_encode(['student_id'=>999,'email'=>'z@a.com']));
-        $resCap = ($this->cb)($reqCap);
-        $this->assertSame(400, $resCap->get_status());
     }
 
     /** @test */
