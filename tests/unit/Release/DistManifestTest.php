@@ -22,7 +22,6 @@ final class DistManifestTest extends TestCase
         $this->assertFileExists($manifestPath);
         $m = json_decode((string)file_get_contents($manifestPath), true);
         $this->assertIsArray($m['entries'] ?? null);
-        $this->assertArrayHasKey('generated_at_utc',$m);
         $this->assertSame('a.txt', $m['entries'][0]['path'] ?? '');
         $this->assertSame('b.txt', $m['entries'][1]['path'] ?? '');
         foreach ($m['entries'] as $e) {

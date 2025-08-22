@@ -56,7 +56,8 @@ final class DoctorCommand
 
         $dlqTable = $wpdb->prefix . 'salloc_dlq';
         $backlog = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable}") ?: 0); // @security-ok-sql
-        $queueOk = $backlog < 100;
+        $threshold = (int) apply_filters('smartalloc_dlq_backlog_threshold', 100);
+        $queueOk = $backlog < $threshold;
 
         return [
             ['label' => __('DB tables', 'smartalloc'), 'status' => (bool) $exists],

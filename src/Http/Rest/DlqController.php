@@ -52,12 +52,12 @@ final class DlqController
                 200
             );
             $out[] = [
-                'id'         => (int) $r['id'],
-                'event_name' => (string) $r['event_name'],
-                'attempts'   => (int) $r['attempts'],
-                'error_text' => $r['error_text'],
-                'created_at' => $r['created_at'],
-                'payload'    => $preview,
+                'id'              => (int) $r['id'],
+                'event_name'      => (string) $r['event_name'],
+                'attempts'        => (int) $r['attempts'],
+                'error_text'      => $r['error_text'],
+                'created_at'      => $r['created_at'],
+                'payload_preview' => $preview,
             ];
         }
         return new WP_REST_Response($out, 200);

@@ -11,6 +11,7 @@ final class GAEnforcerRestTest extends TestCase
 
     protected function setUp(): void
     {
+        putenv('RUN_ENFORCE');
         $this->dir = sys_get_temp_dir() . '/ga-rest-' . uniqid();
         mkdir($this->dir, 0777, true);
         mkdir($this->dir . '/scripts', 0777, true);
