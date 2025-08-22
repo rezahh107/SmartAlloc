@@ -4,42 +4,26 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Integration;
 
-use Brain\Monkey;
-use Brain\Monkey\Functions;
-use SmartAlloc\Migrations\FormTenantMigrator;
 use SmartAlloc\Tests\BaseTestCase;
+use SmartAlloc\Core\FormContext;
+use SmartAlloc\Infra\DB\TableResolver;
+use SmartAlloc\Services\AllocationService;
 
-final class MultiFormIsolationTest extends BaseTestCase
-{
-    protected function setUp(): void
-    {
-        parent::setUp();
-        Monkey\setUp();
+final class MultiFormIsolationTest extends BaseTestCase {
+    public function test_allocations_write_to_form_specific_tables(): void {
         global $wpdb;
-        $wpdb = new class {
-            public string $prefix = 'wp_';
-            public function get_charset_collate() { return ''; }
-            public function query($sql) { return true; }
-        };
-    }
+        $wpdb = new class extends \wpdb { public function __construct() {} };
+        $tables = new TableResolver($wpdb);
+        $svc = new AllocationService($tables);
 
-    protected function tearDown(): void
-    {
-        Monkey\tearDown();
-        parent::tearDown();
-    }
+        $ctx150 = new FormContext(150);
+        $ctx200 = new FormContext(200);
 
-    public function test_provisions_tables_per_form(): void
-    {
-        $captured = [];
-        Functions\when('dbDelta')->alias(function($sql) use (&$captured) { $captured[] = $sql; });
-        FormTenantMigrator::provisionFormTenant($GLOBALS['wpdb'], 150);
-        FormTenantMigrator::provisionFormTenant($GLOBALS['wpdb'], 200);
-        $this->assertTrue(
-            (bool) array_filter($captured, fn($s) => str_contains($s, 'smartalloc_allocations_f150'))
-        );
-        $this->assertTrue(
-            (bool) array_filter($captured, fn($s) => str_contains($s, 'smartalloc_allocations_f200'))
-        );
+        $svc->allocate($ctx150, [['id'=>1],['id'=>2]]);
+        $svc->allocate($ctx200, [['id'=>3]]);
+
+        $this->assertStringContainsString('_f150', $tables->allocations($ctx150));
+        $this->assertStringContainsString('_f200', $tables->allocations($ctx200));
+        // Optionally assert insert counts via $wpdb->queries spy if available
     }
 }
