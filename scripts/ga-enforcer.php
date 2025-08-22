@@ -178,9 +178,11 @@ function parseLocalProfiles(string $path): ?array
     return $data;
 }
 
-// qa-report and go-no-go are advisory.
+// qa-report is advisory; go-no-go optional.
 readJsonFile($root . '/artifacts/qa/qa-report.json', 'qa-report.json', $warnings);
-readJsonFile($root . '/artifacts/qa/go-no-go.json', 'go-no-go.json', $warnings);
+if (is_file($root . '/artifacts/qa/go-no-go.json')) {
+    readJsonFile($root . '/artifacts/qa/go-no-go.json', 'go-no-go.json', $warnings);
+}
 
 @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/dist-manifest.php'));
 @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/dist-audit.php'));
