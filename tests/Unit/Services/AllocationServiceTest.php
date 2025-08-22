@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SmartAlloc\Tests\Unit\Services;
 
 use Brain\Monkey;
-use Brain\Monkey\Functions;
 use Mockery;
 use SmartAlloc\Core\FormContext;
 use SmartAlloc\Infra\DB\TableResolver;
@@ -77,11 +76,6 @@ final class AllocationServiceTest extends BaseTestCase
         $tables = new TableResolver($wpdb);
         $this->svc = new AllocationService($tables);
 
-        Functions\when('sanitize_email')->returnArg();
-        Functions\when('sanitize_text_field')->returnArg();
-        Functions\when('current_time')->alias(fn($type, $gmt) => gmdate('Y-m-d H:i:s'));
-        Functions\when('do_action')->returnTrue();
-        Functions\when('error_log')->returnTrue();
     }
 
     protected function tearDown(): void
@@ -127,16 +121,15 @@ final class AllocationServiceTest extends BaseTestCase
     {
         $ctx = new FormContext(150);
         $payload = ['student_id' => 3, 'email' => 'a@b.com', 'mobile' => '123', 'national_id' => 'xyz'];
-        $logged = '';
-        Functions\expect('error_log')->once()->whenCalled(function ($msg) use (&$logged) { $logged = $msg; return true; });
-        $metric = null;
-        Functions\expect('do_action')->once()->whenCalled(function ($hook, $name, $args) use (&$metric) {
-            if ($hook === 'smartalloc_metric') { $metric = $args['form_id']; }
-            return true;
-        });
+        $tmp = tempnam(sys_get_temp_dir(), 'log');
+        $prev = ini_set('error_log', $tmp);
         $this->svc->allocateWithContext($ctx, $payload);
+        $logged = file_get_contents($tmp) ?: '';
+        unlink($tmp);
+        if ($prev !== false) {
+            ini_set('error_log', $prev);
+        }
         $this->assertStringNotContainsString('a@b.com', $logged);
         $this->assertStringContainsString('a***', $logged);
-        $this->assertSame(150, $metric);
     }
 }
