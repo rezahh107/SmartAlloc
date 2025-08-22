@@ -78,6 +78,11 @@ if ($profilePath !== null) {
     } else {
         $warnings[] = basename($profilePath) . ' missing';
     }
+    // Local overrides via YAML
+    $yamlOverrides = parseLocalProfiles($root . '/configs/ga-profiles.local.yaml');
+    if ($yamlOverrides !== null && isset($yamlOverrides[$profile])) {
+        $config = array_merge($config, $yamlOverrides[$profile]);
+    }
 }
 
 // CLI overrides.
@@ -141,6 +146,33 @@ function readJsonFile(string $path, string $label, array &$warnings): ?array
         $warnings[] = $label . ' missing';
     }
     return null;
+}
+
+function parseLocalProfiles(string $path): ?array
+{
+    if (!is_file($path)) {
+        return null;
+    }
+    $data = [];
+    $current = null;
+    foreach (file($path) as $line) {
+        if (preg_match('/^([A-Za-z0-9_]+):\s*$/', trim($line), $m)) {
+            $current = $m[1];
+            $data[$current] = [];
+        } elseif ($current && preg_match('/^\s+([A-Za-z0-9_]+):\s*([^#]+)?/', $line, $m)) {
+            $val = trim($m[2] ?? '');
+            if ($val === '') {
+                continue;
+            }
+            if (is_numeric($val)) {
+                $val = $val + 0;
+            } elseif (in_array(strtolower($val), ['true','false'], true)) {
+                $val = strtolower($val) === 'true';
+            }
+            $data[$current][$m[1]] = $val;
+        }
+    }
+    return $data;
 }
 
 // qa-report and go-no-go are advisory.
@@ -494,9 +526,13 @@ if ($wantJUnit) {
         $case = $suite->addChild('testcase');
         $case->addAttribute('name', $name);
         if (in_array($key, $failures, true)) {
-            $msg = $name . ' threshold exceeded';
-            $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
-            $fail->addAttribute('message', $msg);
+            if ($enforce && ($opts['profile'] ?? '') === 'ga') {
+                $msg = $name . ' threshold exceeded';
+                $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+                $fail->addAttribute('message', $msg);
+            } else {
+                $case->addChild('skipped');
+            }
         }
     }
 

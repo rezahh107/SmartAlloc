@@ -1,7 +1,6 @@
-name: QA Advisory (coverage + schema + GA Enforcer RC)
+name: QA Advisory
 on:
   pull_request:
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -21,24 +20,16 @@ jobs:
       - name: Install Composer deps (no dev if project uses lock)
         run: composer install --no-interaction --prefer-dist || true
 
-      - name: Coverage import (advisory)
-        run: php scripts/coverage-import.php || true
+      - name: QA rehearsal
+        run: composer qa:advisory || true
 
-      - name: Artifact schema validate (advisory)
-        run: php scripts/artifact-schema-validate.php || true
-
-      - name: GA Enforcer (RC profile, advisory)
-        run: php scripts/ga-enforcer.php --profile=rc --junit || true
+      - name: QA index
+        run: php scripts/qa-index.php || true
 
       - name: Upload QA artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qa-advisory-artifacts
-          path: |
-            artifacts/coverage/**
-            artifacts/schema/**
-            artifacts/ga/**
-            artifacts/qa/**
-            artifacts/dist/**
+          path: artifacts/**
           if-no-files-found: ignore

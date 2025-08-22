@@ -1,18 +1,6 @@
-name: GA Enforce (manual)
+name: GA Enforce
 on:
   workflow_dispatch:
-    inputs:
-      profile:
-        description: 'Threshold profile'
-        required: true
-        default: 'ga'
-        type: choice
-        options: [rc, ga]
-      junit:
-        description: 'Emit JUnit'
-        required: false
-        default: true
-        type: boolean
 jobs:
   enforce:
     runs-on: ubuntu-latest
@@ -24,21 +12,25 @@ jobs:
           extensions: dom, mbstring, xml, json
           coverage: none
       - run: composer install --no-interaction --prefer-dist || true
-      - name: Import coverage (advisory)
-        run: php scripts/coverage-import.php || true
-      - name: Validate artifacts (advisory)
-        run: php scripts/artifact-schema-validate.php || true
-      - name: Enforce thresholds (blocking)
-        env:
-          RUN_ENFORCE: '1'
+      - name: Enforce GA thresholds
+        run: php scripts/ga-enforcer.php --profile=ga --enforce --junit
+      - name: Build dist
+        if: success()
         run: |
-          ARGS="--profile=${{ inputs.profile }} --enforce"
-          if [ "${{ inputs.junit }}" = "true" ]; then ARGS="$ARGS --junit"; fi
-          php scripts/ga-enforcer.php $ARGS
-      - name: Upload GA enforcer artifacts
-        if: always()
+          php scripts/dist-build.php
+          php scripts/dist-manifest.php
+          bash scripts/sign-manifest.sh
+          mkdir -p artifacts/dist
+          (cd dist && zip -qr ../artifacts/dist/dist.zip .)
+      - name: Upload artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: ga-enforcer-${{ inputs.profile }}
-          path: artifacts/ga/**
+          name: ga-enforce
+          path: |
+            artifacts/dist/dist.zip
+            artifacts/dist/manifest.json
+            artifacts/dist/manifest.sha256
+            artifacts/dist/manifest.sig
+            artifacts/ga/**
           if-no-files-found: ignore
