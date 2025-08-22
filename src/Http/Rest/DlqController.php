@@ -6,13 +6,15 @@ declare(strict_types=1);
 namespace SmartAlloc\Http\Rest;
 
 use SmartAlloc\Services\DlqService;
+use SmartAlloc\Security\RateLimiter;
+use SmartAlloc\Observability\Tracer;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
 final class DlqController
 {
-    public function __construct(private DlqService $dlq)
+    public function __construct(private DlqService $dlq, private RateLimiter $limiter = new RateLimiter())
     {
     }
 
@@ -43,6 +45,9 @@ final class DlqController
         if (!current_user_can(SMARTALLOC_CAP)) {
             return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
         }
+        if ($error = $this->limiter->enforce('dlq', get_current_user_id())) {
+            return $error;
+        }
         $rows = $this->dlq->listRecent();
         $out = [];
         foreach ($rows as $r) {
@@ -71,9 +76,21 @@ final class DlqController
         if (!current_user_can(SMARTALLOC_CAP)) {
             return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
         }
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::start('dlq.retry');
+        }
+        if ($error = $this->limiter->enforce('dlq_retry', get_current_user_id())) {
+            if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+                Tracer::finish('dlq.retry');
+            }
+            return $error;
+        }
         $id = (int) $request->get_param('id');
         $row = $this->dlq->get($id);
         if (!$row) {
+            if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+                Tracer::finish('dlq.retry');
+            }
             return new WP_Error('not_found', 'Not found', ['status' => 404]);
         }
         $payload = [
@@ -86,6 +103,9 @@ final class DlqController
             ($GLOBALS['__do_action'])('smartalloc_notify', $payload);
         }
         $this->dlq->delete($id);
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::finish('dlq.retry');
+        }
         return new WP_REST_Response(['ok' => true], 200);
     }
 }

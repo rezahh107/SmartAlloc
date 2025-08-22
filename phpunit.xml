@@ -20,6 +20,12 @@
         <testsuite name="DataQuality">
             <directory>tests/data_quality</directory>
         </testsuite>
+        <testsuite name="SecurityAdvanced">
+            <directory>tests/SecurityAdvanced</directory>
+        </testsuite>
+        <testsuite name="Observability">
+            <directory>tests/Observability</directory>
+        </testsuite>
     </testsuites>
     <coverage>
         <include>

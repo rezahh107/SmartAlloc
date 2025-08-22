@@ -8,6 +8,7 @@ use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
 use SmartAlloc\Testing\FaultFlags;
+use SmartAlloc\Observability\Tracer;
 
 /**
  * Notification queue with circuit breaker, retries and DLQ.
@@ -48,6 +49,9 @@ final class NotificationService
     public function handle(array $payload): void
     {
         $attempt = (int) ($payload['_attempt'] ?? 1);
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::start('notify.dispatch');
+        }
         $body = $payload['body'] ?? [];
         try {
             $delay = 0;
@@ -99,6 +103,9 @@ final class NotificationService
                 'error_text' => $e->getMessage(),
             ]);
             $this->metrics->inc('dlq_push_total');
+        }
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::finish('notify.dispatch');
         }
     }
 

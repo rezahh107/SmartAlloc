@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Http\Rest;
 
 use SmartAlloc\Infra\Metrics\MetricsCollector;
+use SmartAlloc\Security\RateLimiter;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -15,7 +16,7 @@ use WP_REST_Response;
  */
 final class MetricsController
 {
-    public function __construct(private MetricsCollector $collector)
+    public function __construct(private MetricsCollector $collector, private RateLimiter $limiter = new RateLimiter())
     {
     }
 
@@ -51,6 +52,9 @@ final class MetricsController
     {
         if (!current_user_can(SMARTALLOC_CAP)) {
             return new WP_Error('forbidden', 'Forbidden', array('status' => 403));
+        }
+        if ($error = $this->limiter->enforce('metrics', get_current_user_id())) {
+            return $error;
         }
 
         $cache_key = 'smartalloc_metrics_cache';

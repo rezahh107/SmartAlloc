@@ -9,6 +9,7 @@ use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\ScoringAllocatorInterface;
 use SmartAlloc\Services\DbSafe;
 use SmartAlloc\Testing\FaultFlags;
+use SmartAlloc\Observability\Tracer;
 use InvalidArgumentException;
 
 /**
@@ -42,7 +43,13 @@ class AllocationService
         }
         $student = $this->validateInput($student);
 
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::start('alloc.find_candidates');
+        }
         $candidates = $this->loadCandidates($student);
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::finish('alloc.find_candidates');
+        }
         $this->trackMemory();
         if (empty($candidates)) {
             if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
@@ -56,10 +63,22 @@ class AllocationService
             ]);
         }
 
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::start('alloc.rank');
+        }
         $ranked = $this->scorer->rank($candidates, $student);
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            Tracer::finish('alloc.rank');
+        }
         foreach ($ranked as $idx => $mentor) {
             $this->trackMemory();
+            if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+                Tracer::start('alloc.commit');
+            }
             $commit = $this->commit((int) $mentor['mentor_id'], (int) $student['id']);
+            if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+                Tracer::finish('alloc.commit');
+            }
             if ($commit['committed']) {
                 return new AllocationResult([
                     'mentor_id' => $commit['mentor_id'],

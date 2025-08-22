@@ -14,6 +14,9 @@ final class StatsService
         private Logging $logger
     ) {}
 
+    /** @var array<string,float> */
+    private array $metrics = [];
+
     /**
      * Rebuild daily statistics
      */
@@ -75,5 +78,55 @@ final class StatsService
             $cum += ($i + 1) * $v;
         }
         return (($n + 1) - 2 * $cum / $sum) * (1 / $n);
+    }
+
+    // --- Observability helpers (test-mode only) ---
+
+    public function counter(string $name, float $delta = 1.0): void
+    {
+        if (!defined('SMARTALLOC_TEST_MODE') || !SMARTALLOC_TEST_MODE) {
+            return;
+        }
+        $this->metrics[$name] = ($this->metrics[$name] ?? 0.0) + $delta;
+    }
+
+    public function gauge(string $name, float $value): void
+    {
+        if (!defined('SMARTALLOC_TEST_MODE') || !SMARTALLOC_TEST_MODE) {
+            return;
+        }
+        $this->metrics[$name] = $value;
+    }
+
+    public function getMetric(string $name): float
+    {
+        return $this->metrics[$name] ?? 0.0;
+    }
+
+    /**
+     * Record a value into histogram buckets.
+     *
+     * @param array<int> $buckets
+     */
+    public function histogram(string $name, int $value, array $buckets): void
+    {
+        if (!defined('SMARTALLOC_TEST_MODE') || !SMARTALLOC_TEST_MODE) {
+            return;
+        }
+        sort($buckets);
+        $bucket = 'inf';
+        foreach ($buckets as $b) {
+            if ($value <= $b) {
+                $bucket = (string) $b;
+                break;
+            }
+        }
+        $key = $name . '_bucket_' . $bucket;
+        $this->metrics[$key] = ($this->metrics[$key] ?? 0) + 1;
+    }
+
+    public function getBucket(string $name, string $bucket): int
+    {
+        return (int) ($this->metrics[$name . '_bucket_' . $bucket] ?? 0);
     }
 }
