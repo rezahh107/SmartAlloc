@@ -20,6 +20,7 @@ final class CorrelationIdTest extends BaseTestCase
         }
         Monkey\setUp();
         Functions\when('get_option')->alias(fn() => '1.0.0');
+        Functions\expect('current_user_can')->once()->with(SMARTALLOC_CAP)->andReturn(true);
     }
 
     protected function tearDown(): void

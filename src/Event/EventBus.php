@@ -72,13 +72,15 @@ final class EventBus
         // Get listeners sorted by priority
         $sortedListeners = $this->getSortedListeners($event);
         
+        $failed = false;
         foreach ($sortedListeners as $listener) {
             $listenerName = get_class($listener);
             $listenerRunId = $this->eventStore->startListenerRun($eventId, $listenerName);
-            
+
             try {
                 $this->executeListenerWithRetry($listener, $event, $payload, $listenerRunId);
             } catch (\Throwable $e) {
+                $failed = true;
                 $this->eventStore->finishListenerRun($listenerRunId, 'failed', $e->getMessage());
                 $this->logger->error('listener.error', [
                     'event' => $event,
@@ -90,7 +92,12 @@ final class EventBus
         }
 
         $duration = (int) round((microtime(true) - $startTime) * 1000);
-        $this->eventStore->finishEvent($eventId, 'completed', null, $duration);
+        $this->eventStore->finishEvent(
+            $eventId,
+            $failed ? 'failed' : 'completed',
+            $failed ? 'listener_failed' : null,
+            $duration
+        );
         
         // Trigger WordPress action for compatibility
         do_action('smartalloc/event', $event, $payload, $version);
