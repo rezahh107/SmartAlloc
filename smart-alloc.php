@@ -89,6 +89,7 @@ add_action('plugins_loaded', function () {
     \SmartAlloc\Cron\RetentionTasks::register();
     \SmartAlloc\Cron\ExportRetention::register();
     (new \SmartAlloc\Http\Rest\WebhookController())->register_routes();
+    \SmartAlloc\Infra\GF\HookBootstrap::registerEnabledForms();
 });
 
 // Run migrations on admin init
@@ -103,11 +104,13 @@ if (defined('WP_CLI') && WP_CLI) {
     require_once __DIR__ . '/src/Cli/ReviewCommand.php';
     require_once __DIR__ . '/src/Cli/DoctorCommand.php';
     require_once __DIR__ . '/src/Cli/DebugCommand.php';
+    require_once __DIR__ . '/src/Cli/GFCommand.php';
     WP_CLI::add_command('smartalloc export', \SmartAlloc\Cli\ExportCommand::class);
     WP_CLI::add_command('smartalloc allocate', \SmartAlloc\Cli\AllocateCommand::class);
     WP_CLI::add_command('smartalloc review', \SmartAlloc\Cli\ReviewCommand::class);
     WP_CLI::add_command('smartalloc doctor', \SmartAlloc\Cli\DoctorCommand::class);
     WP_CLI::add_command('smartalloc debug pack', \SmartAlloc\Cli\DebugCommand::class);
+    WP_CLI::add_command('smartalloc gf', \SmartAlloc\Cli\GFCommand::class);
 }
 
 // Persian Admin Menu
@@ -160,10 +163,14 @@ add_action('admin_menu', function () {
 });
 
 add_action('admin_menu', ['SmartAlloc\\Admin\\Menu', 'register']);
+add_action('admin_menu', ['SmartAlloc\\Admin\\FormsScreen', 'register']);
 add_action('admin_init', ['SmartAlloc\\Admin\\Pages\\SettingsPage', 'register']);
 add_action('admin_post_smartalloc_export_generate', ['SmartAlloc\\Admin\\Actions\\ExportGenerateAction', 'handle']);
 add_action('admin_post_smartalloc_export_download', ['SmartAlloc\\Admin\\Actions\\ExportDownloadAction', 'handle']);
 add_action('admin_post_smartalloc_reports_csv', ['SmartAlloc\\Admin\\Pages\\ReportsPage', 'downloadCsv']);
+add_action('admin_post_smartalloc_enable_form', ['SmartAlloc\\Admin\\FormsScreen', 'handleEnable']);
+add_action('admin_post_smartalloc_disable_form', ['SmartAlloc\\Admin\\FormsScreen', 'handleDisable']);
+add_action('admin_post_smartalloc_generate_gf_json', ['SmartAlloc\\Admin\\FormsScreen', 'handleGenerateJson']);
 add_action('wp_ajax_smartalloc_manual_approve', ['SmartAlloc\\Admin\\Actions\\ManualApproveAction', 'handle']);
 add_action('wp_ajax_smartalloc_manual_assign', ['SmartAlloc\\Admin\\Actions\\ManualAssignAction', 'handle']);
 add_action('wp_ajax_smartalloc_manual_reject', ['SmartAlloc\\Admin\\Actions\\ManualRejectAction', 'handle']);
