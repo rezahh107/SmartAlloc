@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
-final class AdminNonceCapability_ManualReviewTest extends TestCase
+final class AdminNonceCapability_ManualReviewTest extends BaseTestCase
 {
     protected function setUp(): void
     {

@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\BaseTestCase;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
-final class AdminNonceCapability_ExportTest extends TestCase
+final class AdminNonceCapability_ExportTest extends BaseTestCase
 {
     private $origWpdb;
     private $hHeader;
