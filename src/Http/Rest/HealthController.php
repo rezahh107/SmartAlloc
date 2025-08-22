@@ -8,12 +8,17 @@ namespace SmartAlloc\Http\Rest;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
+use SmartAlloc\Security\RateLimiter;
 
 /**
  * Simple healthcheck endpoint.
  */
 final class HealthController
 {
+    public function __construct(private RateLimiter $limiter = new RateLimiter())
+    {
+    }
+
     /**
      * Register REST route.
      */
@@ -46,6 +51,9 @@ final class HealthController
     {
         if (!current_user_can(SMARTALLOC_CAP)) {
             return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
+        }
+        if ($error = $this->limiter->enforce('health', get_current_user_id())) {
+            return $error;
         }
 
         global $wpdb;

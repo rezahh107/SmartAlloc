@@ -24,7 +24,7 @@ final class Redactor
                 $out[$key] = $value;
                 continue;
             }
-            if (in_array($key, ['mobile','national_id','postal_code'], true)) {
+            if (in_array($key, ['mobile','national_id','postal_code','email'], true)) {
                 $out[$key] = $this->mask((string) $value);
             }
         }
