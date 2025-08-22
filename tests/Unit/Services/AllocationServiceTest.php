@@ -1,0 +1,142 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SmartAlloc\Tests\Unit\Services;
+
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use Mockery;
+use SmartAlloc\Core\FormContext;
+use SmartAlloc\Infra\DB\TableResolver;
+use SmartAlloc\Services\AllocationService;
+use SmartAlloc\Services\Exceptions\DuplicateAllocationException;
+use SmartAlloc\Tests\BaseTestCase;
+
+final class AllocationServiceTest extends BaseTestCase
+{
+    private AllocationService $svc;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Monkey\setUp();
+
+        global $wpdb;
+        $wpdb = new class extends \wpdb {
+            public string $prefix = 'wp_';
+            public array $data = [];
+            public function __construct() {}
+            public function prepare(string $query, ...$args): string {
+                if (isset($args[0]) && is_array($args[0])) {
+                    $args = $args[0];
+                }
+                foreach ($args as &$a) {
+                    if (is_string($a)) {
+                        $a = "'" . addslashes($a) . "'";
+                    }
+                }
+                return vsprintf($query, $args);
+            }
+            public function get_var($query) {
+                if (preg_match('/FROM\s+(\w+)/', $query, $m)) {
+                    $table = $m[1];
+                } else {
+                    return 0;
+                }
+                $rows = $this->data[$table] ?? [];
+                if (str_contains($query, 'WHERE')) {
+                    if (preg_match("/student_id = (\d+) OR email = \\'([^']*)\'/", $query, $n)) {
+                        $sid = (int) $n[1];
+                        $email = stripslashes($n[2]);
+                        foreach ($rows as $r) {
+                            if ($r['student_id'] === $sid || $r['email'] === $email) {
+                                return 1;
+                            }
+                        }
+                    }
+                    return 0;
+                }
+                return count($rows);
+            }
+            public function query($query) {
+                if (preg_match("/INTO\s+(\w+).*VALUES\s*\((\d+),'([^']*)','([^']*)','([^']*)','([^']*)'\)/", $query, $m)) {
+                    $this->data[$m[1]][] = [
+                        'student_id' => (int) $m[2],
+                        'email' => stripslashes($m[3]),
+                        'mobile' => stripslashes($m[4]),
+                        'national_id' => stripslashes($m[5]),
+                        'created_at' => stripslashes($m[6]),
+                    ];
+                    return 1;
+                }
+                return 0;
+            }
+        };
+
+        $tables = new TableResolver($wpdb);
+        $this->svc = new AllocationService($tables);
+
+        Functions\when('sanitize_email')->returnArg();
+        Functions\when('sanitize_text_field')->returnArg();
+        Functions\when('current_time')->alias(fn($type, $gmt) => gmdate('Y-m-d H:i:s'));
+        Functions\when('do_action')->returnTrue();
+        Functions\when('error_log')->returnTrue();
+    }
+
+    protected function tearDown(): void
+    {
+        Monkey\tearDown();
+        Mockery::close();
+        parent::tearDown();
+    }
+
+    /** @test */
+    public function it_delegates_legacy_allocate_to_form150(): void
+    {
+        global $wpdb;
+        $this->svc->allocate(['student_id' => 1]);
+        $this->assertArrayHasKey('wp_smartalloc_allocations_f150', $wpdb->data);
+    }
+
+    /** @test */
+    public function it_writes_to_form_specific_tables_via_allocateWithContext(): void
+    {
+        global $wpdb;
+        $ctx = new FormContext(200);
+        $this->svc->allocateWithContext($ctx, ['student_id' => 2]);
+        $this->assertArrayHasKey('wp_smartalloc_allocations_f200', $wpdb->data);
+        $this->assertArrayNotHasKey('wp_smartalloc_allocations_f150', $wpdb->data);
+    }
+
+    /** @test */
+    public function it_throws_duplicate_on_same_form_only(): void
+    {
+        $ctx150 = new FormContext(150);
+        $ctx200 = new FormContext(200);
+        $payload = ['student_id' => 5, 'email' => 'a@b.com'];
+        $this->svc->allocateWithContext($ctx150, $payload);
+        $this->expectException(DuplicateAllocationException::class);
+        $this->svc->allocateWithContext($ctx150, $payload);
+        $this->svc->allocateWithContext($ctx200, $payload);
+        $this->assertTrue(true);
+    }
+
+    /** @test */
+    public function it_masks_pii_in_logs_and_labels_metrics_with_form_id(): void
+    {
+        $ctx = new FormContext(150);
+        $payload = ['student_id' => 3, 'email' => 'a@b.com', 'mobile' => '123', 'national_id' => 'xyz'];
+        $logged = '';
+        Functions\expect('error_log')->once()->whenCalled(function ($msg) use (&$logged) { $logged = $msg; return true; });
+        $metric = null;
+        Functions\expect('do_action')->once()->whenCalled(function ($hook, $name, $args) use (&$metric) {
+            if ($hook === 'smartalloc_metric') { $metric = $args['form_id']; }
+            return true;
+        });
+        $this->svc->allocateWithContext($ctx, $payload);
+        $this->assertStringNotContainsString('a@b.com', $logged);
+        $this->assertStringContainsString('a***', $logged);
+        $this->assertSame(150, $metric);
+    }
+}
