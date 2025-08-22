@@ -1,0 +1,9 @@
+{
+  "columns": [
+    {"field": "tracking", "label": "Tracking", "gf": "76", "normalize": ["digits_16"]},
+    {"field": "mobile", "label": "Mobile", "gf": "20", "normalize": ["mobile_ir"]},
+    {"field": "postal_code", "label": "Postal Code", "gf": "postal_code", "normalize": ["digits_10"]},
+    {"field": "hakmat_code", "label": "Hakmat Code", "gf": "hakmat_code"},
+    {"field": "hakmat_name", "label": "Hakmat Name", "gf": "hakmat_name"}
+  ]
+}

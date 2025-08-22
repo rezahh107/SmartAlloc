@@ -38,9 +38,9 @@ final class NormalizerTest extends BaseTestCase
 
     public function test_digits16_normalizer(): void
     {
-        $persian = '۰۱۲۳۴۵۶۷۸۹۰۱۲۳۴۵۶';
-        $normalized = $this->callNormalizeValue($persian, ['normalize' => ['digits_10']]);
-        $this->assertSame('01234567890123456', $normalized);
+        $persian = '۰۱۲۳۴۵۶۷۸۹۰۱۲۳۴۵۶۷۸';
+        $normalized = $this->callNormalizeValue($persian, ['normalize' => ['digits_16']]);
+        $this->assertSame('0123456789012345', $normalized);
     }
 
     public function test_mobile_ir_normalizer_valid(): void

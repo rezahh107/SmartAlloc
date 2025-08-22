@@ -27,15 +27,22 @@ final class SabtEntryMapper
             'center'         => $this->normalize($entry['94'] ?? null),
             'support_status' => $this->normalize($entry['75'] ?? null),
             'mentor_select'  => $this->normalize($entry['39'] ?? null),
-            'mobile'         => $this->normalizeDigits((string)($entry['20'] ?? '')),
-            'phone'          => $this->normalizeDigits((string)($entry['22'] ?? '')),
-            'tracking'       => $this->normalizeDigits((string)($entry['76'] ?? '')),
+            'mobile'         => $this->normalizeDigits((string)($entry['20'] ?? ''), 11),
+            'phone'          => $this->normalizeDigits((string)($entry['22'] ?? ''), 11),
+            'tracking'       => $this->normalizeDigits((string)($entry['76'] ?? ''), 16),
+            'hakmat_code'    => $this->normalize($entry['hakmat_code'] ?? null) ?? '',
+            'hakmat_name'    => $this->normalize($entry['hakmat_name'] ?? null) ?? '',
         ];
 
         // Postal code alias rule
-        $alias = $this->normalizeDigits((string)($entry['postal_code_alias'] ?? ''));
-        $postal = $this->normalizeDigits((string)($entry['postal_code'] ?? ''));
+        $alias = $this->normalizeDigits((string)($entry['postal_code_alias'] ?? ''), 10);
+        $postal = $this->normalizeDigits((string)($entry['postal_code'] ?? ''), 10);
         $student['postal_code'] = $alias !== '' ? $alias : $postal;
+
+        if (($student['support_status'] ?? '') !== '3') {
+            $student['hakmat_code'] = '';
+            $student['hakmat_name'] = '';
+        }
 
         // Default empty landline to zeros
         if ($student['phone'] === '') {
@@ -78,7 +85,7 @@ final class SabtEntryMapper
         return is_string($value) ? trim($value) : $value;
     }
 
-    private function normalizeDigits(string $value): string
+    private function normalizeDigits(string $value, int $limit = 0): string
     {
         $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         $arabic  = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -86,8 +93,12 @@ final class SabtEntryMapper
 
         $value = str_replace($persian, $english, $value);
         $value = str_replace($arabic, $english, $value);
+        $value = preg_replace('/\D/', '', $value);
 
-        // Keep only digits after normalization
-        return preg_replace('/\D/', '', $value);
+        if ($limit > 0) {
+            $value = substr($value, 0, $limit);
+        }
+
+        return $value;
     }
 }
