@@ -25,6 +25,7 @@ $configDefaults = [
     'pot_min_entries'           => 10,
     'dist_audit_max_errors'     => 0,
     'wporg_lint_max_warnings'   => 0,
+    'dist_manifest_warnings'    => 0,
 ];
 
 // Collect CLI options dynamically for overrides.
@@ -146,6 +147,11 @@ function readJsonFile(string $path, string $label, array &$warnings): ?array
 readJsonFile($root . '/artifacts/qa/qa-report.json', 'qa-report.json', $warnings);
 readJsonFile($root . '/artifacts/qa/go-no-go.json', 'go-no-go.json', $warnings);
 
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/dist-manifest.php'));
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/dist-audit.php'));
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/version-coherence.php'));
+@passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/validate-readme.php'));
+
 // Scanner outputs
 @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/scan-rest-permissions.php') . ' --q');
 $restData = readJsonFile($root . '/artifacts/security/rest-permissions.json', 'rest-permissions.json', $warnings);
@@ -191,24 +197,22 @@ if (!$signals['sbom_present']) {
     $warnings[] = 'sbom.json missing';
 }
 
-// version coherence
-$signals['version_mismatches'] = 0;
-$vc = $root . '/scripts/version-coherence.php';
-if (is_file($vc)) {
-    $json = @shell_exec('php ' . escapeshellarg($vc));
-    if ($json !== null) {
-        $data = json_decode($json, true);
-        if (is_array($data)) {
-            $signals['version_mismatches'] = count($data['summary']['mismatches'] ?? []);
-        } else {
-            $warnings[] = 'version coherence parse failed';
-        }
-    } else {
-        $warnings[] = 'version coherence exec failed';
-    }
+$vcData = readJsonFile($root . '/artifacts/dist/version-coherence.json', 'version-coherence.json', $warnings) ?? [];
+$rlData = readJsonFile($root . '/artifacts/dist/readme-lint.json', 'readme-lint.json', $warnings) ?? [];
+$mfData = readJsonFile($root . '/artifacts/dist/manifest.json', 'manifest.json', $warnings) ?? [];
+$signals['version_mismatches'] = (int)count($vcData['warnings'] ?? []);
+$dmWarn = $signals['version_mismatches'] + (int)count($rlData['warnings'] ?? []);
+if (!isset($mfData['entries']) || !is_array($mfData['entries'])) {
+    $dmWarn++;
 } else {
-    $warnings[] = 'version coherence script missing';
+    foreach ($mfData['entries'] as $e) {
+        if (!isset($e['path'], $e['sha256'], $e['size']) || strlen((string)$e['sha256']) !== 64) {
+            $dmWarn++;
+            break;
+        }
+    }
 }
+$signals['dist_manifest_warnings'] = $dmWarn;
 
 // coverage
 $signals['coverage_pct'] = null;
@@ -232,21 +236,9 @@ if (is_file($covJson)) {
 
 // dist audit
 $signals['dist_audit_errors'] = null;
-$distArtifact = $root . '/artifacts/dist/dist-audit.json';
-$distScript   = $root . '/scripts/dist-audit.php';
-$distData = null;
-if (is_file($distArtifact)) {
-    $distData = json_decode((string)file_get_contents($distArtifact), true);
-} elseif (is_file($distScript)) {
-    $json = @shell_exec('php ' . escapeshellarg($distScript));
-    if ($json !== null) {
-        $distData = json_decode($json, true);
-    }
-}
+$distData = readJsonFile($root . '/artifacts/dist/audit.json', 'audit.json', $warnings);
 if (is_array($distData)) {
-    $signals['dist_audit_errors'] = (int)($distData['summary']['violations'] ?? 0);
-} else {
-    $warnings[] = 'dist audit missing';
+    $signals['dist_audit_errors'] = (int)($distData['summary']['warnings'] ?? 0);
 }
 
 // wp.org lint
@@ -347,6 +339,9 @@ if ($signals['dist_audit_errors'] !== null && $signals['dist_audit_errors'] > (i
 if ($signals['wporg_lint_warnings'] !== null && $signals['wporg_lint_warnings'] > (int)$config['wporg_lint_max_warnings']) {
     $failures[] = 'wporg_lint_warnings';
 }
+if ($signals['dist_manifest_warnings'] > (int)$config['dist_manifest_warnings']) {
+    $failures[] = 'dist_manifest_warnings';
+}
 if ($config['require_manifest'] && !$signals['manifest_present']) {
     $failures[] = 'manifest_missing';
 }
@@ -395,6 +390,7 @@ $txt[] = 'SBOM present: ' . ($signals['sbom_present'] ? 'yes' : 'no');
 $txt[] = 'Version mismatches: ' . $signals['version_mismatches'];
 $txt[] = 'POT entries: ' . $signals['pot_entries'];
 $txt[] = 'Dist audit errors: ' . ($signals['dist_audit_errors'] ?? 'null');
+$txt[] = 'Dist manifest warnings: ' . ($signals['dist_manifest_warnings'] ?? 'null');
 $txt[] = 'WP.org lint warnings: ' . ($signals['wporg_lint_warnings'] ?? 'null');
 $txt[] = 'Schema warnings: ' . ($signals['schema_warnings'] ?? 'null');
 file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
@@ -456,6 +452,18 @@ if ($wantJUnit) {
         $sk->addAttribute('message', $msg);
     } elseif ($signals['license_denied'] > 0) {
         $msg = 'unapproved license found';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
+
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'Dist.Manifest');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'warnings=' . $signals['dist_manifest_warnings'];
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif ($signals['dist_manifest_warnings'] > (int)$config['dist_manifest_warnings']) {
+        $msg = 'dist manifest warnings present';
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);
     }

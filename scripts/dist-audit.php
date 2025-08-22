@@ -8,7 +8,7 @@ $violations = [];
 $summary = ['scanned' => 0];
 
 if ($path === null) {
-    echo json_encode(['summary' => ['scanned' => 0, 'error' => 'path not found'], 'violations' => []], JSON_PRETTY_PRINT) . PHP_EOL;
+    echo json_encode(['summary' => ['scanned' => 0, 'error' => 'path not found'], 'warnings' => []], JSON_PRETTY_PRINT) . PHP_EOL;
     exit(0);
 }
 
@@ -134,10 +134,15 @@ if (!is_file($readme)) {
     }
 }
 
-$summary['violations'] = count($violations);
-$result = ['summary' => $summary, 'violations' => $violations];
-
-echo json_encode($result, JSON_PRETTY_PRINT) . PHP_EOL;
+$summary['warnings'] = count($violations);
+$result = ['summary' => $summary, 'warnings' => $violations];
+$outDir = $root . '/artifacts/dist';
+if (!is_dir($outDir)) {
+    mkdir($outDir, 0777, true);
+}
+$json = json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+file_put_contents($outDir . '/audit.json', $json . PHP_EOL);
+echo $json . PHP_EOL;
 
 if ($cleanup !== null) {
     cleanupDir($cleanup);
