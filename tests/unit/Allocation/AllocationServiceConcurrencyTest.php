@@ -22,6 +22,7 @@ class AllocationServiceConcurrencyTest extends TestCase
             public array $mentors = [1 => [
                 'mentor_id' => 1,
                 'gender' => 'M',
+                'center' => 'C',
                 'capacity' => 5,
                 'assigned' => 0,
                 'active' => 1,
@@ -35,7 +36,7 @@ class AllocationServiceConcurrencyTest extends TestCase
         $eventStore = new class implements EventStoreInterface {
             public function insertEventIfNotExists(string $event, string $dedupeKey, array $payload): int { return 1; }
             public function startListenerRun(int $eventLogId, string $listener): int { return 1; }
-            public function finishListenerRun(int $listenerRunId, string $status, ?string $error): void {}
+            public function finishListenerRun(int $listenerRunId, string $status, ?string $error, int $durationMs): void {}
             public function finishEvent(int $eventLogId, string $status, ?string $error, int $durationMs): void {}
         };
         $eventBus = new EventBus($logger, $eventStore);
@@ -48,7 +49,7 @@ class AllocationServiceConcurrencyTest extends TestCase
         $service = $this->makeService($GLOBALS['wpdb']);
         $success = 0;
         for ($i = 0; $i < 20; $i++) {
-            $result = $service->assign(['id' => $i + 1, 'gender' => 'M']);
+            $result = $service->assign(['id' => $i + 1, 'gender' => 'M', 'center' => 'C']);
             if ($result instanceof AllocationResult) {
                 $success++;
             }

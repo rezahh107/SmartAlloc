@@ -22,6 +22,7 @@ final class AllocationHappyPathTest extends TestCase
             public array $mentors = [1 => [
                 'mentor_id' => 1,
                 'gender' => 'M',
+                'center' => 'C',
                 'capacity' => 1,
                 'assigned' => 0,
                 'active' => 1,
@@ -38,14 +39,14 @@ final class AllocationHappyPathTest extends TestCase
         $eventStore = new class implements EventStoreInterface {
             public function insertEventIfNotExists(string $event, string $dedupeKey, array $payload): int { return 1; }
             public function startListenerRun(int $eventLogId, string $listener): int { return 1; }
-            public function finishListenerRun(int $listenerRunId, string $status, ?string $error): void {}
+            public function finishListenerRun(int $listenerRunId, string $status, ?string $error, int $durationMs): void {}
             public function finishEvent(int $eventLogId, string $status, ?string $error, int $durationMs): void {}
         };
         $eventBus = new EventBus($logger, $eventStore);
         $metrics = new Metrics();
 
         $service = new AllocationService($logger, $eventBus, $metrics, new ScoringAllocator());
-        $result = $service->assign(['id'=>10,'gender'=>'M']);
+        $result = $service->assign(['id'=>10,'gender'=>'M','center'=>'C']);
         $this->assertInstanceOf(AllocationResult::class,$result);
         $this->assertCount(1,$wpdb->history);
     }

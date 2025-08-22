@@ -91,12 +91,11 @@ class Db
         $sql[] = "CREATE TABLE {$prefix}salloc_dlq (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event_name VARCHAR(100) NOT NULL,
-            payload_json LONGTEXT NOT NULL,
-            error_text TEXT NULL,
+            payload LONGTEXT NOT NULL,
             attempts INT UNSIGNED NOT NULL DEFAULT 0,
-            status VARCHAR(20) NOT NULL DEFAULT 'ready',
-            created_at_utc DATETIME NOT NULL,
-            KEY idx_retry (status, attempts),
+            error_text TEXT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_created (created_at DESC),
             KEY idx_event (event_name)
         ) $charset";
 

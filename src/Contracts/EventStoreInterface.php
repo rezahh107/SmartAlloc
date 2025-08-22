@@ -23,7 +23,7 @@ interface EventStoreInterface
     /**
      * Finish a listener run
      */
-    public function finishListenerRun(int $listenerRunId, string $status, ?string $error): void;
+    public function finishListenerRun(int $listenerRunId, string $status, ?string $error, int $durationMs): void;
 
     /**
      * Finish an event

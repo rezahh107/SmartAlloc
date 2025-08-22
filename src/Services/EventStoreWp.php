@@ -32,7 +32,7 @@ final class EventStoreWp implements EventStoreInterface
                  ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)",
                 $event,
                 $dedupeKey,
-                wp_json_encode($payload),
+                $this->encode($payload),
                 gmdate('Y-m-d H:i:s')
             )
         );
@@ -62,7 +62,7 @@ final class EventStoreWp implements EventStoreInterface
         return (int) $wpdb->insert_id;
     }
 
-    public function finishListenerRun(int $listenerRunId, string $status, ?string $error): void
+    public function finishListenerRun(int $listenerRunId, string $status, ?string $error, int $durationMs): void
     {
         global $wpdb;
 
@@ -71,11 +71,44 @@ final class EventStoreWp implements EventStoreInterface
             [
                 'status'      => $status,
                 'error_text'  => $error,
-                'duration_ms' => null,
+                'duration_ms' => $durationMs,
                 'finished_at' => gmdate('Y-m-d H:i:s'),
             ],
             ['id' => $listenerRunId]
         );
+    }
+
+    /**
+     * Encode payload deterministically.
+     *
+     * @param array<string,mixed> $payload
+     */
+    private function encode(array $payload): string
+    {
+        ksort($payload);
+        foreach ($payload as &$v) {
+            if (is_array($v)) {
+                $v = $this->sortRecursive($v);
+            }
+        }
+        unset($v);
+        return wp_json_encode($payload);
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>
+     */
+    private function sortRecursive(array $data): array
+    {
+        ksort($data);
+        foreach ($data as &$v) {
+            if (is_array($v)) {
+                $v = $this->sortRecursive($v);
+            }
+        }
+        unset($v);
+        return $data;
     }
 
     public function finishEvent(int $eventLogId, string $status, ?string $error, int $durationMs): void

@@ -16,8 +16,10 @@ final class NotifyListener implements ListenerInterface
 
     public function handle(string $event, array $payload): void
     {
-        $payload['event_name'] = $event;
         $notificationService = $this->container->get(\SmartAlloc\Services\NotificationService::class);
-        $notificationService->send($payload);
+        $notificationService->send([
+            'event_name' => $event,
+            'body'       => $payload,
+        ]);
     }
 }

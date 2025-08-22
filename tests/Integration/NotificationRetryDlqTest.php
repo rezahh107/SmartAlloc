@@ -38,11 +38,11 @@ final class NotificationRetryDlqTest extends TestCase
 
         $attempt=0;
         $filters['smartalloc_notify_transport']=function($val,$payload,$a) use (&$attempt){ $attempt++; if($attempt<=3){ throw new RuntimeException('fail'); } return true; };
-        $payload=['x'=>1,'event_name'=>'e'];
-        $service->handle(['payload'=>$payload,'_attempt'=>1]);
-        $service->handle(['payload'=>$payload,'_attempt'=>2]);
-        $service->handle(['payload'=>$payload,'_attempt'=>3]);
-        $service->handle(['payload'=>$payload,'_attempt'=>4]);
+        $payload=['event_name'=>'e','body'=>['x'=>1],'_attempt'=>1];
+        $service->handle($payload);
+        $payload['_attempt']=2; $service->handle($payload);
+        $payload['_attempt']=3; $service->handle($payload);
+        $payload['_attempt']=4; $service->handle($payload);
         $this->assertCount(0,$wpdb->dlq);
     }
 
@@ -64,9 +64,9 @@ final class NotificationRetryDlqTest extends TestCase
         $metrics=new Metrics();
         $service=new NotificationService($breaker,new Logging(),$metrics);
         $filters['smartalloc_notify_transport']=function($v,$p,$a){ throw new RuntimeException('nope'); };
-        $payload=['y'=>2,'event_name'=>'e'];
-        for($i=1;$i<=5;$i++){ $service->handle(['payload'=>$payload,'_attempt'=>$i]); }
+        $payload=['event_name'=>'e','body'=>['y'=>2],'_attempt'=>1];
+        for($i=1;$i<=6;$i++){ $payload['_attempt']=$i; $service->handle($payload); }
         $this->assertCount(1,$wpdb->dlq);
-        $this->assertSame(5,$wpdb->dlq[0]['attempts']);
+        $this->assertSame(6,$wpdb->dlq[0]['attempts']);
     }
 }
