@@ -23,8 +23,9 @@ final class HealthCheckService
      */
     public function addTests(array $tests): array
     {
+        $useI18n = function_exists('__') && apply_filters('smartalloc_use_i18n', false);
         $tests['direct']['smartalloc'] = [
-            'label' => function_exists('__') ? __('SmartAlloc health', 'smartalloc') : 'SmartAlloc health',
+            'label' => $useI18n ? __('SmartAlloc health', 'smartalloc') : 'SmartAlloc health',
             'test'  => [$this, 'run'],
         ];
         return $tests;
@@ -72,8 +73,9 @@ final class HealthCheckService
         $desc .= '<li>Action Scheduler: ' . ($hasScheduler ? 'ok' : 'missing') . '</li>';
         $desc .= '</ul>';
 
+        $useI18n = function_exists('__') && apply_filters('smartalloc_use_i18n', false);
         return [
-            'label'       => function_exists('__') ? __('SmartAlloc health', 'smartalloc') : 'SmartAlloc health',
+            'label'       => $useI18n ? __('SmartAlloc health', 'smartalloc') : 'SmartAlloc health',
             'status'      => $status,
             'description' => $desc,
         ];

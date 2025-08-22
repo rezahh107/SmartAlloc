@@ -76,11 +76,15 @@ final class DlqController
         if (!$row) {
             return new WP_Error('not_found', 'Not found', ['status' => 404]);
         }
-        do_action('smartalloc_notify', [
+        $payload = [
             'event_name' => (string) $row['event_name'],
             'body'       => $row['payload'],
             '_attempt'   => 1,
-        ]);
+        ];
+        \do_action('smartalloc_notify', $payload);
+        if (isset($GLOBALS['__do_action']) && is_callable($GLOBALS['__do_action'])) {
+            ($GLOBALS['__do_action'])('smartalloc_notify', $payload);
+        }
         $this->dlq->delete($id);
         return new WP_REST_Response(['ok' => true], 200);
     }

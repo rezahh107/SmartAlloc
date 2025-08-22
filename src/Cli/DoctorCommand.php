@@ -49,7 +49,9 @@ final class DoctorCommand
 
         $uploads = wp_upload_dir();
         $writable = is_writable($uploads['basedir'] ?? sys_get_temp_dir());
-        $cron = (bool) wp_next_scheduled('smartalloc_retention_daily');
+        // wp_next_scheduled requires the args parameter in newer WordPress
+        // versions; pass an empty array for forward compatibility.
+        $cron = (bool) wp_next_scheduled('smartalloc_retention_daily', []);
         $settings = is_array(Settings::sanitize((array) get_option('smartalloc_settings', [])));
         $routes = rest_get_server()->get_routes();
         $rest = isset($routes['/smartalloc/v1/health']);
