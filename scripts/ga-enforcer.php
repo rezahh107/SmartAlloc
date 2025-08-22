@@ -16,6 +16,7 @@ $configDefaults = [
     'secrets_findings'          => 0,
     'license_denied'            => 0,
     'i18n_domain_mismatches'    => 0,
+    'security_headers_missing'  => 0,
     'coverage_pct_min'          => 0,
     'schema_warnings'           => 0,
     'require_manifest'          => true,
@@ -168,6 +169,13 @@ $licData = readJsonFile($root . '/artifacts/compliance/license-audit.json', 'lic
 $packages = is_array($licData) ? ($licData['packages'] ?? []) : [];
 $signals['license_denied'] = count(array_filter($packages, static fn($p) => empty($p['approved'])));
 
+if (is_file(__DIR__ . '/headers-guard.php')) {
+    @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/headers-guard.php') . ' --q');
+}
+$hdrData = readJsonFile($root . '/artifacts/security/headers.json', 'headers.json', $warnings);
+$signals['security_headers_missing'] = (int)(is_array($hdrData) ? ($hdrData['counts']['missing'] ?? 0) : 0);
+$signals['security_headers_allowlisted'] = (int)(is_array($hdrData) ? ($hdrData['counts']['allowlisted'] ?? 0) : 0);
+
 // i18n
 $pot = readJsonFile($root . '/artifacts/i18n/pot-refresh.json', 'pot-refresh.json', $warnings);
 $signals['pot_entries'] = (int)($pot['pot_entries'] ?? 0);
@@ -318,6 +326,9 @@ if ($signals['secrets_findings'] > (int)$config['secrets_findings']) {
 if ($signals['license_denied'] > (int)$config['license_denied']) {
     $failures[] = 'license_denied';
 }
+if ($signals['security_headers_missing'] > (int)$config['security_headers_missing']) {
+    $failures[] = 'security_headers_missing';
+}
 if ($signals['i18n_domain_mismatches'] > (int)$config['i18n_domain_mismatches']) {
     $failures[] = 'i18n_domain_mismatches';
 }
@@ -375,6 +386,7 @@ $txt[] = 'Verdict: ' . $verdict;
 $txt[] = 'REST warnings: mutating=' . $signals['rest_mutating_warnings'] . ' readonly=' . $signals['rest_readonly_warnings'];
 $txt[] = 'SQL violations: ' . $signals['sql_prepare_violations'];
 $txt[] = 'Secrets findings: ' . $signals['secrets_findings'] . ' allowlisted=' . $signals['secrets_allowlisted'];
+$txt[] = 'Headers missing: ' . $signals['security_headers_missing'] . ' allowlisted=' . $signals['security_headers_allowlisted'];
 $txt[] = 'License denied: ' . $signals['license_denied'];
 $txt[] = 'i18n mismatches: ' . $signals['i18n_domain_mismatches'];
 $txt[] = 'Coverage pct: ' . ($signals['coverage_pct'] ?? 'null');
@@ -420,6 +432,18 @@ if ($wantJUnit) {
         $sk->addAttribute('message', $msg);
     } elseif ($signals['secrets_findings'] > 0) {
         $msg = 'secrets violations present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
+
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'Security.Headers');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'missing=' . $signals['security_headers_missing'] . ' allowlisted=' . $signals['security_headers_allowlisted'];
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif ($signals['security_headers_missing'] > (int)$config['security_headers_missing']) {
+        $msg = 'security headers missing';
         $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
         $fail->addAttribute('message', $msg);
     }

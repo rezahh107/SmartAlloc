@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
+require_once dirname(__DIR__, 3) . '/scripts/headers-guard.php';
+
 /**
  * Ensure security headers are applied when available.
  * Test is advisory and skipped if the plugin does not expose the
@@ -39,6 +41,21 @@ final class HeadersGuardTest extends TestCase
             'strict-origin-when-cross-origin',
         ];
         $this->assertContains($ref, $allowed);
+    }
+
+    public function test_analyze_reports_missing_and_present(): void
+    {
+        $report = hg_analyze([], []);
+        $this->assertSame(count(HG_REQUIRED_HEADERS), $report['counts']['missing']);
+        $this->assertSame(0, $report['counts']['present']);
+
+        $all = [];
+        foreach (HG_REQUIRED_HEADERS as $h) {
+            $all[$h] = 'v';
+        }
+        $report = hg_analyze($all, []);
+        $this->assertSame(count(HG_REQUIRED_HEADERS), $report['counts']['present']);
+        $this->assertSame(0, $report['counts']['missing']);
     }
 }
 
