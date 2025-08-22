@@ -8,6 +8,7 @@ use SmartAlloc\Domain\Allocation\AllocationResult;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\ScoringAllocatorInterface;
 use SmartAlloc\Services\DbSafe;
+use SmartAlloc\Testing\FaultFlags;
 use InvalidArgumentException;
 
 /**
@@ -34,15 +35,9 @@ class AllocationService
     public function assign(array $student): AllocationResult
     {
         $this->trackMemory();
-        $mem = 0;
-        if (function_exists('apply_filters')) {
-            $mem = (int) apply_filters('smartalloc_test_fault_memory_pressure', 0);
-            if (isset($GLOBALS['filters']['smartalloc_test_fault_memory_pressure'])) {
-                $mem = (int) $GLOBALS['filters']['smartalloc_test_fault_memory_pressure']($mem);
-            }
-        }
-        if ($mem > 0) {
-            $junk = str_repeat('x', $mem);
+        $ff = FaultFlags::get();
+        if (!empty($ff['memory_pressure_mb'])) {
+            $junk = str_repeat('x', (int) $ff['memory_pressure_mb'] * 1024 * 1024);
             unset($junk);
         }
         $student = $this->validateInput($student);
@@ -50,6 +45,10 @@ class AllocationService
         $candidates = $this->loadCandidates($student);
         $this->trackMemory();
         if (empty($candidates)) {
+            if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+                $peak = memory_get_peak_usage(true);
+                $this->metrics->observe('alloc_peak_mem_bytes', (int) $peak);
+            }
             return new AllocationResult([
                 'mentor_id' => 0,
                 'committed' => false,
@@ -74,6 +73,11 @@ class AllocationService
                     ],
                 ]);
             }
+        }
+
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            $peak = memory_get_peak_usage(true);
+            $this->metrics->observe('alloc_peak_mem_bytes', (int) $peak);
         }
 
         return new AllocationResult([

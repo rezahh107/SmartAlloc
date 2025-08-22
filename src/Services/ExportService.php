@@ -8,6 +8,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use SmartAlloc\Infra\Export\FormulaEscaper;
+use SmartAlloc\Testing\FaultFlags;
 
 /**
  * Enhanced Export Service with config-driven export functionality
@@ -81,6 +82,12 @@ final class ExportService
         $startTime = microtime(true);
         $this->logger->info('export.start', ['rows_count' => count($rows)]);
 
+        $ff = FaultFlags::get();
+        $rowsFailed = 0;
+        if (!empty($ff['export_partial_fail'])) {
+            $rowsFailed = max(1, (int) floor(count($rows) * 0.1));
+        }
+
         try {
             $spreadsheet = new Spreadsheet();
             
@@ -106,7 +113,10 @@ final class ExportService
             $duration = (int) round((microtime(true) - $startTime) * 1000);
             
             // Log successful export
-            $this->logExportSuccess($filename, count($rows), 0, $duration);
+            $exportId = $this->logExportSuccess($filename, count($rows), $rowsFailed, $duration);
+            if ($rowsFailed > 0) {
+                $this->logRowErrors($exportId, $rowsFailed);
+            }
             
             // Update metrics
             $this->metrics->inc('export_success_total');
@@ -431,11 +441,11 @@ final class ExportService
     /**
      * Log successful export
      */
-    private function logExportSuccess(string $filename, int $rowsTotal, int $rowsFailed, int $duration): void
+    private function logExportSuccess(string $filename, int $rowsTotal, int $rowsFailed, int $duration): int
     {
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_export_log';
-        
+
         // @security-ok-sql
         $wpdb->insert($table, [
             'file_name' => $filename,
@@ -444,6 +454,8 @@ final class ExportService
             'duration_ms' => $duration,
             'created_at' => current_time('mysql')
         ]);
+
+        return (int) $wpdb->insert_id;
     }
 
     /**
@@ -576,4 +588,23 @@ final class ExportService
                 return '';
         }
     }
-} 
+
+    /**
+     * Log synthetic row errors for partial export failures.
+     */
+    private function logRowErrors(int $exportId, int $count): void
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'salloc_export_errors';
+        for ($i = 0; $i < $count; $i++) {
+            // @security-ok-sql
+            $wpdb->insert($table, [
+                'export_id' => $exportId,
+                'row_idx' => $i + 1,
+                'sheet' => 'Sheet1',
+                'error_code' => 'test_row_error',
+                'error_detail' => 'Injected export error (test)',
+            ]);
+        }
+    }
+}

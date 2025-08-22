@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Testing\FaultFlags;
+
 /**
  * Database service with migrations and helper methods
  *
@@ -292,6 +294,13 @@ class Db
      */
     public function startTransaction(): void
     {
+        $ff = FaultFlags::get();
+        if (!empty($ff['db_outage'])) {
+            throw new \RuntimeException('DB outage (test)');
+        }
+        if (!empty($ff['latency_ms'])) {
+            usleep((int)$ff['latency_ms'] * 1000);
+        }
         $this->wpdb->query('START TRANSACTION');
     }
 
@@ -300,6 +309,13 @@ class Db
      */
     public function commit(): void
     {
+        $ff = FaultFlags::get();
+        if (!empty($ff['db_outage'])) {
+            throw new \RuntimeException('DB outage (test)');
+        }
+        if (!empty($ff['latency_ms'])) {
+            usleep((int)$ff['latency_ms'] * 1000);
+        }
         $this->wpdb->query('COMMIT');
     }
 
@@ -308,6 +324,13 @@ class Db
      */
     public function rollback(): void
     {
+        $ff = FaultFlags::get();
+        if (!empty($ff['db_outage'])) {
+            throw new \RuntimeException('DB outage (test)');
+        }
+        if (!empty($ff['latency_ms'])) {
+            usleep((int)$ff['latency_ms'] * 1000);
+        }
         $this->wpdb->query('ROLLBACK');
     }
 
@@ -316,6 +339,13 @@ class Db
      */
     public function query(string $sql, array $params = []): array
     {
+        $ff = FaultFlags::get();
+        if (!empty($ff['db_outage'])) {
+            throw new \RuntimeException('DB outage (test)');
+        }
+        if (!empty($ff['latency_ms'])) {
+            usleep((int)$ff['latency_ms'] * 1000);
+        }
         $prepared = $params ? $this->wpdb->prepare($sql, ...$params) : $sql;
         $results = $this->wpdb->get_results($prepared, ARRAY_A);
         
@@ -331,6 +361,13 @@ class Db
      */
     public function exec(string $sql, array $params = []): int
     {
+        $ff = FaultFlags::get();
+        if (!empty($ff['db_outage'])) {
+            throw new \RuntimeException('DB outage (test)');
+        }
+        if (!empty($ff['latency_ms'])) {
+            usleep((int)$ff['latency_ms'] * 1000);
+        }
         $prepared = $params ? $this->wpdb->prepare($sql, ...$params) : $sql;
         $result = $this->wpdb->query($prepared);
         

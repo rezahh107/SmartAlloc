@@ -15,10 +15,10 @@
             <directory>tests/E2E</directory>
         </testsuite>
         <testsuite name="ChaosEngineering">
-            <directory>tests/ChaosEngineering</directory>
+            <directory>tests/chaos</directory>
         </testsuite>
         <testsuite name="DataQuality">
-            <directory>tests/DataQuality</directory>
+            <directory>tests/data_quality</directory>
         </testsuite>
     </testsuites>
     <coverage>
