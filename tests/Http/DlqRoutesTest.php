@@ -1,0 +1,76 @@
+<?php
+declare(strict_types=1);
+
+use PHPUnit\Framework\TestCase;
+use SmartAlloc\Http\Rest\DlqController;
+use SmartAlloc\Services\NotificationService;
+use SmartAlloc\Services\CircuitBreaker;
+use SmartAlloc\Services\Logging;
+use SmartAlloc\Services\Metrics;
+
+if (!class_exists('WP_Error')) { class WP_Error { public function __construct(public string $code = '', public string $message = '', public array $data = []) {} public function get_error_data(): array { return $this->data; } } }
+if (!class_exists('WP_REST_Request')) { class WP_REST_Request { public function __construct(private array $params=[]){} public function get_param(string $k){ return $this->params[$k]??null;} public function __get($k){ return $this->params[$k]??null; } } }
+if (!class_exists('WP_REST_Response')) { class WP_REST_Response { public function __construct(private array $data=[], private int $status=200){} public function get_status(): int{return $this->status;} public function get_data(): array{return $this->data;} } if (!function_exists('add_action')) { function add_action($h,$c,$p=10,$a=1){} }
+if (!function_exists('wp_schedule_single_event')) { function wp_schedule_single_event($t,$h,$a){ } }
+if (!function_exists('wp_next_scheduled')) { function wp_next_scheduled($h,$a){ return false; } }
+if (!function_exists('as_enqueue_async_action')) { function as_enqueue_async_action(){ return false; } }
+if (!function_exists('as_next_scheduled_action')) { function as_next_scheduled_action(){ return false; } }
+}
+if (!function_exists('current_user_can')) { function current_user_can($cap){ return $GLOBALS['can']??false; } }
+
+final class DlqRoutesTest extends TestCase
+{
+    private function setupWpdb(): void
+    {
+        $GLOBALS['wpdb'] = new class {
+            public string $prefix='wp_';
+            public array $dlq=[[ 'id'=>1,'payload_json'=>'{"x":1}','last_error'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready'],[ 'id'=>2,'payload_json'=>'bad','last_error'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready']];
+            private int $lastId=0;
+            public function prepare($sql,...$args){ if(isset($args[0])){$this->lastId=(int)$args[0];} return $sql; }
+            public function get_results($sql,$mode){ return $this->dlq; }
+            public function get_row($sql,$mode){ foreach($this->dlq as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
+            public function update($t,$d,$w){ foreach($this->dlq as &$r){ if($r['id']==$w['id']){ $r=array_merge($r,$d); }} }
+        };
+    }
+
+    public function testListRequiresCapability(): void
+    {
+        $this->setupWpdb();
+        $GLOBALS['can']=false;
+        $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $resp=$controller->list(new WP_REST_Request());
+        $this->assertInstanceOf(WP_Error::class,$resp);
+        $this->assertSame(403,$resp->get_error_data()['status']);
+    }
+
+    public function testListReturnsItems(): void
+    {
+        $this->setupWpdb();
+        $GLOBALS['can']=true;
+        $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $resp=$controller->list(new WP_REST_Request(['limit'=>10,'offset'=>0]));
+        $this->assertInstanceOf(WP_REST_Response::class,$resp);
+        $this->assertSame(200,$resp->get_status());
+        $this->assertCount(2,$resp->get_data());
+    }
+
+    public function testRetryMissingItem(): void
+    {
+        $this->setupWpdb();
+        $GLOBALS['can']=true;
+        $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $resp=$controller->retry(new WP_REST_Request(['id'=>999]));
+        $this->assertInstanceOf(WP_Error::class,$resp);
+        $this->assertSame(404,$resp->get_error_data()['status']);
+    }
+
+    public function testRetryWithInvalidPayload(): void
+    {
+        $this->setupWpdb();
+        $GLOBALS['can']=true;
+                $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $resp=$controller->retry(new WP_REST_Request(['id'=>2]));
+        $this->assertInstanceOf(WP_Error::class,$resp);
+        $this->assertSame(422,$resp->get_error_data()['status']);
+    }
+}

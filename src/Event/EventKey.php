@@ -14,7 +14,10 @@ final class EventKey
      */
     public static function make(string $event, array $payload, string $version = 'v1'): string
     {
+        if (isset($payload['dedupe_key'])) {
+            return $payload['dedupe_key'];
+        }
         $entry = $payload['entry_id'] ?? ($payload['id'] ?? uniqid('', true));
         return $event . ':' . $entry . ':' . $version;
     }
-} 
+}
