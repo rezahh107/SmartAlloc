@@ -53,7 +53,7 @@ final class ManualReviewPageTest extends BaseTestCase
         };
         $GLOBALS['smartalloc_repo'] = $repo;
         global $wpdb;
-        $wpdb = new \WpdbStub();
+        $wpdb = new \wpdb();
         $wpdb->results = [['entry_id'=>1,'status'=>'manual','mentor_id'=>null,'candidates'=>null]];
         $wpdb->var = 1;
 

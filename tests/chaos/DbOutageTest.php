@@ -6,9 +6,6 @@ use PHPUnit\Framework\TestCase;
 use SmartAlloc\Testing\TestFilters;
 use SmartAlloc\Services\Db;
 
-if (!class_exists('wpdb')) {
-    class wpdb {}
-}
 
 final class DbOutageTest extends TestCase
 {
@@ -23,9 +20,9 @@ final class DbOutageTest extends TestCase
         TestFilters::set(['db_outage' => true]);
         global $wpdb;
         $wpdb = new class extends wpdb {
-            public $prefix = 'wp_';
-            public $last_error = '';
-            public function prepare($q, ...$a) { return preg_replace('/%[dsf]/', 'x', $q); }
+            public string $prefix = 'wp_';
+            public string $last_error = '';
+            public function prepare(string $q, ...$a): string { return preg_replace('/%[dsf]/', 'x', $q); }
             public function get_results($q, $o = ARRAY_A) { return []; }
             public function query($q) { return true; }
         };

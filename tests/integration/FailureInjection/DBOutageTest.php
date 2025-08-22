@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-final class DBOutageTest extends TestCase {
+final class FailureDBOutageTest extends TestCase {
     public function test_db_error_on_allocate_is_graceful_or_skip(): void {
         if (getenv('RUN_FAILURE_TESTS') !== '1') {
             $this->markTestSkipped('failure tests opt-in');

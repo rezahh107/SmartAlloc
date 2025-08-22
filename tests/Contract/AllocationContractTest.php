@@ -22,27 +22,7 @@ if (!class_exists('WP_Error')) {
     }
 }
 
-if (!class_exists('wpdb')) {
-    class wpdb {
-        public string $prefix = 'wp_';
-        public int $rows_affected = 0;
-        public array $mentors = [
-            2 => ['mentor_id'=>2,'gender'=>'M','center'=>1,'group_code'=>'G1','capacity'=>2,'assigned'=>1,'active'=>1],
-        ];
-        public function get_results($sql,$mode){ return array_values($this->mentors); }
-        public function query(string $sql){ $this->rows_affected = 1; }
-        public function insert(string $t, array $d){}
-        public function prepare(string $sql, ...$args): string {
-            $params = is_array($args[0] ?? null) ? $args[0] : $args;
-            foreach ($params as $p) {
-                $sql = preg_replace('/%d/', (string) (int) $p, $sql, 1);
-                $sql = preg_replace('/%s/', "'" . $p . "'", $sql, 1);
-                $sql = preg_replace('/%f/', (string) (float) $p, $sql, 1);
-            }
-            return $sql;
-        }
-    }
-}
+// wpdb stub provided by tests bootstrap
 
 final class AllocationContractTest extends TestCase
 {
@@ -51,6 +31,9 @@ final class AllocationContractTest extends TestCase
     private function makeService(): AllocationService
     {
         $wpdb = new wpdb();
+        $wpdb->mentors = [
+            2 => ['mentor_id'=>2,'gender'=>'M','center'=>1,'group_code'=>'G1','capacity'=>2,'assigned'=>1,'active'=>1],
+        ];
         $GLOBALS['wpdb'] = $wpdb;
 
         $logger = new Logging();

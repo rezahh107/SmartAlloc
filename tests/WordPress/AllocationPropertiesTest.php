@@ -14,66 +14,12 @@ use PHPUnit\Framework\TestCase;
 if (!class_exists('WP_UnitTestCase')) {
     abstract class WP_UnitTestCase extends TestCase {}
 }
-if (!class_exists('wpdb')) {
-    class wpdb {}
-}
-class WpdbStub extends wpdb
-{
-    public string $prefix = 'wp_';
-    public int $rows_affected = 0;
-    public array $history = [];
-    public array $mentors;
-
-    public function __construct()
-    {
-        $this->mentors = [
-            1 => ['mentor_id' => 1, 'gender' => 'M', 'center' => '1', 'group_code' => 'EX', 'capacity' => 3, 'assigned' => 0, 'active' => 1],
-            2 => ['mentor_id' => 2, 'gender' => 'F', 'center' => '1', 'group_code' => 'MA', 'capacity' => 3, 'assigned' => 0, 'active' => 1],
-        ];
-    }
-
-    public function get_results($sql, $mode)
-    {
-        return array_values($this->mentors);
-    }
-
-    public function query($sql): void
-    {
-        if (preg_match('/mentor_id = (\d+)/', $sql, $m)) {
-            $id = (int) $m[1];
-            if ($this->mentors[$id]['assigned'] < $this->mentors[$id]['capacity']) {
-                $this->mentors[$id]['assigned']++;
-                $this->rows_affected = 1;
-            } else {
-                $this->rows_affected = 0;
-            }
-        } else {
-            $this->rows_affected = 0;
-        }
-    }
-
-    public function insert($table, $data): void
-    {
-        if (str_contains($table, 'history')) {
-            $this->history[] = $data;
-        }
-    }
-
-    public function prepare($query, ...$args)
-    {
-        if (count($args) === 1 && is_array($args[0])) {
-            $args = $args[0];
-        }
-        $query = str_replace(['%d','%s','%f'], ['%u','%s','%F'], $query);
-        return vsprintf($query, $args);
-    }
-}
 
 final class AllocationPropertiesTest extends WP_UnitTestCase
 {
     use TestTrait;
 
-    private WpdbStub $db;
+    private wpdb $db;
 
     private function makeAllocationEngine(): AllocationService
     {
@@ -86,7 +32,7 @@ final class AllocationPropertiesTest extends WP_UnitTestCase
         };
         $eventBus = new EventBus($logger, $eventStore);
         $metrics = new Metrics();
-        $this->db = new WpdbStub();
+        $this->db = new wpdb();
         $GLOBALS['wpdb'] = $this->db;
         return new AllocationService($logger, $eventBus, $metrics, new ScoringAllocator(), $this->db);
     }

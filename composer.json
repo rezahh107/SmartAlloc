@@ -69,6 +69,10 @@
             "echo 'post-install-cmd: no-op'"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {"SmartAlloc\\Tests\\": "tests/"},
+        "files": ["tests/bootstrap.php"]
+    },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,

@@ -42,5 +42,15 @@ final class BulkDatasetBuilder
         }
         return $mentors;
     }
+
+    /**
+     * Build mentors and students in one call.
+     *
+     * @return array{0:array<int,array<string,mixed>>,1:array<int,array<string,mixed>>}
+     */
+    public static function build(int $studentCount, int $mentorCount): array
+    {
+        return [self::buildMentors($mentorCount), self::buildStudents($studentCount)];
+    }
 }
 
