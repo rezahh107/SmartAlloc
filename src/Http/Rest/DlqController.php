@@ -5,14 +5,14 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Http\Rest;
 
-use SmartAlloc\Services\NotificationService;
+use SmartAlloc\Services\DlqService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
 final class DlqController
 {
-    public function __construct(private NotificationService $notifications)
+    public function __construct(private DlqService $dlq)
     {
     }
 
@@ -43,15 +43,7 @@ final class DlqController
         if (!current_user_can(SMARTALLOC_CAP)) {
             return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
         }
-        global $wpdb;
-        $table = $wpdb->prefix . 'salloc_dlq';
-        $sql = $wpdb->prepare(
-            "SELECT id, payload_json, last_error, attempts, created_at_utc FROM {$table} WHERE status=%s ORDER BY id DESC LIMIT %d",
-            'ready',
-            200
-        );
-        // @security-ok-sql
-        $rows = $wpdb->get_results($sql, ARRAY_A) ?: [];
+        $rows = $this->dlq->list();
         return new WP_REST_Response($rows, 200);
     }
 
@@ -64,18 +56,15 @@ final class DlqController
             return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
         }
         $id = (int) $request->get_param('id');
-        global $wpdb;
-        $table = $wpdb->prefix . 'salloc_dlq';
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id=%d AND status=%s", $id, 'ready'), ARRAY_A);
+        $row = $this->dlq->get($id);
         if (!$row) {
             return new WP_Error('not_found', 'Not found', ['status' => 404]);
         }
-        $payload = json_decode($row['payload_json'], true);
-        if (!is_array($payload)) {
+        if (!is_array($row['payload'])) {
             return new WP_Error('invalid_payload', 'Invalid payload', ['status' => 422]);
         }
-        $this->notifications->send($payload);
-        $wpdb->delete($table, ['id' => $id]);
+        do_action('smartalloc_notify', ['payload' => $row['payload'], '_attempt' => 1]);
+        $this->dlq->delete($id);
         return new WP_REST_Response(['ok' => true], 200);
     }
 }

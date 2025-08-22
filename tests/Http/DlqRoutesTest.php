@@ -3,10 +3,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use SmartAlloc\Http\Rest\DlqController;
-use SmartAlloc\Services\NotificationService;
-use SmartAlloc\Services\CircuitBreaker;
-use SmartAlloc\Services\Logging;
-use SmartAlloc\Services\Metrics;
+use SmartAlloc\Services\DlqService;
 
 if (!class_exists('WP_Error')) { class WP_Error { public function __construct(public string $code = '', public string $message = '', public array $data = []) {} public function get_error_data(): array { return $this->data; } } }
 if (!class_exists('WP_REST_Request')) { class WP_REST_Request { public function __construct(private array $params=[]){} public function get_param(string $k){ return $this->params[$k]??null;} public function __get($k){ return $this->params[$k]??null; } } }
@@ -15,6 +12,7 @@ if (!function_exists('wp_schedule_single_event')) { function wp_schedule_single_
 if (!function_exists('wp_next_scheduled')) { function wp_next_scheduled($h,$a){ return false; } }
 if (!function_exists('as_enqueue_async_action')) { function as_enqueue_async_action(){ return false; } }
 if (!function_exists('as_next_scheduled_action')) { function as_next_scheduled_action(){ return false; } }
+if (!function_exists('do_action')) { function do_action($h,$a){ if(isset($GLOBALS['__do_action'])){ ($GLOBALS['__do_action'])($h,$a); } } }
 }
 if (!function_exists('current_user_can')) { function current_user_can($cap){ return $GLOBALS['can']??false; } }
 
@@ -24,12 +22,13 @@ final class DlqRoutesTest extends TestCase
     {
         $GLOBALS['wpdb'] = new class {
             public string $prefix='wp_';
-            public array $dlq=[[ 'id'=>1,'payload_json'=>'{"x":1}','last_error'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready'],[ 'id'=>2,'payload_json'=>'bad','last_error'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready']];
+            public array $dlq=[[ 'id'=>1,'event_name'=>'e','payload_json'=>'{"x":1}','error_text'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready'],[ 'id'=>2,'event_name'=>'e','payload_json'=>'bad','error_text'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready']];
             private int $lastId=0;
             public function prepare($sql,...$args){ if(isset($args[0])){$this->lastId=(int)$args[0];} return $sql; }
             public function get_results($sql,$mode){ return $this->dlq; }
             public function get_row($sql,$mode){ foreach($this->dlq as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
             public function delete($t,$w){ foreach($this->dlq as $i=>$r){ if($r['id']==$w['id']){ unset($this->dlq[$i]); }} }
+            public function insert($t,$d){}
         };
     }
 
@@ -37,7 +36,7 @@ final class DlqRoutesTest extends TestCase
     {
         $this->setupWpdb();
         $GLOBALS['can']=false;
-        $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $controller=new DlqController(new DlqService());
         $resp=$controller->list(new WP_REST_Request());
         $this->assertInstanceOf(WP_Error::class,$resp);
         $this->assertSame(403,$resp->get_error_data()['status']);
@@ -47,7 +46,7 @@ final class DlqRoutesTest extends TestCase
     {
         $this->setupWpdb();
         $GLOBALS['can']=true;
-        $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $controller=new DlqController(new DlqService());
         $resp=$controller->list(new WP_REST_Request());
         $this->assertInstanceOf(WP_REST_Response::class,$resp);
         $this->assertSame(200,$resp->get_status());
@@ -58,7 +57,7 @@ final class DlqRoutesTest extends TestCase
     {
         $this->setupWpdb();
         $GLOBALS['can']=true;
-        $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
+        $controller=new DlqController(new DlqService());
         $resp=$controller->retry(new WP_REST_Request(['id'=>999]));
         $this->assertInstanceOf(WP_Error::class,$resp);
         $this->assertSame(404,$resp->get_error_data()['status']);
@@ -68,9 +67,17 @@ final class DlqRoutesTest extends TestCase
     {
         $this->setupWpdb();
         $GLOBALS['can']=true;
-                $controller=new DlqController(new NotificationService(new CircuitBreaker(), new Logging(), new Metrics()));
-        $resp=$controller->retry(new WP_REST_Request(['id'=>2]));
-        $this->assertInstanceOf(WP_Error::class,$resp);
-        $this->assertSame(422,$resp->get_error_data()['status']);
+        $controller=new DlqController(new DlqService());
+        $GLOBALS['ran']=null;
+        $GLOBALS['__do_action']=function($h,$a){$GLOBALS['ran']=$a;};
+        $resp=$controller->retry(new WP_REST_Request(['id'=>1]));
+        $this->assertInstanceOf(WP_REST_Response::class,$resp);
+        $this->assertSame(200,$resp->get_status());
+        $this->assertSame(1,$GLOBALS['ran']['payload']['x']);
+        $this->assertCount(1,$GLOBALS['wpdb']->dlq);
+
+        $resp2=$controller->retry(new WP_REST_Request(['id'=>2]));
+        $this->assertInstanceOf(WP_Error::class,$resp2);
+        $this->assertSame(422,$resp2->get_error_data()['status']);
     }
 }

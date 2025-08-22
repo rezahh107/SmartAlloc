@@ -20,9 +20,8 @@ final class ScoringAllocator implements ScoringAllocatorInterface
      */
     public function rank(array $mentors, array $student): array
     {
-        foreach ($mentors as $i => &$m) {
+        foreach ($mentors as &$m) {
             $m['score'] = $this->score($m, $student);
-            $m['_idx'] = $i; // preserve original order for stability
         }
         unset($m);
 
@@ -31,13 +30,8 @@ final class ScoringAllocator implements ScoringAllocatorInterface
             if ($cmp !== 0) {
                 return $cmp;
             }
-            return $a['_idx'] <=> $b['_idx'];
+            return ((int) ($a['mentor_id'] ?? 0)) <=> ((int) ($b['mentor_id'] ?? 0));
         });
-
-        foreach ($mentors as &$m) {
-            unset($m['_idx']);
-        }
-        unset($m);
 
         return $mentors;
     }
@@ -57,9 +51,6 @@ final class ScoringAllocator implements ScoringAllocatorInterface
         $assigned = max(0, (int) ($mentor['assigned'] ?? 0));
         $loadRatio = $assigned / $capacity;
         $boost = ((int) ($mentor['allocations_new'] ?? 0)) === 0 ? 1.0 : 0.0;
-        $score = (1 - $loadRatio) * $w1 + $boost * $w2;
-        // Small deterministic tiebreaker to avoid inconsistent ordering
-        $score -= ((int) ($mentor['mentor_id'] ?? 0)) / 1000000000;
-        return $score;
+        return (1 - $loadRatio) * $w1 + $boost * $w2;
     }
 }

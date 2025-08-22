@@ -29,10 +29,11 @@ final class RestController
             // Health endpoint
             register_rest_route('smartalloc/v1', '/health', [
                 'methods' => 'GET',
-                'permission_callback' => function (): bool {
-                    return current_user_can('read');
-                },
+                'permission_callback' => '__return_true',
                 'callback' => function() {
+                    if (!current_user_can('read')) {
+                        return new \WP_Error('forbidden', 'Forbidden', ['status' => 403]);
+                    }
                     return $this->container->get(HealthService::class)->status();
                 }
             ]);
@@ -40,10 +41,11 @@ final class RestController
             // Metrics endpoint
             register_rest_route('smartalloc/v1', '/metrics', [
                 'methods' => 'GET',
-                'permission_callback' => function() {
-                    return current_user_can(SMARTALLOC_CAP);
-                },
+                'permission_callback' => '__return_true',
                 'callback' => function() {
+                    if (!current_user_can(SMARTALLOC_CAP)) {
+                        return new \WP_Error('forbidden', 'Forbidden', ['status' => 403]);
+                    }
                     return $this->getMetrics();
                 }
             ]);

@@ -164,7 +164,8 @@ final class Bootstrap
 
         $c->set(NotificationService::class, fn() => new NotificationService(
             $c->get(CircuitBreaker::class),
-            $c->get(Logging::class)
+            $c->get(Logging::class),
+            $c->get(Metrics::class)
         ));
 
         $c->set(StatsService::class, fn() => new StatsService(
