@@ -29,6 +29,7 @@ final class DlqRoutesTest extends TestCase
             public function get_row($sql,$mode){ foreach($this->dlq as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
             public function delete($t,$w){ foreach($this->dlq as $i=>$r){ if($r['id']==$w['id']){ unset($this->dlq[$i]); }} }
             public function insert($t,$d){}
+            public function query($sql){}
         };
     }
 
@@ -50,7 +51,9 @@ final class DlqRoutesTest extends TestCase
         $resp=$controller->list(new WP_REST_Request());
         $this->assertInstanceOf(WP_REST_Response::class,$resp);
         $this->assertSame(200,$resp->get_status());
-        $this->assertCount(2,$resp->get_data());
+        $data=$resp->get_data();
+        $this->assertCount(2,$data);
+        $this->assertArrayHasKey('payload_preview',$data[0]);
     }
 
     public function testRetryMissingItem(): void

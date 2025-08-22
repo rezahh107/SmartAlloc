@@ -48,6 +48,7 @@ final class HealthCheckService
 
         $dlqTable = $wpdb->prefix . 'salloc_dlq';
         $dlqBacklog = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable}") ?: 0); // @security-ok-sql
+        $dlqThreshold = (int) apply_filters('smartalloc_dlq_backlog_threshold', 100);
 
         $mentorsTable = $wpdb->prefix . 'salloc_mentors';
         $overCapacity = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$mentorsTable} WHERE assigned > 60") ?: 0);
@@ -57,10 +58,8 @@ final class HealthCheckService
         $hasScheduler  = function_exists('as_enqueue_async_action');
 
         $status = 'good';
-        if (!$dbOk || !$cacheOk || $dlqBacklog !== 0 || $overCapacity !== 0) {
+        if (!$dbOk || !$cacheOk || $dlqBacklog > $dlqThreshold || $overCapacity !== 0) {
             $status = 'critical';
-        } elseif (!$hasPlaywright || !$hasCoverage || !$hasScheduler) {
-            $status = 'recommended';
         }
 
         $desc  = '<ul>';

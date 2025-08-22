@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 final class GAEnforcerProfilesTest extends TestCase
 {
     private string $root;
+    private string $schemaScriptBak;
 
     protected function setUp(): void
     {
@@ -17,7 +18,9 @@ final class GAEnforcerProfilesTest extends TestCase
         @mkdir($this->root . '/artifacts/dist', 0777, true);
         @mkdir($this->root . '/artifacts/ga', 0777, true);
         file_put_contents($this->root . '/artifacts/coverage/coverage.json', json_encode(['totals' => ['pct' => 50]]) );
-        file_put_contents($this->root . '/artifacts/schema/schema-validate.json', json_encode(['count' => 5]));
+        $this->schemaScriptBak = $this->root . '/scripts/artifact-schema-validate.php.bak';
+        rename($this->root . '/scripts/artifact-schema-validate.php', $this->schemaScriptBak);
+        file_put_contents($this->root . '/scripts/artifact-schema-validate.php', "<?php\nfile_put_contents(__DIR__.'/../../artifacts/schema/schema-validate.json', json_encode(['count'=>5]));\n");
     }
 
     public function test_rc_profile_skips_failures(): void
@@ -40,6 +43,13 @@ final class GAEnforcerProfilesTest extends TestCase
         $this->assertNotEmpty($cov->failure);
         $schema = $xml->xpath('//testcase[@name="Artifacts.Schema"]')[0];
         $this->assertNotEmpty($schema->failure);
+    }
+
+    protected function tearDown(): void
+    {
+        if (isset($this->schemaScriptBak)) {
+            rename($this->schemaScriptBak, $this->root . '/scripts/artifact-schema-validate.php');
+        }
     }
 }
 

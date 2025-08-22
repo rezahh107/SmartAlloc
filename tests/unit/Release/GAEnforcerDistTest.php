@@ -9,6 +9,7 @@ final class GAEnforcerDistTest extends TestCase
 
     protected function setUp(): void
     {
+        putenv('RUN_ENFORCE');
         $this->origReadme = (string)file_get_contents('readme.txt');
         @mkdir('artifacts/ga', 0777, true);
         @mkdir('artifacts/dist', 0777, true);

@@ -28,9 +28,9 @@ $outDir = $root . '/artifacts/dist';
 if (!is_dir($outDir)) {
     mkdir($outDir, 0777, true);
 }
-$manifest = [
-    'entries' => $entries,
-    'generated_at_utc' => gmdate('c'),
-];
-file_put_contents($outDir . '/manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+$manifest = ['entries' => $entries];
+file_put_contents(
+    $outDir . '/manifest.json',
+    json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n"
+);
 exit(0);

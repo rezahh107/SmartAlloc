@@ -43,5 +43,6 @@ class GAEnforcerI18nWporgTest extends TestCase
         $this->assertStringContainsString('i18n lint warnings present', $xml);
         $this->assertStringContainsString('<testcase name="WPOrg.Preflight"', $xml);
         $this->assertStringContainsString('wporg preflight warnings present', $xml);
+        putenv('RUN_ENFORCE');
     }
 }

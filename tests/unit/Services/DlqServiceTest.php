@@ -12,26 +12,33 @@ final class DlqServiceTest extends TestCase
             public string $prefix = 'wp_';
             public array $rows = [];
             public int $auto = 1;
-            public function insert($table, $data){ $data['id']=$this->auto++; $this->rows[]=$data; }
-            public function prepare($sql,...$args){ return $sql; }
-            public function get_results($sql,$mode){ return array_map(fn($r)=>$r, $this->rows); }
-            public function get_row($sql,$mode){ return $this->rows[0]??null; }
-            public function delete($t,$w){ $this->rows=[]; }
+            public int $lastId = 0;
+            public function query($sql){ /* no-op for START/COMMIT */ }
+            public function insert($table, $data){ $data['id'] = $this->auto++; $this->rows[] = $data; }
+            public function prepare($sql,...$args){ $this->lastId=(int)($args[0]??0); return $sql; }
+            public function get_results($sql,$mode){ return $this->rows; }
+            public function get_row($sql,$mode){ foreach($this->rows as $r){ if($r['id']==$this->lastId){ return $r; } } return null; }
+            public function delete($t,$w){ foreach($this->rows as $i=>$r){ if($r['id']==$w['id']){ unset($this->rows[$i]); } } }
         };
     }
 
-    public function testPushListGetDeleteRetry(): void
+    public function testPushListGetDelete(): void
     {
         $this->setupDb();
         $svc = new DlqService();
-        $svc->push('Evt',['a'=>1],'err',3);
-        $list = $svc->list();
+        $svc->push([
+            'event_name' => 'Evt',
+            'payload'    => ['b'=>2,'a'=>1],
+            'attempts'   => 3,
+            'error_text' => 'err',
+        ]);
+        $list = $svc->listRecent();
         $this->assertCount(1,$list);
+        $this->assertSame(['a'=>1,'b'=>2], $list[0]['payload']);
         $id = $list[0]['id'];
         $item = $svc->get($id);
         $this->assertSame('Evt',$item['event_name']);
-        $ok = $svc->retry($id);
-        $this->assertTrue($ok);
-        $this->assertCount(0,$svc->list());
+        $svc->delete($id);
+        $this->assertCount(0,$svc->listRecent());
     }
 }

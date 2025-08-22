@@ -12,7 +12,10 @@ use SmartAlloc\Domain\Allocation\AllocationResult;
 
 final class AllocationServiceTest extends TestCase
 {
-    private function makeService(): AllocationService
+    /**
+     * @return array{0:AllocationService,1:object}
+     */
+    private function makeService(): array
     {
         $GLOBALS['wpdb'] = new class {
             public string $prefix = 'wp_';
@@ -45,22 +48,25 @@ final class AllocationServiceTest extends TestCase
         };
         $logger = new Logging();
         $eventStore = new class implements EventStoreInterface {
-            public function insertEventIfNotExists(string $e,string $k,array $p): int {return 1;}
+            public array $events = [];
+            public function insertEventIfNotExists(string $e,string $k,array $p): int { $this->events[]=$e; return count($this->events); }
             public function startListenerRun(int $e,string $l): int {return 1;}
             public function finishListenerRun(int $i,string $s,?string $er,int $d): void {}
             public function finishEvent(int $i,string $s,?string $e,int $d): void {}
         };
         $bus = new EventBus($logger,$eventStore);
         $metrics = new Metrics();
-        return new AllocationService($logger,$bus,$metrics,new ScoringAllocator());
+        return [new AllocationService($logger,$bus,$metrics,new ScoringAllocator()), $eventStore];
     }
 
     public function testFiltersRankingAndCommit(): void
     {
-        $svc = $this->makeService();
+        [$svc,$store] = $this->makeService();
         $res = $svc->assign(['id'=>7,'gender'=>'M','center'=>'A','group_code'=>'G1']);
         $this->assertInstanceOf(AllocationResult::class,$res);
         $this->assertSame(2,$res->get('mentor_id'));
         $this->assertSame(2,$GLOBALS['wpdb']->mentors[2]['assigned']);
+        $this->assertSame(['MentorAssigned','AllocationCommitted'],$store->events);
+        $this->assertSame(1,$GLOBALS['wpdb']->rows_affected);
     }
 }

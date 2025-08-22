@@ -36,6 +36,15 @@ final class GAEnforcerCoverageTest extends TestCase
             ],
         ];
         file_put_contents($rootArtifacts . '/dist/manifest.json', json_encode($clean));
+        $stubScripts = ['scan-sql-prepare.php','dist-manifest.php'];
+        $backups = [];
+        foreach ($stubScripts as $s) {
+            $orig = __DIR__ . '/../../../scripts/' . $s;
+            $bak = $orig . '.bak';
+            $backups[$orig] = $bak;
+            rename($orig, $bak);
+            file_put_contents($orig, "<?php\nexit(0);\n");
+        }
 
         putenv('RUN_ENFORCE');
         $cmd = PHP_BINARY . ' '
@@ -67,5 +76,7 @@ final class GAEnforcerCoverageTest extends TestCase
 
         $report = json_decode((string)file_get_contents($rootArtifacts . '/ga/GA_ENFORCER.json'), true);
         $this->assertGreaterThan(0, $report['signals']['schema_warnings'] ?? 0);
+        putenv('RUN_ENFORCE');
+        foreach ($backups as $orig => $bak) { rename($bak, $orig); }
     }
 }

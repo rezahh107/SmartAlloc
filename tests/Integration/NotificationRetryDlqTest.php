@@ -29,6 +29,7 @@ final class NotificationRetryDlqTest extends TestCase
             public function get_row($sql){ return null; }
             public function replace($t,$d){ }
             public function prepare($sql,...$args){ return $sql; }
+            public function query($sql){}
         };
         $GLOBALS['wpdb']=$wpdb;
 
@@ -58,6 +59,7 @@ final class NotificationRetryDlqTest extends TestCase
             public function get_row($sql){ return null; }
             public function replace($t,$d){ }
             public function prepare($sql,...$args){ return $sql; }
+            public function query($sql){}
         };
         $GLOBALS['wpdb']=$wpdb;
         $breaker = new CircuitBreaker();
