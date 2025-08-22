@@ -7,23 +7,25 @@ namespace SmartAlloc\Services;
 use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
-use WP_Error;
 
 /**
  * Notification queue with circuit breaker, retries and DLQ.
  */
 final class NotificationService
 {
-    private string $dlqTable;
+    private RetryService $retry;
+    private DlqService $dlq;
 
     public function __construct(
         private CircuitBreaker $circuitBreaker,
         private Logging $logger,
-        private Metrics $metrics
+        private Metrics $metrics,
+        ?RetryService $retry = null,
+        ?DlqService $dlq = null
     ) {
-        global $wpdb;
-        $this->dlqTable = $wpdb->prefix . 'salloc_dlq';
-        add_action('smartalloc_notify', [$this, 'handle'], 10, 2);
+        $this->retry = $retry ?? new RetryService();
+        $this->dlq = $dlq ?? new DlqService();
+        add_action('smartalloc_notify', [$this, 'handle']);
     }
 
     /**
@@ -39,10 +41,12 @@ final class NotificationService
     /**
      * Process queued job.
      *
-     * @param array<string,mixed> $payload
+     * @param array<string,mixed> $args
      */
-    public function handle(array $payload, int $attempt = 1): void
+    public function handle(array $args): void
     {
+        $payload = $args['payload'] ?? [];
+        $attempt = (int) ($args['_attempt'] ?? 1);
         try {
             $this->circuitBreaker->guard('notify');
             $result = apply_filters('smartalloc_notify_transport', true, $payload, $attempt);
@@ -58,12 +62,12 @@ final class NotificationService
             $this->logger->warning('notify.fail', ['error' => $e->getMessage(), 'attempt' => $attempt]);
             if ($attempt < 5) {
                 $this->metrics->inc('notify_retry_total');
-                $delay = min(60, (int) pow(2, $attempt - 1));
-                $delay += random_int(0, 3);
+                $delay = $this->retry->backoff($attempt);
                 $this->enqueue($payload, $attempt + 1, $delay);
                 return;
             }
-            $this->pushDlq($payload, $e->getMessage(), $attempt);
+            $this->dlq->push((string) ($payload['event_name'] ?? 'notify'), $payload, $e->getMessage(), $attempt);
+            $this->metrics->inc('dlq_push_total');
         }
     }
 
@@ -74,39 +78,17 @@ final class NotificationService
      */
     private function enqueue(array $payload, int $attempt, int $delay): void
     {
-        $args = ['payload' => $payload, 'attempt' => $attempt];
+        $args = ['payload' => $payload, '_attempt' => $attempt];
         $hook = 'smartalloc_notify';
         if (function_exists('as_enqueue_async_action')) {
             $group = 'smartalloc';
-            if (false === as_next_scheduled_action($hook, $args, $group)) {
-                if ($delay > 0) {
-                    as_enqueue_single_action(time() + $delay, $hook, $args, $group, true);
-                } else {
-                    as_enqueue_async_action($hook, $args, $group, true);
-                }
+            if ($delay > 0) {
+                as_enqueue_single_action(time() + $delay, $hook, [$args], $group, true);
+            } else {
+                as_enqueue_async_action($hook, [$args], $group, true);
             }
             return;
         }
-        if (false === wp_next_scheduled($hook, $args)) {
-            wp_schedule_single_event(time() + $delay, $hook, $args);
-        }
-    }
-
-    /**
-     * Push payload to DLQ.
-     *
-     * @param array<string,mixed> $payload
-     */
-    private function pushDlq(array $payload, string $error, int $attempt): void
-    {
-        global $wpdb;
-        $this->metrics->inc('dlq_push_total');
-        $wpdb->insert($this->dlqTable, [
-            'payload_json'  => wp_json_encode($payload),
-            'last_error'    => $error,
-            'attempts'      => $attempt,
-            'created_at_utc'=> gmdate('Y-m-d H:i:s'),
-            'status'        => 'ready',
-        ]);
+        wp_schedule_single_event(time() + $delay, $hook, [$args]);
     }
 }
