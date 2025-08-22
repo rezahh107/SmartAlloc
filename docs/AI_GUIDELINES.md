@@ -47,3 +47,9 @@ php scripts/scan-sql-prepare.php
 
 Review and justify any allowlist entries in `tools/sql-allowlist.json`.
 
+
+## Allocation Engine
+
+Scoring uses weights filterable through `smartalloc_scoring_weights`.
+All queued jobs must remain idempotent by guarding with dedupe keys when
+scheduling notifications or background tasks.
