@@ -12,6 +12,9 @@ require_once __DIR__ . '/../stubs/wp-stubs.php';
 require_once __DIR__ . '/BaseTestCase.php';
 require_once __DIR__ . '/_support/FaultFlags.php';
 require_once __DIR__ . '/_support/Gini.php';
+require_once __DIR__ . '/Fixtures/MentorFactory.php';
+require_once __DIR__ . '/Fixtures/StudentFactory.php';
+require_once __DIR__ . '/Fixtures/CrosswalkFactory.php';
 
 // Ensure WP_DEBUG is enabled but errors are not displayed
 if (!defined('WP_DEBUG')) {

@@ -26,6 +26,12 @@
         <testsuite name="Observability">
             <directory>tests/Observability</directory>
         </testsuite>
+        <testsuite name="BusinessLogic">
+            <directory>tests/Business</directory>
+        </testsuite>
+        <testsuite name="PropertyBased">
+            <directory>tests/Property</directory>
+        </testsuite>
     </testsuites>
     <coverage>
         <include>

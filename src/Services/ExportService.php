@@ -206,6 +206,9 @@ final class ExportService
                 
             case 'db':
                 $fieldName = $columnConfig['field_name'] ?? '';
+                if ($fieldName === 'postal_code' && !empty($row['postal_code_alias'])) {
+                    return $row['postal_code_alias'];
+                }
                 return $row[$fieldName] ?? '';
                 
             case 'empty':
