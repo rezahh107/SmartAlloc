@@ -2,15 +2,9 @@
 <?php
 declare(strict_types=1);
 
-$root = dirname(__DIR__);
-$pluginFile = $root . '/smart-alloc.php';
-$domain = '';
-if (is_file($pluginFile)) {
-    $content = (string) file_get_contents($pluginFile);
-    if (preg_match('/Text Domain:\s*(\S+)/i', $content, $m)) {
-        $domain = trim($m[1]);
-    }
-}
+$opts = getopt('', ['path:', 'domain:']);
+$root = $opts['path'] ?? dirname(__DIR__);
+$domain = $opts['domain'] ?? 'smartalloc';
 $potFile = $root . '/languages/' . $domain . '.pot';
 
 if (!is_file($potFile)) {
@@ -33,6 +27,7 @@ echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
 
 $dir = $root . '/artifacts/i18n';
 @mkdir($dir, 0777, true);
+file_put_contents($dir . '/pot-diff.json', json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 $md = "# POT Diff\n\n";
 $md .= 'Source strings: ' . count($sourceStrings) . "\n";
 $md .= 'POT strings: ' . count($potStrings) . "\n";

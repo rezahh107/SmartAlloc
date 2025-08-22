@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 $pluginFile = $root . '/smart-alloc.php';
-$expectedDomain = '';
+$expectedDomain = 'smartalloc';
 if (is_file($pluginFile)) {
     $content = (string) file_get_contents($pluginFile);
     if (preg_match('/Text Domain:\s*(\S+)/i', $content, $m)) {
@@ -17,6 +17,7 @@ $result = [
     'total_calls' => 0,
     'wrong_domain' => [],
     'placeholder_mismatch' => [],
+    'untranslated' => [],
     'files_scanned' => count($files),
 ];
 
@@ -41,6 +42,13 @@ foreach ($files as $file) {
     $count = count($tokens);
     for ($i = 0; $i < $count; $i++) {
         $t = $tokens[$i];
+        if (is_array($t) && $t[0] === T_ECHO) {
+            $j = $i + 1;
+            while ($j < $count && is_array($tokens[$j]) && $tokens[$j][0] === T_WHITESPACE) { $j++; }
+            if ($j < $count && is_array($tokens[$j]) && $tokens[$j][0] === T_CONSTANT_ENCAPSED_STRING) {
+                $result['untranslated'][] = ['file' => $file, 'line' => $t[2]];
+            }
+        }
         if (is_array($t) && $t[0] === T_STRING && isset($functions[$t[1]])) {
             $call = extractCall($tokens, $i);
             if ($call === null) {
@@ -77,6 +85,10 @@ foreach ($files as $file) {
         }
     }
 }
+
+$outDir = $root . '/artifacts/i18n';
+@mkdir($outDir, 0777, true);
+file_put_contents($outDir . '/i18n-lint.json', json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
 echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
 exit(0);

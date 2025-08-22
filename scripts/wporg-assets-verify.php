@@ -7,6 +7,9 @@ $dir = $root . '/.wordpress-org';
 $result = ['assets' => [], 'warnings' => []];
 
 if (!is_dir($dir)) {
+    $out = $root . '/artifacts/i18n';
+    @mkdir($out, 0777, true);
+    file_put_contents($out . '/wporg-assets-verify.json', json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
     exit(0);
 }
@@ -39,6 +42,9 @@ if ($table !== '') {
     echo $table . PHP_EOL;
 }
 
+$out = $root . '/artifacts/i18n';
+@mkdir($out, 0777, true);
+file_put_contents($out . '/wporg-assets-verify.json', json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
 exit(0);
 

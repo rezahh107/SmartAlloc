@@ -85,6 +85,16 @@ the manifest, version coherence and readme linting steps. RC/advisory runs mark
 the testcase skipped. Under `--profile=ga --enforce` the testcase fails when
 `dist_manifest_warnings` (default `0`) is exceeded.
 
+Additional testcases:
+
+- `I18N.Lint` – output from `scripts/i18n-lint.php` highlighting text-domain or
+  placeholder issues.
+- `WPOrg.Preflight` – results of `scripts/wporg-deploy-checklist.php` ensuring
+  required assets and a matching Stable tag.
+
+Both are skipped in RC runs and enforced only when GA mode is used with
+`--enforce`.
+
 The SQL prepare scanner integrates similarly. GA Enforcer runs
 `scan-sql-prepare.php` automatically and emits a testcase `SQL.Prepare` in its
 JUnit output. Advisory and RC profiles mark the testcase skipped with a message
