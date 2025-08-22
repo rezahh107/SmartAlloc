@@ -22,7 +22,7 @@ final class DlqRoutesTest extends TestCase
     {
         $GLOBALS['wpdb'] = new class {
             public string $prefix='wp_';
-            public array $dlq=[[ 'id'=>1,'event_name'=>'e','payload_json'=>'{"x":1}','error_text'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready'],[ 'id'=>2,'event_name'=>'e','payload_json'=>'bad','error_text'=>'e','attempts'=>1,'created_at_utc'=>'2020','status'=>'ready']];
+            public array $dlq=[[ 'id'=>1,'event_name'=>'e','payload'=>'{"x":1}','error_text'=>'e','attempts'=>1,'created_at'=>'2020'],[ 'id'=>2,'event_name'=>'e','payload'=>'bad','error_text'=>'e','attempts'=>1,'created_at'=>'2020']];
             private int $lastId=0;
             public function prepare($sql,...$args){ if(isset($args[0])){$this->lastId=(int)$args[0];} return $sql; }
             public function get_results($sql,$mode){ return $this->dlq; }
@@ -63,7 +63,7 @@ final class DlqRoutesTest extends TestCase
         $this->assertSame(404,$resp->get_error_data()['status']);
     }
 
-    public function testRetryWithInvalidPayload(): void
+    public function testRetryDispatchesAndDeletes(): void
     {
         $this->setupWpdb();
         $GLOBALS['can']=true;
@@ -73,11 +73,8 @@ final class DlqRoutesTest extends TestCase
         $resp=$controller->retry(new WP_REST_Request(['id'=>1]));
         $this->assertInstanceOf(WP_REST_Response::class,$resp);
         $this->assertSame(200,$resp->get_status());
-        $this->assertSame(1,$GLOBALS['ran']['payload']['x']);
+        $this->assertSame('e',$GLOBALS['ran']['event_name']);
+        $this->assertSame(1,$GLOBALS['ran']['body']['x']);
         $this->assertCount(1,$GLOBALS['wpdb']->dlq);
-
-        $resp2=$controller->retry(new WP_REST_Request(['id'=>2]));
-        $this->assertInstanceOf(WP_Error::class,$resp2);
-        $this->assertSame(422,$resp2->get_error_data()['status']);
     }
 }

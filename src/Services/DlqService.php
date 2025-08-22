@@ -18,41 +18,44 @@ final class DlqService
     }
 
     /**
-     * Push a payload to DLQ.
+     * Push an entry to the DLQ.
      *
-     * @param array<string,mixed> $payload
+     * @param array<string,mixed> $entry
      */
-    public function push(string $event, array $payload, string $error, int $attempts): void
+    public function push(array $entry): void
     {
         global $wpdb;
+
+        $payload = (array) ($entry['payload'] ?? []);
+        $payloadJson = $this->encode($payload);
+
+        $wpdb->query('START TRANSACTION');
         $wpdb->insert($this->table, [
-            'event_name'    => $event,
-            'payload_json'  => wp_json_encode($payload),
-            'error_text'    => $error,
-            'attempts'      => $attempts,
-            'status'        => 'ready',
-            'created_at_utc'=> gmdate('Y-m-d H:i:s'),
+            'event_name' => (string) ($entry['event_name'] ?? ''),
+            'payload'    => $payloadJson,
+            'attempts'   => (int) ($entry['attempts'] ?? 0),
+            'error_text' => (string) ($entry['error_text'] ?? ''),
+            'created_at' => gmdate('Y-m-d H:i:s'),
         ]);
+        $wpdb->query('COMMIT');
     }
 
     /**
-     * List last N DLQ items.
+     * List recent DLQ items.
      *
      * @return array<int,array<string,mixed>>
      */
-    public function list(int $limit = 200): array
+    public function listRecent(int $limit = 200): array
     {
         global $wpdb;
         $sql = $wpdb->prepare(
-            "SELECT id,event_name,payload_json,error_text,attempts,created_at_utc FROM {$this->table} WHERE status=%s ORDER BY id DESC LIMIT %d",
-            'ready',
+            "SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} ORDER BY created_at DESC LIMIT %d",
             $limit
         );
         // @security-ok-sql
         $rows = $wpdb->get_results($sql, ARRAY_A) ?: [];
         foreach ($rows as &$r) {
-            $r['payload'] = json_decode((string) $r['payload_json'], true);
-            unset($r['payload_json']);
+            $r['payload'] = json_decode((string) $r['payload'], true);
         }
         unset($r);
         return $rows;
@@ -67,14 +70,13 @@ final class DlqService
     {
         global $wpdb;
         $row = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM {$this->table} WHERE id=%d AND status=%s", $id, 'ready'),
+            $wpdb->prepare("SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} WHERE id=%d", $id),
             ARRAY_A
         );
         if (!$row) {
             return null;
         }
-        $row['payload'] = json_decode((string) $row['payload_json'], true);
-        unset($row['payload_json']);
+        $row['payload'] = json_decode((string) $row['payload'], true);
         return $row;
     }
 
@@ -85,16 +87,35 @@ final class DlqService
     }
 
     /**
-     * Retry a DLQ item.
+     * Encode payload deterministically.
+     *
+     * @param array<string,mixed> $data
      */
-    public function retry(int $id): bool
+    private function encode(array $data): string
     {
-        $row = $this->get($id);
-        if (!$row || !is_array($row['payload'])) {
-            return false;
+        ksort($data);
+        foreach ($data as &$v) {
+            if (is_array($v)) {
+                $v = $this->sortRecursive($v);
+            }
         }
-        do_action('smartalloc_notify', ['payload' => $row['payload'], '_attempt' => 1]);
-        $this->delete($id);
-        return true;
+        unset($v);
+        return wp_json_encode($data);
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>
+     */
+    private function sortRecursive(array $data): array
+    {
+        ksort($data);
+        foreach ($data as &$v) {
+            if (is_array($v)) {
+                $v = $this->sortRecursive($v);
+            }
+        }
+        unset($v);
+        return $data;
     }
 }

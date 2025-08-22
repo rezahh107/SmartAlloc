@@ -47,18 +47,30 @@ final class HealthCheckService
         }
 
         $dlqTable = $wpdb->prefix . 'salloc_dlq';
-        $dlqBacklog = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable} WHERE status='ready'") ?: 0);
+        $dlqBacklog = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable}") ?: 0); // @security-ok-sql
 
         $mentorsTable = $wpdb->prefix . 'salloc_mentors';
         $overCapacity = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$mentorsTable} WHERE assigned > 60") ?: 0);
 
-        $status = ($dbOk && $cacheOk && $dlqBacklog === 0 && $overCapacity === 0) ? 'good' : 'critical';
+        $hasPlaywright = class_exists('Playwright\\Browser') || file_exists(ABSPATH . '/../node_modules/.bin/playwright');
+        $hasCoverage   = function_exists('xdebug_info') || extension_loaded('pcov');
+        $hasScheduler  = function_exists('as_enqueue_async_action');
+
+        $status = 'good';
+        if (!$dbOk || !$cacheOk || $dlqBacklog !== 0 || $overCapacity !== 0) {
+            $status = 'critical';
+        } elseif (!$hasPlaywright || !$hasCoverage || !$hasScheduler) {
+            $status = 'recommended';
+        }
 
         $desc  = '<ul>';
         $desc .= '<li>DB: ' . ($dbOk ? 'ok' : 'error') . '</li>';
         $desc .= '<li>Queue: ' . ($cacheOk ? 'ok' : 'error') . '</li>';
         $desc .= '<li>DLQ backlog: ' . $dlqBacklog . '</li>';
         $desc .= '<li>Mentors over capacity: ' . $overCapacity . '</li>';
+        $desc .= '<li>Playwright: ' . ($hasPlaywright ? 'ok' : 'missing') . '</li>';
+        $desc .= '<li>Coverage driver: ' . ($hasCoverage ? 'ok' : 'missing') . '</li>';
+        $desc .= '<li>Action Scheduler: ' . ($hasScheduler ? 'ok' : 'missing') . '</li>';
         $desc .= '</ul>';
 
         return [

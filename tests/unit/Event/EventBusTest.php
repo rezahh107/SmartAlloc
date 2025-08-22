@@ -23,7 +23,7 @@ final class EventBusTest extends TestCase
                 $this->runs[] = ['listener' => $listener];
                 return count($this->runs);
             }
-            public function finishListenerRun(int $listenerRunId, string $status, ?string $error): void {
+            public function finishListenerRun(int $listenerRunId, string $status, ?string $error, int $durationMs): void {
                 $this->runs[$listenerRunId-1]['status'] = $status;
             }
             public function finishEvent(int $eventLogId, string $status, ?string $error, int $durationMs): void {}

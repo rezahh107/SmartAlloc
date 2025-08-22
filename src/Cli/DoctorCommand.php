@@ -54,6 +54,10 @@ final class DoctorCommand
         $routes = rest_get_server()->get_routes();
         $rest = isset($routes['/smartalloc/v1/health']);
 
+        $dlqTable = $wpdb->prefix . 'salloc_dlq';
+        $backlog = (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable}") ?: 0); // @security-ok-sql
+        $queueOk = $backlog < 100;
+
         return [
             ['label' => __('DB tables', 'smartalloc'), 'status' => (bool) $exists],
             ['label' => __('DB indices', 'smartalloc'), 'status' => (bool) $index],
@@ -61,6 +65,7 @@ final class DoctorCommand
             ['label' => __('Cron scheduled', 'smartalloc'), 'status' => $cron],
             ['label' => __('Settings parsable', 'smartalloc'), 'status' => $settings],
             ['label' => __('REST routes', 'smartalloc'), 'status' => $rest],
+            ['label' => __('Queue backlog', 'smartalloc'), 'status' => $queueOk],
         ];
     }
 }

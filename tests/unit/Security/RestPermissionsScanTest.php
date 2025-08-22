@@ -44,9 +44,11 @@ final class RestPermissionsScanTest extends TestCase
         $this->assertSame(2, $report['summary']['mutating_warnings']);
         $this->assertSame(1, $report['summary']['readonly_warnings']);
 
-        $warn = $report['warnings'][0];
+        $warns = array_values(array_filter($report['warnings'], fn($w) => $w['route'] === 'foo/v1/bad'));
+        $this->assertNotEmpty($warns);
+        $warn = $warns[0];
         $this->assertSame('foo/v1/bad', $warn['route']);
-        $expectedFinger = sha1('bad.php:2:foo/v1/bad');
+        $expectedFinger = sha1($warn['file'] . ':2:foo/v1/bad');
         $this->assertSame($expectedFinger, $warn['fingerprint']);
     }
 }

@@ -31,25 +31,26 @@ final class NotificationService
     /**
      * Queue notification job.
      *
-     * @param array<string,mixed> $payload
+     * @param array<string,mixed> $payload { event_name, body, _attempt? }
      */
     public function send(array $payload): void
     {
-        $this->enqueue($payload, 1, 0);
+        $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
+        $this->enqueue($payload, 0);
     }
 
     /**
      * Process queued job.
      *
-     * @param array<string,mixed> $args
+     * @param array<string,mixed> $payload
      */
-    public function handle(array $args): void
+    public function handle(array $payload): void
     {
-        $payload = $args['payload'] ?? [];
-        $attempt = (int) ($args['_attempt'] ?? 1);
+        $attempt = (int) ($payload['_attempt'] ?? 1);
         try {
             $this->circuitBreaker->guard('notify');
-            $result = apply_filters('smartalloc_notify_transport', true, $payload, $attempt);
+            $body = $payload['body'] ?? [];
+            $result = apply_filters('smartalloc_notify_transport', true, $body, $attempt);
             if ($result !== true) {
                 throw new \RuntimeException(is_string($result) ? $result : 'notify failed');
             }
@@ -60,13 +61,19 @@ final class NotificationService
             $this->circuitBreaker->failure('notify');
             $this->metrics->inc('notify_failed_total');
             $this->logger->warning('notify.fail', ['error' => $e->getMessage(), 'attempt' => $attempt]);
-            if ($attempt < 5) {
+            if ($attempt <= 5) {
                 $this->metrics->inc('notify_retry_total');
+                $payload['_attempt'] = $attempt + 1;
                 $delay = $this->retry->backoff($attempt);
-                $this->enqueue($payload, $attempt + 1, $delay);
+                $this->enqueue($payload, $delay);
                 return;
             }
-            $this->dlq->push((string) ($payload['event_name'] ?? 'notify'), $payload, $e->getMessage(), $attempt);
+            $this->dlq->push([
+                'event_name' => (string) ($payload['event_name'] ?? 'notify'),
+                'payload'    => $body,
+                'attempts'   => $attempt,
+                'error_text' => $e->getMessage(),
+            ]);
             $this->metrics->inc('dlq_push_total');
         }
     }
@@ -76,19 +83,18 @@ final class NotificationService
      *
      * @param array<string,mixed> $payload
      */
-    private function enqueue(array $payload, int $attempt, int $delay): void
+    private function enqueue(array $payload, int $delay): void
     {
-        $args = ['payload' => $payload, '_attempt' => $attempt];
         $hook = 'smartalloc_notify';
         if (function_exists('as_enqueue_async_action')) {
             $group = 'smartalloc';
             if ($delay > 0) {
-                as_enqueue_single_action(time() + $delay, $hook, [$args], $group, true);
+                as_enqueue_single_action(time() + $delay, $hook, [$payload], $group, true);
             } else {
-                as_enqueue_async_action($hook, [$args], $group, true);
+                as_enqueue_async_action($hook, [$payload], $group, true);
             }
             return;
         }
-        wp_schedule_single_event(time() + $delay, $hook, [$args]);
+        wp_schedule_single_event(time() + $delay, $hook, [$payload]);
     }
 }

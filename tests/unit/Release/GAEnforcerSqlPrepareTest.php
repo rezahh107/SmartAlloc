@@ -74,6 +74,7 @@ final class GAEnforcerSqlPrepareTest extends TestCase
             'counts' => ['violations' => 1, 'allowlisted' => 0],
         ];
         $this->write('artifacts/security/sql-prepare.json', json_encode($report));
+        $this->write('artifacts/schema/schema-validate.json', json_encode(['count' => 0]));
 
         $cmd = 'php ' . escapeshellarg($this->dir . '/scripts/ga-enforcer.php') . ' --profile=rc --junit';
         exec($cmd, $out, $code);

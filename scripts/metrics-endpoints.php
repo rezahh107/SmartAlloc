@@ -71,9 +71,8 @@ function sa_metrics_handle(WP_REST_Request $request)
 
     // DLQ backlog stats
     $dlq = [
-        'ready'  => (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable} WHERE status='ready'") ?: 0),
-        'failed' => (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable} WHERE status='failed'") ?: 0),
-    ];
+        'total' => (int) ($wpdb->get_var("SELECT COUNT(*) FROM {$dlqTable}") ?: 0),
+    ]; // @security-ok-sql
 
     $metrics = [
         'allocations'       => [

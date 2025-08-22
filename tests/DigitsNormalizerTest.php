@@ -83,7 +83,7 @@ class DigitsNormalizerTest extends BaseTestCase
         $eventStore = new class implements EventStoreInterface {
             public function insertEventIfNotExists(string $event, string $dedupeKey, array $payload): int { return 1; }
             public function startListenerRun(int $eventLogId, string $listener): int { return 1; }
-            public function finishListenerRun(int $listenerRunId, string $status, ?string $error): void {}
+            public function finishListenerRun(int $listenerRunId, string $status, ?string $error, int $durationMs): void {}
             public function finishEvent(int $eventLogId, string $status, ?string $error, int $durationMs): void {}
         };
 

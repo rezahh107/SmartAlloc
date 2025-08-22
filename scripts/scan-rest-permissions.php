@@ -140,14 +140,14 @@ function rp_parse_call(string $call, string $file, string $src): ?array
     $route = $m['route'];
     $argsStr = substr($call, strpos($call, $m[0]) + strlen($m[0]));
     $perm = null; $callback = null; $methods = [];
-    if (preg_match('/permission_callback\s*=>\s*([^,\)]+)/s', $argsStr, $pm)) {
-        $perm = trim($pm[1]);
+    if (preg_match('/["\']permission_callback["\']\s*=>\s*([^,\)]+)/s', $argsStr, $pm)) {
+        $perm = trim($pm[1], " \t\n'\"");
     }
-    if (preg_match('/callback\s*=>\s*([^,\)]+)/s', $argsStr, $cm)) {
-        $callback = trim($cm[1]);
+    if (preg_match('/["\']callback["\']\s*=>\s*([^,\)]+)/s', $argsStr, $cm)) {
+        $callback = trim($cm[1], " \t\n'\"");
     }
-    if (preg_match('/methods\s*=>\s*([^,\)]+)/s', $argsStr, $mm)) {
-        $methods = rp_parse_methods($mm[1]);
+    if (preg_match('/["\']methods["\']\s*=>\s*([^,\)]+)/s', $argsStr, $mm)) {
+        $methods = rp_parse_methods(trim($mm[1], " \t\n'\""));
     }
     $line = 1 + substr_count(substr($src, 0, strpos($src, $call)), "\n");
     $meta = [

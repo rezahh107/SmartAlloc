@@ -43,8 +43,24 @@ final class DlqController
         if (!current_user_can(SMARTALLOC_CAP)) {
             return new WP_Error('forbidden', 'Forbidden', ['status' => 403]);
         }
-        $rows = $this->dlq->list();
-        return new WP_REST_Response($rows, 200);
+        $rows = $this->dlq->listRecent();
+        $out = [];
+        foreach ($rows as $r) {
+            $preview = substr(
+                (string) wp_json_encode($r['payload']),
+                0,
+                200
+            );
+            $out[] = [
+                'id'         => (int) $r['id'],
+                'event_name' => (string) $r['event_name'],
+                'attempts'   => (int) $r['attempts'],
+                'error_text' => $r['error_text'],
+                'created_at' => $r['created_at'],
+                'payload'    => $preview,
+            ];
+        }
+        return new WP_REST_Response($out, 200);
     }
 
     /**
@@ -60,10 +76,11 @@ final class DlqController
         if (!$row) {
             return new WP_Error('not_found', 'Not found', ['status' => 404]);
         }
-        if (!is_array($row['payload'])) {
-            return new WP_Error('invalid_payload', 'Invalid payload', ['status' => 422]);
-        }
-        do_action('smartalloc_notify', ['payload' => $row['payload'], '_attempt' => 1]);
+        do_action('smartalloc_notify', [
+            'event_name' => (string) $row['event_name'],
+            'body'       => $row['payload'],
+            '_attempt'   => 1,
+        ]);
         $this->dlq->delete($id);
         return new WP_REST_Response(['ok' => true], 200);
     }

@@ -77,11 +77,19 @@ final class EventBus
             $listenerName = get_class($listener);
             $listenerRunId = $this->eventStore->startListenerRun($eventId, $listenerName);
 
+            $lStart = microtime(true);
             try {
-                $this->executeListenerWithRetry($listener, $event, $payload, $listenerRunId);
+                $this->executeListenerWithRetry($listener, $event, $payload);
+                $lDuration = (int) round((microtime(true) - $lStart) * 1000);
+                $this->eventStore->finishListenerRun($listenerRunId, 'completed', null, $lDuration);
+                $this->logger->info('listener.success', [
+                    'event' => $event,
+                    'listener' => $listenerName,
+                ]);
             } catch (\Throwable $e) {
+                $lDuration = (int) round((microtime(true) - $lStart) * 1000);
                 $failed = true;
-                $this->eventStore->finishListenerRun($listenerRunId, 'failed', $e->getMessage());
+                $this->eventStore->finishListenerRun($listenerRunId, 'failed', $e->getMessage(), $lDuration);
                 $this->logger->error('listener.error', [
                     'event' => $event,
                     'listener' => $listenerName,
@@ -107,36 +115,24 @@ final class EventBus
      * Execute listener with retry logic and timeout
      */
     private function executeListenerWithRetry(
-        ListenerInterface $listener, 
-        string $event, 
-        array $payload, 
-        int $listenerRunId
+        ListenerInterface $listener,
+        string $event,
+        array $payload
     ): void {
         $listenerName = get_class($listener);
         $attempts = 0;
         $lastError = null;
-        
+
         while ($attempts < $this->maxRetries) {
             $attempts++;
-            
+
             try {
-                // Set timeout for this execution
                 $this->setTimeout($this->defaultTimeout);
-                
                 $listener->handle($event, $payload);
-                
-                $this->eventStore->finishListenerRun($listenerRunId, 'completed', null);
-                $this->logger->info('listener.success', [
-                    'event' => $event,
-                    'listener' => $listenerName,
-                    'attempts' => $attempts
-                ]);
-                
-                return; // Success, exit retry loop
-                
+                return; // Success
             } catch (\Throwable $e) {
                 $lastError = $e;
-                
+
                 if ($attempts < $this->maxRetries) {
                     $this->logger->warning('listener.retry', [
                         'event' => $event,
@@ -145,14 +141,13 @@ final class EventBus
                         'max_retries' => $this->maxRetries,
                         'error' => $e->getMessage()
                     ]);
-                    
-                    // Wait before retry (exponential backoff)
+
                     $waitTime = min(30, pow(2, $attempts - 1));
                     sleep($waitTime);
                 }
             }
         }
-        
+
         // All retries failed
         throw new \RuntimeException(
             "Listener {$listenerName} failed after {$this->maxRetries} attempts. Last error: " . $lastError->getMessage()

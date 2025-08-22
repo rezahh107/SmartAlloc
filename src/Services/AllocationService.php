@@ -59,21 +59,17 @@ class AllocationService
         global $wpdb;
         $table = $wpdb->prefix . 'salloc_mentors';
 
-        $where = ['active = 1', 'assigned < capacity'];
-        $params = [];
-        if (!empty($student['gender'])) {
-            $where[] = 'gender = %s';
-            $params[] = $student['gender'];
+        if (empty($student['gender']) || empty($student['center'])) {
+            return [];
         }
-        if (!empty($student['center'])) {
-            $where[] = 'center = %s';
-            $params[] = $student['center'];
-        }
+
+        $where  = 'active = 1 AND assigned < capacity AND gender = %s AND center = %s';
+        $params = [$student['gender'], $student['center']];
         if (!empty($student['group_code'])) {
-            $where[] = 'group_code = %s';
+            $where .= ' AND group_code = %s';
             $params[] = $student['group_code'];
         }
-        $sql = "SELECT mentor_id, gender, center, group_code, capacity, assigned FROM {$table} WHERE " . implode(' AND ', $where) . " ORDER BY mentor_id ASC LIMIT 50";
+        $sql = "SELECT mentor_id, gender, center, group_code, capacity, assigned FROM {$table} WHERE {$where} ORDER BY mentor_id ASC LIMIT 50";
         $query = $wpdb->prepare($sql, $params);
         // @security-ok-sql
         $rows = $wpdb->get_results($query, ARRAY_A);
@@ -111,8 +107,8 @@ class AllocationService
         $payload = [
             'student_id' => $studentId,
             'mentor_id'  => $mentorId,
+            'entry_id'   => $studentId,
             'ts_utc'     => gmdate('Y-m-d H:i:s'),
-            'dedupe_key' => 'alloc:' . $studentId . ':v1',
         ];
         if (!empty($_SERVER['HTTP_X_TRACE_ID'])) {
             $payload['trace_id'] = sanitize_text_field((string) $_SERVER['HTTP_X_TRACE_ID']);
