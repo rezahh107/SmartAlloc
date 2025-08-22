@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Services\DbSafe;
+
 /**
  * Dead letter queue storage service.
  */
@@ -48,9 +50,9 @@ final class DlqService
     public function listRecent(int $limit = 200): array
     {
         global $wpdb;
-        $sql = $wpdb->prepare(
+        $sql = DbSafe::mustPrepare(
             "SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} ORDER BY created_at DESC LIMIT %d",
-            $limit
+            [$limit]
         );
         // @security-ok-sql
         $rows = $wpdb->get_results($sql, ARRAY_A) ?: [];
@@ -69,10 +71,11 @@ final class DlqService
     public function get(int $id): ?array
     {
         global $wpdb;
-        $row = $wpdb->get_row(
-            $wpdb->prepare("SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} WHERE id=%d", $id),
-            ARRAY_A
+        $sql = DbSafe::mustPrepare(
+            "SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} WHERE id=%d",
+            [$id]
         );
+        $row = $wpdb->get_row($sql, ARRAY_A);
         if (!$row) {
             return null;
         }

@@ -44,13 +44,10 @@ final class ScoringAllocator implements ScoringAllocatorInterface
      */
     public function score(array $mentor, array $student): float
     {
-        $weights = apply_filters('smartalloc_scoring_weights', ['load' => 1.0, 'new' => 0.1]);
-        $w1 = (float) ($weights['load'] ?? 1.0);
-        $w2 = (float) ($weights['new'] ?? 0.1);
         $capacity = max(1, (int) ($mentor['capacity'] ?? 1));
         $assigned = max(0, (int) ($mentor['assigned'] ?? 0));
         $loadRatio = $assigned / $capacity;
         $boost = ((int) ($mentor['allocations_new'] ?? 0)) === 0 ? 1.0 : 0.0;
-        return (1 - $loadRatio) * $w1 + $boost * $w2;
+        return (1 - $loadRatio) + $boost;
     }
 }

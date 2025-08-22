@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Services;
 
 use SmartAlloc\Contracts\EventStoreInterface;
+use SmartAlloc\Services\DbSafe;
 
 /**
  * WordPress-specific event store implementation
@@ -25,17 +26,14 @@ final class EventStoreWp implements EventStoreInterface
     {
         global $wpdb;
 
-        $result = $wpdb->query(
-            $wpdb->prepare(
-                "INSERT INTO {$this->eventTable}(event_name, dedup_key, payload_json, status, created_at)
-                 VALUES (%s, %s, %s, 'started', %s)
-                 ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)",
-                $event,
-                $dedupeKey,
-                $this->encode($payload),
-                gmdate('Y-m-d H:i:s')
-            )
-        );
+        $sql = "INSERT INTO {$this->eventTable}(event_name, dedup_key, payload_json, status, created_at) VALUES (%s, %s, %s, 'started', %s) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)";
+        $prepared = DbSafe::mustPrepare($sql, [
+            $event,
+            $dedupeKey,
+            $this->encode($payload),
+            gmdate('Y-m-d H:i:s'),
+        ]);
+        $result = $wpdb->query($prepared);
 
         if ($result === false) {
             throw new \RuntimeException('Database insertEvent error: ' . $wpdb->last_error);

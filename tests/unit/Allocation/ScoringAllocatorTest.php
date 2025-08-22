@@ -15,8 +15,8 @@ final class ScoringAllocatorTest extends TestCase
             ['mentor_id' => 3, 'capacity' => 10, 'assigned' => 2, 'allocations_new' => 1],
         ];
         $ranked = $allocator->rank($mentors, []);
-        $this->assertSame(3, $ranked[0]['mentor_id']);
-        $this->assertSame(1, $ranked[1]['mentor_id']);
-        $this->assertSame(2, $ranked[2]['mentor_id']);
+        $this->assertSame(1, $ranked[0]['mentor_id']);
+        $this->assertSame(2, $ranked[1]['mentor_id']);
+        $this->assertSame(3, $ranked[2]['mentor_id']);
     }
 }

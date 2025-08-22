@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace SmartAlloc\Tests\Release;
 
 use PHPUnit\Framework\TestCase;
+use SmartAlloc\Services\{AllocationService,Logging,Metrics,ScoringAllocator,DlqService,EventStoreWp};
+use SmartAlloc\Event\EventBus;
+use SmartAlloc\Contracts\EventStoreInterface;
 
 final class GAEnforcerSqlPrepareTest extends TestCase
 {
@@ -92,5 +95,52 @@ final class GAEnforcerSqlPrepareTest extends TestCase
         $case = $xml->xpath('//testcase[@name="SQL.Prepare"]')[0];
         $this->assertTrue(isset($case->failure));
         $this->assertStringContainsString('bad.php:1', (string)$case->failure['message']);
+    }
+
+    public function test_hot_paths_require_prepared_sql(): void
+    {
+        global $wpdb;
+        $wpdb = new class {
+            public string $prefix = 'wp_';
+            public int $rows_affected = 1;
+            public function prepare($sql, $params) { return $sql; }
+            public function query($sql) { }
+            public function get_results($sql, $mode = null) { return []; }
+            public function insert($t, $d) { }
+            public function get_row($sql, $mode = null) { return null; }
+        };
+        $logger = new Logging();
+        $metrics = new Metrics();
+        $store = new class implements EventStoreInterface {
+            public function insertEventIfNotExists(string $e,string $k,array $p): int { return 1; }
+            public function startListenerRun(int $e,string $l): int { return 1; }
+            public function finishListenerRun(int $i,string $s,?string $er,int $d): void {}
+            public function finishEvent(int $i,string $s,?string $e,int $d): void {}
+        };
+        $bus = new EventBus($logger, $store);
+
+        $alloc = new AllocationService($logger, $bus, $metrics, new ScoringAllocator());
+        try {
+            $alloc->assign(['id' => 1, 'gender' => 'M', 'center' => 'C']);
+            $this->fail('Allocation did not enforce prepare');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('SQL', $e->getMessage());
+        }
+
+        $dlq = new DlqService();
+        try {
+            $dlq->listRecent();
+            $this->fail('DLQ did not enforce prepare');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('SQL', $e->getMessage());
+        }
+
+        $store2 = new EventStoreWp();
+        try {
+            $store2->insertEventIfNotExists('Evt', 'k', []);
+            $this->fail('Event store did not enforce prepare');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('SQL', $e->getMessage());
+        }
     }
 }

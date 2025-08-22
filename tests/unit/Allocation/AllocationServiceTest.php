@@ -27,7 +27,16 @@ final class AllocationServiceTest extends TestCase
                 4 => ['mentor_id'=>4,'gender'=>'M','center'=>'B','group_code'=>'G1','capacity'=>2,'assigned'=>0,'active'=>1,'allocations_new'=>0],
                 5 => ['mentor_id'=>5,'gender'=>'F','center'=>'A','group_code'=>'G1','capacity'=>2,'assigned'=>0,'active'=>1,'allocations_new'=>0],
             ];
-            public function prepare($sql,...$args){ $this->params = is_array($args[0]) ? $args[0] : $args; return $sql; }
+            public function prepare($sql,...$args){
+                $params = is_array($args[0] ?? null) ? $args[0] : $args;
+                $this->params = $params;
+                foreach ($params as $p) {
+                    $sql = preg_replace('/%d/', (string) (int) $p, $sql, 1);
+                    $sql = preg_replace('/%s/', "'" . $p . "'", $sql, 1);
+                    $sql = preg_replace('/%f/', (string) (float) $p, $sql, 1);
+                }
+                return $sql;
+            }
             public function get_results($sql,$mode){
                 [$gender,$center,$group] = $this->params;
                 $out = array_filter($this->mentors, function($m) use($gender,$center,$group){
