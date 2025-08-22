@@ -225,7 +225,7 @@ function rp_rel(string $path): string
     return $path;
 }
 
-if (PHP_SAPI === 'cli' && realpath($argv[0]) === __FILE__) {
+if (PHP_SAPI === 'cli' && realpath($_SERVER['argv'][0] ?? '') === __FILE__) {
     $opts = getopt('', ['output::','allowlist::','q']);
     $root = dirname(__DIR__);
     foreach ($argv as $i => $a) {

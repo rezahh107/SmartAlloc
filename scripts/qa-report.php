@@ -68,6 +68,18 @@ function qa_report(string $root, string $outDir): array
         $notes[] = 'secrets report missing';
     }
 
+    $headers = ['missing' => null, 'allowlisted' => null];
+    $hdrFile = $root . '/artifacts/security/headers.json';
+    if (is_file($hdrFile)) {
+        $data = json_decode((string)file_get_contents($hdrFile), true);
+        if (is_array($data) && isset($data['counts'])) {
+            $headers['missing'] = (int)($data['counts']['missing'] ?? 0);
+            $headers['allowlisted'] = (int)($data['counts']['allowlisted'] ?? 0);
+        }
+    } else {
+        $notes[] = 'headers report missing';
+    }
+
     $license = ['unapproved' => null];
     $licFile = $root . '/artifacts/compliance/license-audit.json';
     if (is_file($licFile)) {
@@ -79,7 +91,7 @@ function qa_report(string $root, string $outDir): array
         $notes[] = 'license audit missing';
     }
 
-    ksort($rest); ksort($sql); ksort($secrets); ksort($license);
+    ksort($rest); ksort($sql); ksort($secrets); ksort($headers); ksort($license);
 
     $summary = [
         'coverage_pct' => $coverage,
@@ -87,6 +99,7 @@ function qa_report(string $root, string $outDir): array
         'rest_permissions' => $rest,
         'sql_prepare' => $sql,
         'secrets'     => $secrets,
+        'headers'     => $headers,
         'license'     => $license,
     ];
     ksort($summary);
@@ -113,6 +126,7 @@ function qa_report(string $root, string $outDir): array
     $html .= '<li>REST read-only warnings: ' . ($rest['readonly_warnings'] ?? 'N/A') . '</li>';
     $html .= '<li>SQL violations: ' . ($sql['violations'] ?? 'N/A') . ', allowlisted: ' . ($sql['allowlisted'] ?? 'N/A') . '</li>';
     $html .= '<li>Secret violations: ' . ($secrets['violations'] ?? 'N/A') . ', allowlisted: ' . ($secrets['allowlisted'] ?? 'N/A') . '</li>';
+    $html .= '<li>Headers missing: ' . ($headers['missing'] ?? 'N/A') . ', allowlisted: ' . ($headers['allowlisted'] ?? 'N/A') . '</li>';
     $html .= '<li>Unapproved licenses: ' . ($license['unapproved'] ?? 'N/A') . '</li>';
     if ($notes) {
         $html .= '<li>Notes<ul>';
@@ -127,7 +141,7 @@ function qa_report(string $root, string $outDir): array
     return $report;
 }
 
-if (PHP_SAPI === 'cli' && realpath($argv[0]) === __FILE__) {
+if (PHP_SAPI === 'cli' && realpath($_SERVER['argv'][0] ?? '') === __FILE__) {
     $root = dirname(__DIR__);
     $opts = getopt('', ['output::','q']);
     $outDir = $opts['output'] ?? ($root . '/artifacts/qa');

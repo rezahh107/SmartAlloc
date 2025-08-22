@@ -45,6 +45,11 @@ if [ -f scripts/license-audit.php ]; then
     run_step "License audit" "php scripts/license-audit.php > licenses.json"
 fi
 
+# Security headers
+if [ -f scripts/headers-guard.php ]; then
+    run_step "Headers guard" "php scripts/headers-guard.php --q"
+fi
+
 # I18N lint
 if [ -f scripts/i18n-lint.php ]; then
     run_step "I18N lint" "php scripts/i18n-lint.php > i18n-lint.json"
@@ -85,15 +90,41 @@ if [ -f scripts/qa-report.php ]; then
     run_step "QA report" "php scripts/qa-report.php"
 fi
 
-# HTML index (optional)
-if [ -f scripts/qa-index.php ]; then
-    run_step "QA index" "php scripts/qa-index.php"
-fi
-
 # QA bundle package
 if [ -f scripts/qa-bundle.php ]; then
     run_step "QA bundle" "php scripts/qa-bundle.php"
 fi
+
+# Aggregate index
+out_dir="artifacts/qa"
+mkdir -p "$out_dir"
+declare -a qa_files=(
+    "coverage/coverage.json"
+    "schema/schema-validate.json"
+    "security/sql-prepare.json"
+    "security/rest-permissions.json"
+    "security/secrets.json"
+    "compliance/license-audit.json"
+    "security/headers.json"
+    "qa-report.html"
+    "qa-report.json"
+)
+links=()
+for f in "${qa_files[@]}"; do
+    path="artifacts/$f"
+    if [ -f "$path" ]; then
+        rel="../${f}"
+        links+=("<li><a href=\"$rel\">$rel</a></li>")
+    fi
+done
+IFS=$'\n' sorted=( $(sort <<<"${links[*]}") )
+{
+    echo '<!DOCTYPE html><html dir="rtl"><meta charset="utf-8"><body><ul>'
+    for l in "${sorted[@]}"; do
+        echo "$l"
+    done
+    echo '</ul></body></html>'
+} > "$out_dir/index.html"
 
 echo "QA Orchestrator Summary:"
 for line in "${summary[@]}"; do
