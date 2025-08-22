@@ -7,6 +7,7 @@ namespace SmartAlloc\Integration;
 use SmartAlloc\Container;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\LoggerInterface;
+use SmartAlloc\Integration\GravityForms\Form150;
 
 /**
  * Gravity Forms integration
@@ -27,6 +28,8 @@ final class GravityForms
      */
     public function register(): void
     {
+        (new Form150())->register();
+
         // Form submission hook
         add_action('gform_after_submission', [$this, 'handleFormSubmission'], 10, 2);
         
