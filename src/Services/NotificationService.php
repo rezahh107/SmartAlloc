@@ -7,6 +7,7 @@ namespace SmartAlloc\Services;
 use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
+use SmartAlloc\Testing\FaultFlags;
 
 /**
  * Notification queue with circuit breaker, retries and DLQ.
@@ -50,22 +51,21 @@ final class NotificationService
         $body = $payload['body'] ?? [];
         try {
             $delay = 0;
-            $partial = [];
             if (function_exists('apply_filters')) {
                 $delay = (int) apply_filters('smartalloc_test_fault_latency_ms', 0);
-                $partial = apply_filters('smartalloc_test_fault_partial_service', []);
                 if (isset($GLOBALS['filters']['smartalloc_test_fault_latency_ms'])) {
                     $delay = (int) $GLOBALS['filters']['smartalloc_test_fault_latency_ms']($delay);
-                }
-                if (isset($GLOBALS['filters']['smartalloc_test_fault_partial_service'])) {
-                    $partial = $GLOBALS['filters']['smartalloc_test_fault_partial_service']($partial);
                 }
             }
             if ($delay > 0) {
                 usleep($delay * 1000);
             }
-            if (!empty($partial['notify'])) {
-                throw new \RuntimeException('notify unavailable');
+            $ff = FaultFlags::get();
+            if (!empty($ff['notify_partial_fail'])) {
+                $h = crc32(json_encode($payload));
+                if (($h % 10) < 3) {
+                    throw new \RuntimeException('Notify failed (test)');
+                }
             }
             $this->circuitBreaker->guard('notify');
             $result = true;

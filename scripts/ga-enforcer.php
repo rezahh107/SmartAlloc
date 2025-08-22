@@ -256,6 +256,9 @@ $covJson = $root . '/artifacts/coverage/coverage.json';
 if (is_file($covJson)) {
     $data = json_decode((string)file_get_contents($covJson), true);
     if (is_array($data)) {
+        if (($data['source'] ?? '') === 'none') {
+            $warnings[] = 'coverage driver none';
+        }
         $pct = $data['totals']['pct'] ?? null;
         if ($pct !== null) {
             $signals['coverage_pct'] = (float)$pct;

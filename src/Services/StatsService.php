@@ -53,4 +53,27 @@ final class StatsService
         
         $this->logger->info('stats.rebuilt', ['date' => gmdate('Y-m-d')]);
     }
-} 
+
+    /**
+     * Compute Gini coefficient for array of non-negative numbers.
+     *
+     * @param array<int|float> $loads
+     */
+    public static function gini(array $loads): float
+    {
+        $n = count($loads);
+        if ($n === 0) {
+            return 0.0;
+        }
+        sort($loads);
+        $cum = 0.0;
+        $sum = array_sum($loads);
+        if ($sum == 0.0) {
+            return 0.0;
+        }
+        foreach ($loads as $i => $v) {
+            $cum += ($i + 1) * $v;
+        }
+        return (($n + 1) - 2 * $cum / $sum) * (1 / $n);
+    }
+}

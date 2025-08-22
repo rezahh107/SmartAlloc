@@ -192,6 +192,30 @@ composer test
 vendor/bin/phpunit tests/DigitsNormalizerTest.php
 ```
 
+## Test Mode & Chaos Flags
+
+When `SMARTALLOC_TEST_MODE` is true, test code can toggle synthetic faults via `SmartAlloc\Testing\TestFilters`:
+
+```php
+use SmartAlloc\Testing\TestFilters;
+
+TestFilters::set([
+    'db_outage' => true,
+    'latency_ms' => 50,
+]);
+// run code under test
+TestFilters::reset();
+```
+
+Supported flags: `db_outage`, `latency_ms`, `memory_pressure_mb`, `notify_partial_fail`, `export_partial_fail`.
+
+Chaos and data-quality suites can be run separately:
+
+```bash
+vendor/bin/phpunit --testsuite ChaosEngineering
+vendor/bin/phpunit --testsuite DataQuality
+```
+
 ## End-to-End Testing
 
 Run a11y and editor smoke tests via Playwright using one of three paths:

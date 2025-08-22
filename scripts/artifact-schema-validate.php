@@ -54,8 +54,6 @@ if (is_file($manifest)) {
             $warnings[] = ['file' => $rel, 'reason' => 'legacy files[] present; use entries[] as canonical'];
         }
     }
-} else {
-    $warnings[] = ['file' => substr($manifest, strlen($root) + 1), 'reason' => 'missing file'];
 }
 
 usort(
