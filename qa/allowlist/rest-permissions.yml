@@ -1,0 +1,3 @@
+# Routes allowed to use __return_true for read-only access
+# Format: - namespace/route (no trailing slashes)
+- smartalloc/v1/public

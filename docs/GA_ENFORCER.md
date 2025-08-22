@@ -88,6 +88,12 @@ containing the violation and allowlist counts. When run with
 fail and the first few `file:line` locations are included in the failure
 message.
 
+The REST permission scanner (`scan-rest-permissions.php`) is also invoked
+automatically. Its JUnit testcase `REST.Permissions` is skipped in RC/advisory
+runs and fails under `--profile=ga --enforce` when mutating routes have any
+warnings or when read‑only warnings exceed the configured
+`rest_permission_violations` threshold.
+
 ### Profiles
 
 * RC: `coverage_pct_min` 60, `schema_warnings` ≤ 3
