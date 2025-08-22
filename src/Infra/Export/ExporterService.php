@@ -59,6 +59,25 @@ class ExporterService
             $start = microtime(true);
             $this->metrics->gauge('exports_in_progress', 1);
 
+            $delay = 0;
+            $partial = [];
+            if (function_exists('apply_filters')) {
+                $delay = (int) apply_filters('smartalloc_test_fault_latency_ms', 0);
+                $partial = apply_filters('smartalloc_test_fault_partial_service', []);
+                if (isset($GLOBALS['filters']['smartalloc_test_fault_latency_ms'])) {
+                    $delay = (int) $GLOBALS['filters']['smartalloc_test_fault_latency_ms']($delay);
+                }
+                if (isset($GLOBALS['filters']['smartalloc_test_fault_partial_service'])) {
+                    $partial = $GLOBALS['filters']['smartalloc_test_fault_partial_service']($partial);
+                }
+            }
+            if ($delay > 0) {
+                usleep($delay * 1000);
+            }
+            if (!empty($partial['export'])) {
+                throw new \RuntimeException('export unavailable');
+            }
+
             $upload = wp_upload_dir();
             $dir    = trailingslashit($upload['basedir']) . 'smartalloc/exports/' . gmdate('Y/m/');
             wp_mkdir_p($dir);

@@ -10,6 +10,8 @@ define('PHPUNIT_RUNNING', true);
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../stubs/wp-stubs.php';
 require_once __DIR__ . '/BaseTestCase.php';
+require_once __DIR__ . '/_support/FaultFlags.php';
+require_once __DIR__ . '/_support/Gini.php';
 
 // Ensure WP_DEBUG is enabled but errors are not displayed
 if (!defined('WP_DEBUG')) {
@@ -303,7 +305,10 @@ if (!defined('SMARTALLOC_CAP')) {
 
 if (!defined('SMARTALLOC_UPLOAD_DIR')) {
     define('SMARTALLOC_UPLOAD_DIR', 'smart-alloc');
-} 
+}
+if (!defined('SMARTALLOC_TEST_MODE')) {
+    define('SMARTALLOC_TEST_MODE', true);
+}
 // === SMARTALLOC TEST FOUNDATION START ===
 if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
     define('SMARTALLOC_TEST_FOUNDATION', true);

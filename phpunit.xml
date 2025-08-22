@@ -14,6 +14,12 @@
         <testsuite name="E2E">
             <directory>tests/E2E</directory>
         </testsuite>
+        <testsuite name="ChaosEngineering">
+            <directory>tests/ChaosEngineering</directory>
+        </testsuite>
+        <testsuite name="DataQuality">
+            <directory>tests/DataQuality</directory>
+        </testsuite>
     </testsuites>
     <coverage>
         <include>

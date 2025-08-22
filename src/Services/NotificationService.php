@@ -49,6 +49,24 @@ final class NotificationService
         $attempt = (int) ($payload['_attempt'] ?? 1);
         $body = $payload['body'] ?? [];
         try {
+            $delay = 0;
+            $partial = [];
+            if (function_exists('apply_filters')) {
+                $delay = (int) apply_filters('smartalloc_test_fault_latency_ms', 0);
+                $partial = apply_filters('smartalloc_test_fault_partial_service', []);
+                if (isset($GLOBALS['filters']['smartalloc_test_fault_latency_ms'])) {
+                    $delay = (int) $GLOBALS['filters']['smartalloc_test_fault_latency_ms']($delay);
+                }
+                if (isset($GLOBALS['filters']['smartalloc_test_fault_partial_service'])) {
+                    $partial = $GLOBALS['filters']['smartalloc_test_fault_partial_service']($partial);
+                }
+            }
+            if ($delay > 0) {
+                usleep($delay * 1000);
+            }
+            if (!empty($partial['notify'])) {
+                throw new \RuntimeException('notify unavailable');
+            }
             $this->circuitBreaker->guard('notify');
             $result = true;
             if (function_exists('apply_filters')) {

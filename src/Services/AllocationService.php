@@ -15,6 +15,8 @@ use InvalidArgumentException;
  */
 class AllocationService
 {
+    private int $debugPeakMemory = 0;
+
     public function __construct(
         private Logging $logger,
         private EventBus $eventBus,
@@ -31,9 +33,22 @@ class AllocationService
      */
     public function assign(array $student): AllocationResult
     {
+        $this->trackMemory();
+        $mem = 0;
+        if (function_exists('apply_filters')) {
+            $mem = (int) apply_filters('smartalloc_test_fault_memory_pressure', 0);
+            if (isset($GLOBALS['filters']['smartalloc_test_fault_memory_pressure'])) {
+                $mem = (int) $GLOBALS['filters']['smartalloc_test_fault_memory_pressure']($mem);
+            }
+        }
+        if ($mem > 0) {
+            $junk = str_repeat('x', $mem);
+            unset($junk);
+        }
         $student = $this->validateInput($student);
 
         $candidates = $this->loadCandidates($student);
+        $this->trackMemory();
         if (empty($candidates)) {
             return new AllocationResult([
                 'mentor_id' => 0,
@@ -44,6 +59,7 @@ class AllocationService
 
         $ranked = $this->scorer->rank($candidates, $student);
         foreach ($ranked as $idx => $mentor) {
+            $this->trackMemory();
             $commit = $this->commit((int) $mentor['mentor_id'], (int) $student['id']);
             if ($commit['committed']) {
                 return new AllocationResult([
@@ -65,6 +81,22 @@ class AllocationService
             'committed' => false,
             'metadata' => [],
         ]);
+    }
+
+    private function trackMemory(): void
+    {
+        if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
+            $usage = memory_get_usage(true);
+            if ($usage > $this->debugPeakMemory) {
+                $this->debugPeakMemory = $usage;
+            }
+        }
+    }
+
+    /** @internal */
+    public function debugPeakMemory(): int
+    {
+        return defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE ? $this->debugPeakMemory : 0;
     }
 
     /**

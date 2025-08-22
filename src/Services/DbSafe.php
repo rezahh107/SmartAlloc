@@ -17,6 +17,16 @@ final class DbSafe
      */
     public static function mustPrepare(string $sql, array $params): string
     {
+        $fault = false;
+        if (function_exists('apply_filters')) {
+            $fault = (bool) apply_filters('smartalloc_test_fault_db_down', false);
+            if (!$fault && isset($GLOBALS['filters']['smartalloc_test_fault_db_down'])) {
+                $fault = (bool) $GLOBALS['filters']['smartalloc_test_fault_db_down'](false);
+            }
+        }
+        if ($fault) {
+            throw new \RuntimeException('database unavailable');
+        }
         $expected = preg_match_all('/(?<!%)%[dsf]/i', $sql);
         if ($expected !== count($params)) {
             throw new \InvalidArgumentException('SQL placeholder count mismatch');
