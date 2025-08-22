@@ -10,6 +10,7 @@ use SmartAlloc\Services\Logging;
 use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Http\Rest\AllocationController;
 use SmartAlloc\Services\AllocationService;
+use SmartAlloc\Domain\Allocation\AllocationResult;
 
 if (!class_exists('WP_Error')) {
     class WP_Error {
@@ -98,10 +99,10 @@ final class AllocationControllerTest extends BaseTestCase
         $allocator = new class extends AllocationService {
             public int $called = 0;
             public function __construct() {}
-            public function assign(array $student): array
+            public function assign(array $student): AllocationResult
             {
                 $this->called++;
-                return ['mentor_id' => 1001, 'committed' => true];
+                return new AllocationResult(['mentor_id' => 1001, 'committed' => true]);
             }
         };
 

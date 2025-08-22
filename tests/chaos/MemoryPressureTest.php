@@ -11,9 +11,6 @@ use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\EventStoreInterface;
 use SmartAlloc\Contracts\ScoringAllocatorInterface;
 
-if (!class_exists('wpdb')) {
-    class wpdb {}
-}
 
 final class MemoryPressureTest extends TestCase
 {
@@ -33,7 +30,7 @@ final class MemoryPressureTest extends TestCase
             public function insert($table, $data){ if(str_contains($table,'metrics')){ $this->metrics[]=$data; } }
             public function query($q){ return true; }
             public function get_results($q,$t=ARRAY_A){ return []; }
-            public function prepare($q,...$a){ return preg_replace('/%[dsf]/','x',$q); }
+            public function prepare(string $q, ...$a): string { return preg_replace('/%[dsf]/','x',$q); }
         };
         $logger = new Logging();
         $eventBus = new EventBus($logger, new class implements EventStoreInterface {

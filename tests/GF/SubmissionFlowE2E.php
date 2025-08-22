@@ -9,6 +9,7 @@ use SmartAlloc\Infra\GF\SabtEntryMapper;
 use SmartAlloc\Infra\GF\SabtSubmissionHandler;
 use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Services\AllocationService;
+use SmartAlloc\Domain\Allocation\AllocationResult;
 
 final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
 {
@@ -33,13 +34,13 @@ final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
         parent::tearDown();
     }
 
-    private function handler(array $allocationResult, WpdbStub $wpdb): SabtSubmissionHandler
+    private function handler(array $allocationResult, wpdb $wpdb): SabtSubmissionHandler
     {
         $mapper = new SabtEntryMapper();
         $allocator = new class($allocationResult) extends AllocationService {
             public int $called = 0;
             public function __construct(private array $result) {}
-            public function assign(array $student): array { $this->called++; return $this->result; }
+            public function assign(array $student): AllocationResult { $this->called++; return new AllocationResult($this->result); }
         };
         $logger = new class implements LoggerInterface {
             public function debug(string $message, array $context = []): void {}
@@ -53,7 +54,7 @@ final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
 
     public function test_direct_mode_auto_manual_reject_branches(): void
     {
-        $wpdb = new WpdbStub();
+        $wpdb = new wpdb();
 
         // Auto branch
         $autoRes = ['committed' => true, 'mentor_id' => 5, 'school_match_score' => 0.95];
@@ -81,7 +82,7 @@ final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
 
     public function test_rest_mode_equivalence_persists_same_result(): void
     {
-        $wpdb = new WpdbStub();
+        $wpdb = new wpdb();
         $res = ['committed' => true, 'mentor_id' => 7, 'school_match_score' => 0.93];
         $this->handler($res, $wpdb)->process(['id' => 10, '20' => '09123456789', '76' => '1234567890123456'], []);
 
@@ -97,7 +98,7 @@ final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
 
     public function test_idempotency_by_entry_id_returns_prior_result(): void
     {
-        $wpdb = new WpdbStub();
+        $wpdb = new wpdb();
         $res = ['committed' => true, 'mentor_id' => 1, 'school_match_score' => 0.95];
         $handler = $this->handler($res, $wpdb);
         $entry = ['id' => 20, '20' => '09123456789', '76' => '1234567890123456'];
@@ -108,10 +109,10 @@ final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
 
     public function test_populate_anything_hint_respected_but_not_forced(): void
     {
-        $wpdb = new WpdbStub();
+        $wpdb = new wpdb();
         $allocator = new class extends AllocationService {
             public array $student = [];
-            public function assign(array $student): array { $this->student = $student; return ['committed'=>true,'mentor_id'=>10,'school_match_score'=>0.99]; }
+            public function assign(array $student): AllocationResult { $this->student = $student; return new AllocationResult(['committed'=>true,'mentor_id'=>10,'school_match_score'=>0.99]); }
         };
         $mapper = new SabtEntryMapper();
         $logger = new class implements LoggerInterface {
@@ -128,43 +129,3 @@ final class SubmissionFlowE2E extends \PHPUnit\Framework\TestCase
     }
 }
 
-if (!class_exists('wpdb')) {
-    class wpdb {}
-}
-
-if (!class_exists('WpdbStub')) {
-    class WpdbStub extends wpdb
-    {
-        public string $prefix = 'wp_';
-        public array $rows = [];
-        public string $last_error = '';
-        public int $rows_affected = 0;
-
-        public function prepare(string $query, ...$args): string
-        {
-            foreach ($args as &$a) { $a = is_numeric($a) ? (int)$a : "'{$a}'"; }
-            $query = str_replace('%d', '%u', $query);
-            return vsprintf($query, $args);
-        }
-
-        public function get_row(string $sql, $output = ARRAY_A)
-        {
-            if (preg_match('/entry_id = (\d+)/', $sql, $m)) {
-                $id = (int) $m[1];
-                return $this->rows[$id] ?? null;
-            }
-            return null;
-        }
-
-        public function insert(string $table, array $data)
-        {
-            $id = $data['entry_id'];
-            if (isset($this->rows[$id])) {
-                $this->last_error = 'duplicate';
-                return false;
-            }
-            $this->rows[$id] = $data;
-            return 1;
-        }
-    }
-}

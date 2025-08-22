@@ -224,69 +224,12 @@ if (!function_exists('rgar')) {
     }
 }
 
-// Mock global $wpdb
+// Load wpdb stub and ensure global is available
+require_once __DIR__ . '/TestDoubles/WordPress/WpdbStub.php';
 global $wpdb;
-$wpdb = new class {
-    public $prefix = 'wp_';
-    public $last_error = '';
-    public $insert_id = 0;
-    public $rows_affected = 0;
-    public array $queries = [];
-
-    private function log(string $sql): void { $this->queries[] = $sql; }
-
-    public function prepare($query, ...$args) {
-        return $query;
-    }
-
-    public function query($query) {
-        $this->log($query);
-        return true;
-    }
-
-    public function get_results($query, $output_type = 'OBJECT') {
-        $this->log($query);
-        return [];
-    }
-
-    public function get_row($query, $output_type = 'OBJECT') {
-        $this->log($query);
-        return null;
-    }
-
-    public function get_var($query) {
-        $this->log($query);
-        return null;
-    }
-
-    public function insert($table, $data) {
-        $this->insert_id = 1;
-        $this->log('INSERT');
-        return true;
-    }
-
-    public function update($table, $data, $where) {
-        $this->rows_affected = 1;
-        $this->log('UPDATE');
-        return true;
-    }
-
-    public function delete($table, $where) {
-        $this->rows_affected = 1;
-        $this->log('DELETE');
-        return true;
-    }
-
-    public function replace($table, $data) {
-        $this->insert_id = 1;
-        $this->log('REPLACE');
-        return true;
-    }
-    
-    public function get_charset_collate() {
-        return 'DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci';
-    }
-};
+if (!isset($wpdb) || !($wpdb instanceof wpdb)) {
+    $wpdb = new wpdb();
+}
 
 // Define constants if not already defined
 if (!defined('ABSPATH')) {

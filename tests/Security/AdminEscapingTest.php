@@ -4,9 +4,6 @@ declare(strict_types=1);
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
-if (!class_exists('wpdb')) {
-    class wpdb {}
-}
 
 final class AdminEscapingTest extends \HttpTest
 {
@@ -38,8 +35,8 @@ final class AdminEscapingTest extends \HttpTest
 
         global $wpdb;
         $wpdb = new class extends \wpdb {
-            public $prefix = 'wp_';
-            public function prepare($q, ...$a) { return $q; }
+            public string $prefix = 'wp_';
+            public function prepare(string $q, ...$a): string { return $q; }
             public function get_results($q, $o = 'OBJECT') { return []; }
             public function get_var($q) { return null; }
             public function insert($t, $d) { return true; }

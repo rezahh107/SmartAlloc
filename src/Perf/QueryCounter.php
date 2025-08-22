@@ -5,33 +5,36 @@ declare(strict_types=1);
 namespace SmartAlloc\Perf;
 
 /**
- * Simple query counter for tests. Wraps global $wpdb->queries if available.
+ * Query counter utility backed by global $wpdb->queries.
  */
 final class QueryCounter
 {
-    private int $start = 0;
+    public static function isAvailable(): bool
+    {
+        global $wpdb;
+        return is_object($wpdb) && is_array($wpdb->queries ?? null);
+    }
 
+    public static function reset(): void
+    {
+        if (self::isAvailable()) {
+            $GLOBALS['wpdb']->queries = [];
+        }
+    }
+
+    public static function lastCount(): int
+    {
+        return self::isAvailable() ? count($GLOBALS['wpdb']->queries) : 0;
+    }
+
+    // Backwards compatibility for previous start/stop API
     public function start(): void
     {
-        global $wpdb;
-        if (is_object($wpdb) && is_array($wpdb->queries ?? null)) {
-            $this->start = count($wpdb->queries);
-        } else {
-            $this->start = 0;
-        }
+        self::reset();
     }
 
-    /**
-     * @return int Number of queries executed since start()
-     */
     public function stop(): int
     {
-        global $wpdb;
-        if (!is_object($wpdb) || !is_array($wpdb->queries ?? null)) {
-            return 0;
-        }
-
-        return max(0, count($wpdb->queries) - $this->start);
+        return self::lastCount();
     }
 }
-
