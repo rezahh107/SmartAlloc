@@ -24,8 +24,9 @@ for ($i = 0; $i < count($lines); $i++) {
     }
 }
 if ($idx === null) {
-    file_put_contents($outDir . '/readme-truncated.txt', $content);
+    file_put_contents($outDir . '/changelog-truncate.txt', $content);
     $result['status'] = 'changelog_missing';
+    file_put_contents($outDir . '/changelog-truncate.json', json_encode($result, JSON_PRETTY_PRINT) . "\n");
     echo json_encode($result, JSON_PRETTY_PRINT) . PHP_EOL;
     exit(0);
 }
@@ -67,7 +68,8 @@ foreach ($kept as $section) {
     $output = array_merge($output, $section['lines']);
 }
 $fileOut = implode("\n", $output);
-file_put_contents($outDir . '/readme-truncated.txt', $fileOut);
+file_put_contents($outDir . '/changelog-truncate.txt', $fileOut);
 
+file_put_contents($outDir . '/changelog-truncate.json', json_encode($result, JSON_PRETTY_PRINT) . "\n");
 echo json_encode($result, JSON_PRETTY_PRINT) . PHP_EOL;
 exit(0);

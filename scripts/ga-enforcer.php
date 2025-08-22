@@ -286,6 +286,26 @@ if (is_array($lintData)) {
     $warnings[] = 'wporg lint missing';
 }
 
+// i18n lint
+$signals['i18n_lint_warnings'] = null;
+$i18nJson = @shell_exec(PHP_BINARY . ' ' . escapeshellarg($root . '/scripts/i18n-lint.php'));
+if ($i18nJson !== null) {
+    $i18nData = json_decode($i18nJson, true);
+    if (is_array($i18nData)) {
+        $signals['i18n_lint_warnings'] = count($i18nData['wrong_domain'] ?? []) + count($i18nData['placeholder_mismatch'] ?? []);
+    }
+}
+
+// wporg deploy checklist
+$signals['wporg_preflight_warnings'] = null;
+$preJson = @shell_exec(PHP_BINARY . ' ' . escapeshellarg($root . '/scripts/wporg-deploy-checklist.php'));
+if ($preJson !== null) {
+    $preData = json_decode($preJson, true);
+    if (is_array($preData)) {
+        $signals['wporg_preflight_warnings'] = count($preData['warnings'] ?? []);
+    }
+}
+
 // schema validation
 @passthru(PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/artifact-schema-validate.php'));
 $schemaPath = $root . '/artifacts/schema/schema-validate.json';
@@ -392,6 +412,8 @@ $txt[] = 'POT entries: ' . $signals['pot_entries'];
 $txt[] = 'Dist audit errors: ' . ($signals['dist_audit_errors'] ?? 'null');
 $txt[] = 'Dist manifest warnings: ' . ($signals['dist_manifest_warnings'] ?? 'null');
 $txt[] = 'WP.org lint warnings: ' . ($signals['wporg_lint_warnings'] ?? 'null');
+$txt[] = 'i18n lint warnings: ' . ($signals['i18n_lint_warnings'] ?? 'null');
+$txt[] = 'WP.org preflight warnings: ' . ($signals['wporg_preflight_warnings'] ?? 'null');
 $txt[] = 'Schema warnings: ' . ($signals['schema_warnings'] ?? 'null');
 file_put_contents($gaDir . '/GA_ENFORCER.txt', implode("\n", $txt) . "\n");
 
@@ -476,6 +498,30 @@ if ($wantJUnit) {
             $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
             $fail->addAttribute('message', $msg);
         }
+    }
+
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'I18N.Lint');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'warnings=' . ($signals['i18n_lint_warnings'] ?? 0);
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif (($signals['i18n_lint_warnings'] ?? 0) > 0) {
+        $msg = 'i18n lint warnings present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
+    }
+
+    $case = $suite->addChild('testcase');
+    $case->addAttribute('name', 'WPOrg.Preflight');
+    if (!$enforce || ($opts['profile'] ?? '') !== 'ga') {
+        $msg = 'warnings=' . ($signals['wporg_preflight_warnings'] ?? 0);
+        $sk = $case->addChild('skipped', htmlspecialchars($msg, ENT_QUOTES));
+        $sk->addAttribute('message', $msg);
+    } elseif (($signals['wporg_preflight_warnings'] ?? 0) > 0) {
+        $msg = 'wporg preflight warnings present';
+        $fail = $case->addChild('failure', htmlspecialchars($msg, ENT_QUOTES));
+        $fail->addAttribute('message', $msg);
     }
 
     $case = $suite->addChild('testcase');

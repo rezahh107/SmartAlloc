@@ -19,6 +19,7 @@ $result = [
 
 if ($distPath === '' || $version === '') {
     $result['status'] = 'missing_args';
+    file_put_contents($outDir . '/prepare.json', json_encode($result, JSON_PRETTY_PRINT) . "\n");
     echo json_encode($result, JSON_PRETTY_PRINT) . PHP_EOL;
     exit(0);
 }
@@ -137,6 +138,7 @@ $result['validation']['assets'] = $assets;
 
 deleteDir($tmp);
 
+file_put_contents($outDir . '/prepare.json', json_encode($result, JSON_PRETTY_PRINT) . "\n");
 echo json_encode($result, JSON_PRETTY_PRINT) . PHP_EOL;
 exit(0);
 
