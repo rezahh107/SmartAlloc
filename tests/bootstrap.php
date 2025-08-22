@@ -12,6 +12,10 @@ if (\ob_get_level() === 0) {
 define('PHPUNIT_RUNNING', true);
 
 // Load Composer autoloader
+ $patch = __DIR__ . '/../vendor/antecedent/patchwork/src/patchwork.php';
+if (file_exists($patch)) {
+    require_once $patch;
+}
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../stubs/wp-stubs.php';
 require_once __DIR__ . '/BaseTestCase.php';
@@ -120,7 +124,7 @@ if (!function_exists('wp_json_encode')) {
 }
 
   if (!function_exists('current_time')) {
-      function current_time($type = 'mysql') {
+      function current_time($type = 'mysql', $gmt = 0) {
           $format = $type === 'mysql' ? 'Y-m-d H:i:s' : $type;
           return gmdate($format);
       }
@@ -200,6 +204,27 @@ if (!function_exists('sa_tests_temp_dir')) {
     }
 }
 
+if (!function_exists('sanitize_email')) {
+    function sanitize_email($email) {
+        return strtolower(trim($email));
+    }
+}
+
+if (!function_exists('is_email')) {
+    function is_email($email) {
+        return (bool) filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+}
+
+if (!function_exists('wp_unslash')) {
+    function wp_unslash($value) {
+        if (is_array($value)) {
+            return array_map('wp_unslash', $value);
+        }
+        return stripslashes((string) $value);
+    }
+}
+
 if (!function_exists('sanitize_text_field')) {
     function sanitize_text_field($str) {
         return trim(strip_tags($str));
@@ -219,6 +244,9 @@ if (!function_exists('absint')) {
 
 if (!function_exists('register_rest_route')) {
     function register_rest_route($namespace, $route, $args = []) {
+        if (defined('PHPUNIT_RUNNING') && PHPUNIT_RUNNING && isset($args['callback'])) {
+            $GLOBALS['__rest_cb'] = $args['callback'];
+        }
         return true;
     }
 }
@@ -268,10 +296,6 @@ if (!defined('SMARTALLOC_TEST_MODE')) {
 // === SMARTALLOC TEST FOUNDATION START ===
 if (!defined('SMARTALLOC_TEST_FOUNDATION')) {
     define('SMARTALLOC_TEST_FOUNDATION', true);
-    $patch = __DIR__ . '/../vendor/antecedent/patchwork/src/patchwork.php';
-    if (file_exists($patch)) {
-        require_once $patch;
-    }
     foreach (['EnvReset', 'AdminTest', 'HttpTestCase', 'WpdbSpy'] as $h) {
         $p = __DIR__ . '/Helpers/' . $h . '.php';
         if (file_exists($p)) {

@@ -73,11 +73,6 @@ final class MultiFormIsolationTest extends BaseTestCase
         $tables = new TableResolver($wpdb);
         $this->svc = new AllocationService($tables);
 
-        Functions\when('sanitize_email')->returnArg();
-        Functions\when('sanitize_text_field')->returnArg();
-        Functions\when('current_time')->alias(fn($type, $gmt) => gmdate('Y-m-d H:i:s'));
-        Functions\when('do_action')->returnTrue();
-        Functions\when('error_log')->returnTrue();
     }
 
     protected function tearDown(): void

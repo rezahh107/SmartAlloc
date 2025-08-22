@@ -1,13 +1,9 @@
 <?php
-namespace {
-    function register_rest_route($ns, $route, $args) { $GLOBALS['__rest_cb'] = $args['callback']; }
-}
 
 namespace SmartAlloc\Tests\REST;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use SmartAlloc\Core\FormContext;
 use SmartAlloc\Infra\DB\TableResolver;
 use SmartAlloc\REST\Controllers\AllocationController;
 use SmartAlloc\Services\AllocationService;
@@ -62,9 +58,6 @@ final class AllocationControllerTest extends BaseTestCase
         $svc = new AllocationService($tables);
         $this->controller = new AllocationController($svc);
         $this->cb = null;
-        Functions\when('sanitize_email')->returnArg();
-        Functions\when('sanitize_text_field')->returnArg();
-        Functions\when('current_time')->alias(fn($type, $gmt) => gmdate('Y-m-d H:i:s'));
     }
 
     protected function tearDown(): void
@@ -85,10 +78,8 @@ final class AllocationControllerTest extends BaseTestCase
         Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
         Functions\expect('wp_verify_nonce')->with('good', 'smartalloc_allocate_200')->andReturn(true);
         $this->register();
-        $req = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
         $_POST['form_id'] = '200';
-        $req->set_param('form_id', 200);
-        $req->set_param('_wpnonce', 'good');
+        $req = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'good']);
         $req->set_body(json_encode(['student_id'=>1,'email'=>'a@a.com']));
         $res = ($this->cb)($req);
         $this->assertSame(201, $res->get_status());
@@ -99,7 +90,7 @@ final class AllocationControllerTest extends BaseTestCase
     {
         Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(false);
         $this->register();
-        $req = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
+        $req = new \WP_REST_Request();
         $res = ($this->cb)($req);
         $this->assertSame(403, $res->get_status());
     }
@@ -110,9 +101,7 @@ final class AllocationControllerTest extends BaseTestCase
         Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
         Functions\expect('wp_verify_nonce')->with('bad', 'smartalloc_allocate_200')->andReturn(false);
         $this->register();
-        $req = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
-        $req->set_param('form_id', 200);
-        $req->set_param('_wpnonce', 'bad');
+        $req = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'bad']);
         $res = ($this->cb)($req);
         $this->assertSame(403, $res->get_status());
     }
@@ -120,30 +109,22 @@ final class AllocationControllerTest extends BaseTestCase
     /** @test */
     public function returns_409_on_duplicate_and_400_on_capacity_exceeded_mapping(): void
     {
-        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
-        Functions\expect('wp_verify_nonce')->andReturn(true);
+        Functions\when('current_user_can')->alias(fn() => true);
+        Functions\when('wp_verify_nonce')->alias(fn() => true);
         $this->register();
-        $req1 = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
-        $req1->set_param('form_id', 200);
-        $req1->set_param('_wpnonce', 'n');
+        $req1 = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'n']);
         $req1->set_body(json_encode(['student_id'=>1,'email'=>'dup@a.com']));
         ($this->cb)($req1);
-        $reqDup = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
-        $reqDup->set_param('form_id', 200);
-        $reqDup->set_param('_wpnonce', 'n');
+        $reqDup = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'n']);
         $reqDup->set_body(json_encode(['student_id'=>1,'email'=>'dup@a.com']));
         $resDup = ($this->cb)($reqDup);
         $this->assertSame(409, $resDup->get_status());
         for ($i = 0; $i < 59; $i++) {
-            $r = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
-            $r->set_param('form_id', 200);
-            $r->set_param('_wpnonce', 'n');
+            $r = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'n']);
             $r->set_body(json_encode(['student_id'=>$i+2,'email'=>"u{$i}@a.com"]));
             ($this->cb)($r);
         }
-        $reqCap = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
-        $reqCap->set_param('form_id', 200);
-        $reqCap->set_param('_wpnonce', 'n');
+        $reqCap = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'n']);
         $reqCap->set_body(json_encode(['student_id'=>999,'email'=>'z@a.com']));
         $resCap = ($this->cb)($reqCap);
         $this->assertSame(400, $resCap->get_status());
@@ -155,9 +136,7 @@ final class AllocationControllerTest extends BaseTestCase
         Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
         Functions\expect('wp_verify_nonce')->andReturn(true);
         $this->register();
-        $req = new \WP_REST_Request('POST', '/smartalloc/v1/allocate');
-        $req->set_param('form_id', 123);
-        $req->set_param('_wpnonce', 'n');
+        $req = new \WP_REST_Request(['form_id' => 123, '_wpnonce' => 'n']);
         $req->set_body(json_encode(['student_id'=>5,'email'=>'x@a.com']));
         ($this->cb)($req);
         global $wpdb;
