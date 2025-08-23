@@ -16,7 +16,7 @@ final class ServiceContainer
     public static function allocation(): AllocationServiceInterface
     {
         if (!self::$allocation) {
-            /** @var AllocationServiceInterface $svc */
+            /** @var mixed $svc */
             $svc = apply_filters('smartalloc_service_allocation', null);
             if ($svc instanceof AllocationServiceInterface) {
                 self::$allocation = $svc;
@@ -34,5 +34,11 @@ final class ServiceContainer
     public static function setAllocation(AllocationServiceInterface $svc): void
     {
         self::$allocation = $svc;
+    }
+
+    /** For tests only. */
+    public static function reset(): void
+    {
+        self::$allocation = null;
     }
 }
