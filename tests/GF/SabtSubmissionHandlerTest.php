@@ -5,11 +5,12 @@ declare(strict_types=1);
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use SmartAlloc\Contracts\LoggerInterface;
-use SmartAlloc\Domain\Allocation\AllocationResult;
 use SmartAlloc\Infra\GF\SabtEntryMapper;
 use SmartAlloc\Infra\GF\SabtSubmissionHandler;
 use SmartAlloc\Infra\Repository\AllocationsRepository;
-use SmartAlloc\Services\AllocationService;
+use SmartAlloc\Contracts\AllocationServiceInterface;
+use SmartAlloc\Services\ServiceContainer;
+use SmartAlloc\Core\FormContext;
 use SmartAlloc\Tests\BaseTestCase;
 
 final class SabtSubmissionHandlerTest extends BaseTestCase
@@ -38,10 +39,13 @@ final class SabtSubmissionHandlerTest extends BaseTestCase
     private function makeHandler(array $allocationResult, wpdb $wpdb): SabtSubmissionHandler
     {
         $mapper = new SabtEntryMapper();
-        $allocator = new class($allocationResult) extends AllocationService {
-            public int $called = 0; public function __construct(private array $result) {}
-            public function assign(array $student): AllocationResult { $this->called++; return new AllocationResult($this->result); }
+        $allocator = new class($allocationResult) implements AllocationServiceInterface {
+            public int $called = 0;
+            public function __construct(private array $result) {}
+            public function allocateWithContext(FormContext $ctx, array $payload): array { $this->called++; return $this->result; }
+            public function allocate(array $payload): array { $this->called++; return $this->result; }
         };
+        ServiceContainer::setAllocation($allocator);
         $logger = new class implements LoggerInterface {
             public function debug(string $message, array $context = []): void {}
             public function info(string $message, array $context = []): void {}
@@ -49,7 +53,7 @@ final class SabtSubmissionHandlerTest extends BaseTestCase
             public function error(string $message, array $context = []): void {}
         };
         $repo = new AllocationsRepository($logger, $wpdb);
-        return new SabtSubmissionHandler($mapper, $allocator, $logger, $repo);
+        return new SabtSubmissionHandler($mapper, null, $logger, $repo);
     }
 
     public function test_handle_rejects_invalid_mapper_output_records_reason(): void

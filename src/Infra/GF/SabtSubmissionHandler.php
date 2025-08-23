@@ -9,19 +9,23 @@ use SmartAlloc\Contracts\LoggerInterface;
 use SmartAlloc\Domain\Allocation\AllocationStatus;
 use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Infra\Settings\Settings;
-use SmartAlloc\Services\AllocationService;
+use SmartAlloc\Contracts\AllocationServiceInterface;
+use SmartAlloc\Services\ServiceContainer;
 
 /**
  * Handle Sabt form submissions from Gravity Forms.
  */
 final class SabtSubmissionHandler
 {
+    private AllocationServiceInterface $allocator;
+
     public function __construct(
         private SabtEntryMapper $mapper,
-        private AllocationService $allocator,
+        ?AllocationServiceInterface $allocator,
         private LoggerInterface $logger,
         private AllocationsRepository $repository
     ) {
+        $this->allocator = $allocator ?: ServiceContainer::allocation();
     }
 
     /**
@@ -35,7 +39,7 @@ final class SabtSubmissionHandler
         $c = Bootstrap::container();
         $handler = new self(
             new SabtEntryMapper(),
-            $c->get(AllocationService::class),
+            ServiceContainer::allocation(),
             $c->get(LoggerInterface::class),
             $c->get(AllocationsRepository::class)
         );
@@ -100,7 +104,7 @@ final class SabtSubmissionHandler
                 }
                 $result = json_decode((string) ($response['body'] ?? ''), true)['result'] ?? [];
             } else {
-                $result = $this->allocator->assign($student);
+                $result = $this->allocator->allocate($student);
             }
         } catch (\Throwable $e) {
             $this->logger->error('sabt.allocate_error', [
