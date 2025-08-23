@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Validate composer
+        run: composer validate --strict
+      - name: Lint PHP
+        run: |
+          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: PHP_CodeSniffer (optional)
+        run: |
+          if [ -f phpcs.xml ] || [ -f phpcs.xml.dist ]; then
+            vendor/bin/phpcs || true
+          fi
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit
+      - name: Validate artifact schema
+        run: php scripts/artifact-schema-validate.php
+      - name: GA Enforcer
+        run: php scripts/ga-enforcer.php --profile=ga --junit
+      - name: Build ZIP
+        run: php scripts/build-zip.php
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smartalloc
+          path: |
+            smartalloc-*.zip
+            smartalloc-*.zip.sha256
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            smartalloc-*.zip
+            smartalloc-*.zip.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

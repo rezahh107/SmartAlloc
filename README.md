@@ -26,6 +26,13 @@ SmartAlloc is a comprehensive WordPress plugin designed for automatic mentor all
 - MySQL 8.0+ (InnoDB)
 - Gravity Forms Pro
 - Action Scheduler (recommended)
+## Quickstart
+
+1. Download the latest `smartalloc-*.zip` from releases.
+2. Upload the ZIP through **Plugins → Add New → Upload Plugin**.
+3. Activate and run `wp smartalloc smoke:env` to verify the environment.
+4. Configure form settings and run allocations.
+
 
 ## Installation
 
