@@ -18,21 +18,17 @@
   </php>
 
   <testsuites>
-    <testsuite name="All">
-      <directory>tests</directory>
+    <testsuite name="Unit">
+      <directory>tests/Unit</directory>
     </testsuite>
-    <testsuite name="Performance">
-      <directory>tests/Performance</directory>
+    <testsuite name="Integration">
+      <directory>tests/Integration</directory>
     </testsuite>
-    <testsuite name="Regression">
-      <directory>tests/Regression</directory>
+    <testsuite name="REST">
+      <directory>tests/REST</directory>
     </testsuite>
     <testsuite name="Meta">
       <directory>tests/Meta</directory>
     </testsuite>
-    <testsuite name="Admin"><directory>tests/Admin</directory></testsuite>
-    <testsuite name="Infra"><directory>tests/Infra</directory></testsuite>
-    <testsuite name="Integration"><directory>tests/Integration</directory></testsuite>
-    <testsuite name="REST"><directory>tests/REST</directory></testsuite>
   </testsuites>
 </phpunit>
