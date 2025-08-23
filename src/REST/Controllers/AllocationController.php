@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace SmartAlloc\REST\Controllers;
 
+use SmartAlloc\Contracts\AllocationServiceInterface;
 use SmartAlloc\Core\FormContext;
-use SmartAlloc\Services\AllocationService;
 use SmartAlloc\Services\Exceptions\DuplicateAllocationException;
 use SmartAlloc\Services\Exceptions\InsufficientCapacityException;
 use SmartAlloc\Services\Exceptions\InvalidFormContextException;
+use SmartAlloc\Services\ServiceContainer;
 
 final class AllocationController
 {
-    public function __construct(private AllocationService $svc) {}
+    private AllocationServiceInterface $svc;
+
+    public function __construct(?AllocationServiceInterface $svc = null)
+    {
+        $this->svc = $svc ?: ServiceContainer::allocation();
+    }
 
     public function register(): void
     {

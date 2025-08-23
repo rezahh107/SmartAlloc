@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Contracts\AllocationServiceInterface;
 use SmartAlloc\Core\FormContext;
 use SmartAlloc\Infra\DB\TableResolver;
 use SmartAlloc\Services\DbSafe;
@@ -11,7 +12,7 @@ use SmartAlloc\Services\Exceptions\DuplicateAllocationException;
 use SmartAlloc\Services\Exceptions\InsufficientCapacityException;
 use SmartAlloc\Services\Exceptions\InvalidFormContextException;
 
-final class AllocationService
+final class AllocationService implements AllocationServiceInterface
 {
     public function __construct(private TableResolver $tables) {}
 
