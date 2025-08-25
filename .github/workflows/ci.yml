@@ -106,10 +106,6 @@ jobs:
           vendor/bin/psalm --no-progress --output-format=github --stats || true
           vendor/bin/psalm --taint-analysis || true
 
-      - name: 🔐 Ensure scripts executable (defensive)
-        if: always()
-        run: chmod +x scripts/*.php || true
-
       - name: 🧪 PHPUnit (smoke only)
         env:
           XDEBUG_MODE: coverage
@@ -117,6 +113,10 @@ jobs:
           vendor/bin/phpunit \
             tests/Unit/BrainMonkeySmokeTest.php \
             tests/WordPress/Smoke/BootTest.php
+
+      - name: 🔐 Ensure scripts executable (defensive)
+        if: always()
+        run: chmod +x scripts/*.php || true
 
       - name: 🔄 Generate FEATURES.md
         if: always()
@@ -134,37 +134,6 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
           cat ai_context.json | jq '.decisions | {count: length, items: .[0:5]}' >> "$GITHUB_STEP_SUMMARY" || true
-
-      - name: 📦 Upload artifacts (state)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: state-artifacts
-          path: |
-            FEATURES.md
-            ai_context.json
-          retention-days: 14
-
-      - name: 📊 Summary
-        if: always()
-        run: |
-          echo "## SmartAlloc QA Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- PHP: ${{ matrix.php }} / WP: ${{ matrix.wp }}" >> $GITHUB_STEP_SUMMARY
-          if [ -f coverage.xml ]; then
-            PCT=$(grep -o 'lines percent="[0-9.]*"' coverage.xml | head -1 | sed 's/[^0-9.]*//g')
-            echo "- Coverage: ${PCT}%" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: 📦 Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-${{ matrix.php }}-${{ matrix.wp }}
-          path: |
-            coverage.xml
-            test-results.xml
-            psalm*.xml
-          retention-days: 14
 
       - name: ✅ Verify summary sections
         if: always()
@@ -191,14 +160,12 @@ jobs:
         run: |
           set -e
           API="https://api.github.com/repos/$REPO"
-          # find workflow id by name
           WF_ID=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$API/actions/workflows" | jq -r '.workflows[] | select(.name=="E2E (optional)") | .id')
           if [ -z "$WF_ID" ]; then
             echo "E2E workflow not found; skipping check"
             exit 0
           fi
-          # list runs for that workflow and filter by this SHA
           EVENTS=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$API/actions/workflows/$WF_ID/runs?per_page=50" | jq -r '.workflow_runs[] | select(.head_sha=="'"$SHA"'") | .event')
           echo "E2E runs for this SHA (if any):"; echo "$EVENTS"
@@ -206,7 +173,6 @@ jobs:
             echo "E2E ran automatically! Expected only workflow_dispatch/schedule."; exit 1;
           fi
           echo "E2E did not auto-run ✓"
-
   full:
     name: 🔬 Full Test Matrix (manual/scheduled)
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
