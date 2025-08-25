@@ -19,15 +19,11 @@ on:
   schedule:
     - cron: '0 6 * * 0'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
-  security-events: write
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   qa:
@@ -72,12 +68,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
 
-      - name: 🗄️ Cache Composer
+      - name: ♻️ Composer cache
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
-          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: composer-${{ runner.os }}-
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - name: 📦 Composer install
         run: composer install --no-interaction --prefer-dist --ansi
@@ -106,6 +103,9 @@ jobs:
           vendor/bin/psalm --no-progress --output-format=github --stats || true
           vendor/bin/psalm --taint-analysis || true
 
+      - name: 🔎 PHP syntax lint
+        run: composer lint:php
+
       - name: 🧪 PHPUnit (smoke only)
         env:
           XDEBUG_MODE: coverage
@@ -116,7 +116,9 @@ jobs:
 
       - name: 🔐 Ensure scripts executable (defensive)
         if: always()
-        run: chmod +x scripts/*.php || true
+        run: |
+          chmod +x scripts/*.php || true
+          chmod +x scripts/new_adr.sh || true
 
       - name: 🔄 Generate FEATURES.md
         if: always()
