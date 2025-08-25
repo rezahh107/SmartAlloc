@@ -25,4 +25,4 @@ gen-context:
 	composer gen:context
 
 state:
-	composer state
+	bash scripts/update_state.sh
