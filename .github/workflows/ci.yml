@@ -114,6 +114,10 @@ jobs:
             tests/Unit/BrainMonkeySmokeTest.php \
             tests/WordPress/Smoke/BootTest.php
 
+      - name: 🔐 Ensure scripts executable (defensive)
+        if: always()
+        run: chmod +x scripts/*.php || true
+
       - name: 🔄 Generate FEATURES.md
         if: always()
         run: php scripts/generate_features_md.php
