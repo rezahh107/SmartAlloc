@@ -14,14 +14,11 @@ $featuresFile = $root . '/features.json';
 $outFile = $root . '/FEATURES.md';
 
 function read_features(string $file): array {
-    if (!is_file($file)) {
-        return ['schema' => 1, 'features' => []];
-    }
+    if (!is_file($file)) return ['schema' => 1, 'features' => []];
     $raw = trim((string)@file_get_contents($file));
     if ($raw === '') return ['schema' => 1, 'features' => []];
     $json = json_decode($raw, true);
-    return (is_array($json) && isset($json['features']) && is_array($json['features']))
-        ? $json : ['schema' => 1, 'features' => []];
+    return (is_array($json) && isset($json['features']) && is_array($json['features'])) ? $json : ['schema' => 1, 'features' => []];
 }
 
 function all_exist(array $paths): bool {
@@ -90,8 +87,6 @@ foreach ($data['features'] as $f) {
     $risk   = (string)($f['risk'] ?? 'unknown');
     $code   = $f['code_paths'] ?? [];
     $tests  = $f['test_paths'] ?? [];
-    $secReq = $f['security_requirements'] ?? [];
-
     $codeOk = all_exist($code);
     $testOk = all_exist($tests);
     $secOk  = security_hit($code);
