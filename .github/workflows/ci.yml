@@ -110,7 +110,7 @@ jobs:
         if: always()
         run: chmod +x scripts/*.php || true
 
-      - name: 🧪 PHPUnit (smoke only, temporary)
+      - name: 🧪 PHPUnit (smoke only)
         env:
           XDEBUG_MODE: coverage
         run: |
@@ -129,11 +129,11 @@ jobs:
       - name: 📝 Append project state to summary
         if: always()
         run: |
-          echo "## 📊 Feature Scores" >> $GITHUB_STEP_SUMMARY
-          head -n 40 FEATURES.md >> $GITHUB_STEP_SUMMARY || true
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🤖 AI Context (decisions)" >> $GITHUB_STEP_SUMMARY
-          cat ai_context.json | jq '.decisions | {count: length, items: .[0:5]}' >> $GITHUB_STEP_SUMMARY || true
+          echo "## 📊 Feature Scores" >> "$GITHUB_STEP_SUMMARY"
+          head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
+          cat ai_context.json | jq '.decisions | {count: length, items: .[0:5]}' >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: 📦 Upload artifacts (state)
         if: always()
@@ -165,6 +165,47 @@ jobs:
             test-results.xml
             psalm*.xml
           retention-days: 14
+
+      - name: ✅ Verify summary sections
+        if: always()
+        run: |
+          test -f "$GITHUB_STEP_SUMMARY"
+          grep -q "## 📊 Feature Scores" "$GITHUB_STEP_SUMMARY"
+          grep -q "## 🤖 AI Context (decisions)" "$GITHUB_STEP_SUMMARY"
+          echo "Summary contains required sections ✓"
+
+      - name: ✅ Verify artifacts presence & JSON validity
+        if: always()
+        run: |
+          test -s FEATURES.md || { echo "FEATURES.md missing or empty"; exit 1; }
+          test -s ai_context.json || { echo "ai_context.json missing or empty"; exit 1; }
+          jq empty ai_context.json
+          echo "Artifacts present and ai_context.json is valid JSON ✓"
+
+      - name: ✅ Verify E2E not auto-run
+        if: always()
+        env:
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          API="https://api.github.com/repos/$REPO"
+          # find workflow id by name
+          WF_ID=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$API/actions/workflows" | jq -r '.workflows[] | select(.name=="E2E (optional)") | .id')
+          if [ -z "$WF_ID" ]; then
+            echo "E2E workflow not found; skipping check"
+            exit 0
+          fi
+          # list runs for that workflow and filter by this SHA
+          EVENTS=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$API/actions/workflows/$WF_ID/runs?per_page=50" | jq -r '.workflow_runs[] | select(.head_sha=="'"$SHA"'") | .event')
+          echo "E2E runs for this SHA (if any):"; echo "$EVENTS"
+          if echo "$EVENTS" | grep -Eq 'push|pull_request'; then
+            echo "E2E ran automatically! Expected only workflow_dispatch/schedule."; exit 1;
+          fi
+          echo "E2E did not auto-run ✓"
 
   full:
     name: 🔬 Full Test Matrix (manual/scheduled)
