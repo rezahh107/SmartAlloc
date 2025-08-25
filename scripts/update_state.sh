@@ -43,6 +43,7 @@ done
 echo -e "\n## 🔄 آخرین تغییرات" >> PROJECT_STATE.md
 git log -5 --pretty="- %h %s (%ad)" --date=short >> PROJECT_STATE.md || true
 
+# Generate feature and ADR context snapshots
 php scripts/generate_features_md.php || true
 php scripts/ai_context_sync.php || true
 
