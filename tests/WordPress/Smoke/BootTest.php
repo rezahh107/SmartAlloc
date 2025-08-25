@@ -12,4 +12,3 @@ class BootTest extends TestCase
         $this->assertTrue(function_exists('do_action'), 'WordPress did not boot (do_action missing).');
     }
 }
-

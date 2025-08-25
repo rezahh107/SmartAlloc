@@ -62,7 +62,7 @@ jobs:
       - name: 🛠️ System tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip zip subversion curl tar mysql-client
+          sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
 
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
@@ -114,6 +114,33 @@ jobs:
             tests/Unit/BrainMonkeySmokeTest.php \
             tests/WordPress/Smoke/BootTest.php
 
+      - name: 🔄 Generate FEATURES.md
+        if: always()
+        run: php scripts/generate_features_md.php
+
+      - name: 🔁 Sync AI context (ADRs → ai_context.json)
+        if: always()
+        run: php scripts/ai_context_sync.php
+
+      - name: 📝 Append project state to summary
+        if: always()
+        run: |
+          echo "## 📊 Feature Scores" >> $GITHUB_STEP_SUMMARY
+          head -n 40 FEATURES.md >> $GITHUB_STEP_SUMMARY || true
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 AI Context (decisions)" >> $GITHUB_STEP_SUMMARY
+          cat ai_context.json | jq '.decisions | {count: length, items: .[0:5]}' >> $GITHUB_STEP_SUMMARY || true
+
+      - name: 📦 Upload artifacts (state)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: state-artifacts
+          path: |
+            FEATURES.md
+            ai_context.json
+          retention-days: 14
+
       - name: 📊 Summary
         if: always()
         run: |
@@ -157,7 +184,7 @@ jobs:
       - name: 🛠️ System tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip zip subversion curl tar mysql-client
+          sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
       - run: composer install --no-interaction --prefer-dist --ansi
       - name: 🔧 PHPCS installed_paths (safety)
         run: |
