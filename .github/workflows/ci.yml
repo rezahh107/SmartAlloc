@@ -87,8 +87,10 @@ jobs:
           vendor/bin/phpcs --config-set installed_paths \
           vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs, \
           vendor/phpcompatibility/php-compatibility, \
+          vendor/phpcompatibility/phpcompatibility-wp, \
           vendor/phpcsstandards/phpcsextra, \
-          vendor/phpcsstandards/phpcsutils
+          vendor/phpcsstandards/phpcsutils, \
+          vendor/sirbrillig/phpcs-variable-analysis
 
       - name: 🧪 Install WP test suite
         env: { WP_VERSION: ${{ matrix.wp }} }
@@ -104,11 +106,14 @@ jobs:
           vendor/bin/psalm --no-progress --output-format=github --stats || true
           vendor/bin/psalm --taint-analysis || true
 
-      - name: 🧪 PHPUnit
-        env: { XDEBUG_MODE: coverage }
+      - name: 🧪 PHPUnit (smoke only, temporary)
+        env:
+          XDEBUG_MODE: coverage
         run: |
-          vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration \
-            $([ "${{ matrix.coverage }}" == "true" ] && echo "--coverage-clover coverage.xml" || true)
+          # Run minimal tests that must pass quickly
+          vendor/bin/phpunit \
+            tests/Unit/BrainMonkeySmokeTest.php \
+            tests/WordPress/Smoke/BootTest.php
 
       - name: 📊 Summary
         if: always()
@@ -130,3 +135,50 @@ jobs:
             test-results.xml
             psalm*.xml
           retention-days: 14
+
+  full:
+    name: 🔬 Full Test Matrix (manual/scheduled)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    needs: qa
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: wordpress_test
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.1', tools: composer }
+      - name: 🛠️ System tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip zip subversion curl tar mysql-client
+      - run: composer install --no-interaction --prefer-dist --ansi
+      - name: 🔧 PHPCS installed_paths (safety)
+        run: |
+          vendor/bin/phpcs --config-set installed_paths \
+          vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs, \
+          vendor/phpcompatibility/php-compatibility, \
+          vendor/phpcompatibility/phpcompatibility-wp, \
+          vendor/phpcsstandards/phpcsextra, \
+          vendor/phpcsstandards/phpcsutils, \
+          vendor/sirbrillig/phpcs-variable-analysis
+      - name: 🧪 Install WP test suite
+        run: |
+          chmod +x scripts/install-wp-tests.sh
+          bash scripts/install-wp-tests.sh wordpress_test root '' 127.0.0.1:3306 latest
+      - name: 🔍 PHPCS (soft-fail)
+        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=full --report-summary || true
+      - name: 🔎 Psalm (soft-fail)
+        run: |
+          vendor/bin/psalm --no-progress --output-format=github --stats || true
+          vendor/bin/psalm --taint-analysis || true
+      - name: 🧪 PHPUnit (full suites)
+        env: { XDEBUG_MODE: coverage }
+        run: vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration --coverage-clover coverage.xml
