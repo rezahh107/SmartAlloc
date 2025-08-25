@@ -110,7 +110,6 @@ jobs:
         env:
           XDEBUG_MODE: coverage
         run: |
-          # Run minimal tests that must pass quickly
           vendor/bin/phpunit \
             tests/Unit/BrainMonkeySmokeTest.php \
             tests/WordPress/Smoke/BootTest.php
