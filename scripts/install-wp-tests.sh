@@ -21,7 +21,10 @@ download() { if command -v curl >/dev/null 2>&1; then curl -sSL -o "$1" "$2"; el
 
 # Wait for MySQL
 HOSTNAME=${DB_HOST%:*}
-until mysqladmin ping -h"${HOSTNAME}" --silent; do echo "⏳ waiting for mysql at ${HOSTNAME}..."; sleep 3; done
+until mysqladmin ping -h"${HOSTNAME}" --silent; do
+  echo "⏳ waiting for mysql at ${HOSTNAME}..."
+  sleep 3
+done
 
 install_wp() {
   if [ -d "$WP_CORE_DIR" ]; then return; fi
