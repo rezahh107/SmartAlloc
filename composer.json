@@ -24,12 +24,15 @@
         "brain\/monkey": "^2.6",
         "wp-coding-standards\/wpcs": "^3.0",
         "automattic\/vipwpcs": "^3.0",
+        "phpcompatibility\/php-compatibility": "^9.0",
         "phpcompatibility\/phpcompatibility-wp": "^2.1",
         "dealerdirect\/phpcodesniffer-composer-installer": "^1.0",
         "phpcsstandards\/phpcsutils": "^1.0",
-        "phpcsstandards\/phpcsextra": "^1.1",
+        "phpcsstandards\/phpcsextra": "^1.2",
+        "sirbrillig\/phpcs-variable-analysis": "^2.11",
         "vimeo\/psalm": "^5.18",
-        "php-stubs\/wordpress-stubs": "^6.6"
+        "php-stubs\/wordpress-stubs": "^6.6",
+        "giorgiosironi\/eris": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -40,7 +43,8 @@
         "test": "phpunit",
         "cs": "phpcs -q --standard=phpcs.xml",
         "psalm": "psalm --no-progress",
-        "psalm:taint": "psalm --taint-analysis"
+        "psalm:taint": "psalm --taint-analysis",
+        "phpcs:paths": "vendor/bin/phpcs --config-set installed_paths vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs,vendor/phpcompatibility/php-compatibility,vendor/phpcompatibility/phpcompatibility-wp,vendor/phpcsstandards/phpcsextra,vendor/phpcsstandards/phpcsutils,vendor/sirbrillig/phpcs-variable-analysis"
     },
     "autoload-dev": {
         "psr-4": {
@@ -58,6 +62,8 @@
         "platform": {
             "php": "8.1.0"
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
 
