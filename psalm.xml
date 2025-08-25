@@ -8,7 +8,6 @@
     </ignoreFiles>
   </projectFiles>
   <issueHandlers>
-    <!-- Safe\gmdate و مشابه را فعلاً ساکت کن تا CI سبز شود؛ بعداً رفع فنی -->
     <DeprecatedFunction errorLevel="suppress"/>
     <DeprecatedConstant errorLevel="suppress"/>
     <DeprecatedClass errorLevel="suppress"/>
