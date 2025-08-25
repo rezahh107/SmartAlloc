@@ -1,0 +1,8 @@
+{
+    "last_updated_utc": "2025-08-25T15:35:01Z",
+    "decisions": [],
+    "notes": {
+        "source": "ADR markdown files",
+        "policy": "No auto-commit; artifacts uploaded in CI"
+    }
+}
