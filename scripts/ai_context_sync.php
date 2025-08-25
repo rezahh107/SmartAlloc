@@ -3,9 +3,8 @@ declare(strict_types=1);
 
 /**
  * Build ai_context.json by scanning docs/architecture/decisions for ADRs.
- * Extract title from first markdown heading, date from filename prefix YYYYMMDD if present.
+ * Extract title from first markdown heading; date from filename prefix YYYYMMDD if present.
  */
-
 $root = dirname(__DIR__);
 $adrDir = $root . '/docs/architecture/decisions';
 $out   = $root . '/ai_context.json';
@@ -18,8 +17,8 @@ if (is_dir($adrDir)) {
         if (!preg_match('/\.md$/i', $name)) continue;
 
         $path = $f->getPathname();
-        $title = null;
         $content = @file_get_contents($path) ?: '';
+        $title = null;
         if (preg_match('/^#\s*(.+)$/m', $content, $m)) {
             $title = trim($m[1]);
         }
@@ -32,21 +31,22 @@ if (is_dir($adrDir)) {
         }
 
         $decisions[] = [
-            'file' => "docs/architecture/decisions/$name",
-            'title'=> $title ?: pathinfo($name, PATHINFO_FILENAME),
-            'date' => $date,
+            'file'  => "docs/architecture/decisions/$name",
+            'title' => $title ?: pathinfo($name, PATHINFO_FILENAME),
+            'date'  => $date,
         ];
     }
 }
 
 $result = [
     'last_updated_utc' => gmdate('Y-m-d\TH:i:s\Z'),
-    'decisions'        => $decisions,
+    'decisions'        => array_values($decisions),
     'notes'            => [
         'source' => 'ADR markdown files',
         'policy' => 'No auto-commit; artifacts uploaded in CI'
     ],
 ];
 
-file_put_contents($out, json_encode($result, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+file_put_contents($out, json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 echo "Generated ai_context.json with " . count($decisions) . " decisions\n";
+

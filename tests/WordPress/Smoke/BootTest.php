@@ -8,6 +8,7 @@ class BootTest extends TestCase
     {
         if (!class_exists('WP_UnitTestCase')) {
             $this->markTestSkipped('WP test suite not available locally; skipping WordPress smoke test.');
+            return;
         }
         $this->assertTrue(function_exists('do_action'), 'WordPress did not boot (do_action missing).');
     }
