@@ -1,0 +1,46 @@
+name: Session Continuation
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  snapshot:
+    if: >
+      contains(github.event.comment.body, 'پروتکل تداوم نشست را اجرا کن') ||
+      contains(github.event.comment.body, '/snapshot')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🧮 Generate/refresh project state (if missing)
+        run: |
+          if [ ! -f PROJECT_STATE.md ]; then
+            chmod +x scripts/update_state.sh || true
+            ./scripts/update_state.sh || true
+          fi
+
+      - name: 🧾 Post snapshot as comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '### 🎯 SNAPSHOT وضعیت پروژه\n';
+            if (fs.existsSync('PROJECT_STATE.md')) {
+              const content = fs.readFileSync('PROJECT_STATE.md', 'utf8');
+              body += content.substring(0, 6000);
+              if (content.length > 6000) body += '\n... (truncated)';
+            } else {
+              body += '⚠️ PROJECT_STATE.md یافت نشد. یک کامیت بزنید تا CI اجرا شود.';
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue?.number || context.payload.pull_request?.number || 1,
+              body
+            });

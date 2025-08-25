@@ -1,5 +1,5 @@
 {
-    "name": "smartalloc/wordpress-plugin",
+    "name": "smartalloc\/wordpress-plugin",
     "description": "Event-driven student support allocation with Gravity Forms + Exporter",
     "type": "wordpress-plugin",
     "version": "1.0.0-rc.2",
@@ -12,79 +12,47 @@
     ],
     "require": {
         "php": ">=8.1",
-        "phpoffice/phpspreadsheet": "~1.29.0",
-        "maennchen/zipstream-php": "^2.2.1"
+        "phpoffice\/phpspreadsheet": "~1.29.0",
+        "maennchen\/zipstream-php": "^2.2.1"
     },
     "conflict": {
-        "maennchen/zipstream-php": ">=3.0"
+        "maennchen\/zipstream-php": ">=3.0"
     },
     "require-dev": {
-        "wp-coding-standards/wpcs": "^3.0",
-        "squizlabs/php_codesniffer": "^3.7",
-        "phpstan/phpstan": "^1.10",
-        "phpunit/phpunit": "^10.0",
-        "vimeo/psalm": "^5.0",
-        "brain/monkey": "^2.6",
-        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-        "phpcompatibility/php-compatibility": "^9.3",
-        "wp-phpunit/wp-phpunit": "^5.7",
-        "mikey179/vfsstream": "^1.6",
-        "infection/infection": "^0.27",
-        "giorgiosironi/eris": "^1.0",
-        "nikic/php-parser": "^4.18"
-    },
-    "suggest": {
-        "patchstack/security-scanner": "Run composer update when you have access to Patchstack repo to enable local scanning"
+        "phpunit\/phpunit": "^9.6",
+        "wp-coding-standards\/wpcs": "^3.0",
+        "phpcompatibility\/phpcompatibility-wp": "^2.1",
+        "dealerdirect\/phpcodesniffer-composer-installer": "^1.0",
+        "vimeo\/psalm": "^5.18",
+        "automattic\/vipwpcs": "^3.0"
     },
     "autoload": {
         "psr-4": {
-            "SmartAlloc\\": "src/"
+            "SmartAlloc\\": "src\/"
         }
     },
     "scripts": {
-        "cs": "phpcs",
-        "cs:fix": "phpcbf",
-        "phpstan": "phpstan analyse --memory-limit=1G",
-        "phpstan:baseline": "phpstan analyse --memory-limit=1G --generate-baseline",
-        "psalm": "psalm --no-cache --taint-analysis --show-info=false",
         "test": "phpunit",
-        "test:security": "phpunit --testsuite Security && psalm --no-cache --taint-analysis --show-info=false",
-        "test:e2e": "phpunit --testsuite E2E",
-        "coverage": "php tools/coverage.php",
-        "qa": "composer cs && composer psalm && composer test",
-        "qa:advisory": "bash scripts/ga-rehearsal.sh",
-        "qa:enforce:ga": "php scripts/ga-enforcer.php --profile=ga --enforce --junit",
-        "ci": "composer cs && composer test:security && composer coverage",
-        "preflight": "php tools/preflight.php",
-        "docs": "@php bin/docs_build.php --in=docs/Docs-Bundle.md --out=docs/Docs-Bundle.compiled.md || exit 0",
-        "dist": "composer docs && php tools/build-dist.php",
-        "release:check": "composer cs && composer phpstan && composer psalm && composer test && composer test:security && composer preflight",
-        "bump": "php scripts/version-bump.php",
-        "changelog": "php scripts/changelog-from-commits.php",
-        "release:notes": "php scripts/release-notes.php",
-        "release:rc": "php scripts/tag-release.php --enforce=false",
-        "release:ga": "php scripts/tag-release.php --enforce=true",
-        "sec:semgrep": "if command -v docker >/dev/null; then docker run --rm -v $PWD:/src returntocorp/semgrep --config=auto --timeout 120 --sarif --output semgrep.sarif /src; else echo 'Docker not installed, skipping Semgrep'; fi",
-        "sec:wp": "if [ -x vendor/bin/patchstack ]; then vendor/bin/patchstack scan --format=json --output build/patchstack.json || true; else echo 'Patchstack unavailable'; fi",
-        "post-install-cmd": [
-            "echo 'post-install-cmd: no-op'"
-        ]
+        "cs": "phpcs -q --standard=phpcs.xml",
+        "psalm": "psalm --no-progress",
+        "psalm:taint": "psalm --taint-analysis"
     },
     "autoload-dev": {
         "psr-4": {
-            "SmartAlloc\\Tests\\": "tests/"
+            "SmartAlloc\\Tests\\": "tests\/"
         },
         "files": [
-            "stubs/wp-stubs.php"
+            "stubs\/wp-stubs.php"
         ]
     },
     "config": {
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true,
-            "infection/extension-installer": true
+            "dealerdirect\/phpcodesniffer-composer-installer": true,
+            "infection\/extension-installer": true
         },
         "platform": {
             "php": "8.1.0"
         }
     }
 }
+
