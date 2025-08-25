@@ -20,27 +20,20 @@ class SecurityAuditTest extends WP_UnitTestCase
         }
     }
 
-    public function test_admin_can_access_protected_endpoints()
+    public function test_role_gates()
     {
-        $user = $this->factory->user->create_and_get(['role' => 'administrator']);
-        wp_set_current_user($user->ID);
-        $endpoints = ['/smartalloc/v1/metrics', '/smartalloc/v1/export'];
-        foreach ($endpoints as $ep) {
-            $req = new WP_REST_Request('GET', $ep);
-            $res = rest_do_request($req);
+        $admin = $this->factory->user->create_and_get(['role' => 'administrator']);
+        wp_set_current_user($admin->ID);
+        foreach (['/smartalloc/v1/metrics','/smartalloc/v1/export'] as $ep) {
+            $res = rest_do_request(new WP_REST_Request('GET', $ep));
             $this->assertNotEquals(403, $res->get_status(), "Admin should access $ep");
         }
-    }
 
-    public function test_subscriber_cannot_access_protected_endpoints()
-    {
-        $user = $this->factory->user->create_and_get(['role' => 'subscriber']);
-        wp_set_current_user($user->ID);
-        $endpoints = ['/smartalloc/v1/metrics', '/smartalloc/v1/export'];
-        foreach ($endpoints as $ep) {
-            $req = new WP_REST_Request('GET', $ep);
-            $res = rest_do_request($req);
-            $this->assertEquals(403, $res->get_status(), "Subscriber should be blocked for $ep");
+        $subscriber = $this->factory->user->create_and_get(['role' => 'subscriber']);
+        wp_set_current_user($subscriber->ID);
+        foreach (['/smartalloc/v1/metrics','/smartalloc/v1/export'] as $ep) {
+            $res = rest_do_request(new WP_REST_Request('GET', $ep));
+            $this->assertEquals(403, $res->get_status(), "Subscriber must be blocked for $ep");
         }
     }
 }

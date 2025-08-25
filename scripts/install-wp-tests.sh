@@ -22,9 +22,8 @@ download() { if command -v curl >/dev/null 2>&1; then curl -sSL -o "$1" "$2"; el
 install_wp() {
   if [ -d "$WP_CORE_DIR" ]; then return; fi
   mkdir -p "$WP_CORE_DIR"
-  if [ "$WP_VERSION" == 'latest' ]; then
-    LATEST=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | grep -Po '"version":"\K[^"]*')
-    download $TMPDIR/wordpress.tar.gz https://wordpress.org/wordpress-$LATEST.tar.gz
+  if [ "$WP_VERSION" = "latest" ]; then
+    download $TMPDIR/wordpress.tar.gz https://wordpress.org/latest.tar.gz
   elif [[ $WP_VERSION =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
     download $TMPDIR/wordpress.tar.gz https://wordpress.org/wordpress-$WP_VERSION.tar.gz
   else
@@ -35,16 +34,12 @@ install_wp() {
 
 install_test_suite() {
   mkdir -p "$WP_TESTS_DIR"
-  TAG=${WP_VERSION/latest/trunk}
-  if [[ $TAG == trunk || $TAG == nightly ]]; then
-    svn co --quiet https://develop.svn.wordpress.org/trunk/tests/phpunit/includes/ "$WP_TESTS_DIR/includes"
-    svn co --quiet https://develop.svn.wordpress.org/trunk/tests/phpunit/data/ "$WP_TESTS_DIR/data"
-  else
-    download $TMPDIR/wptests.zip https://github.com/WordPress/wordpress-develop/archive/tags/$WP_VERSION.zip
-    unzip -q $TMPDIR/wptests.zip -d $TMPDIR
-    mv "$TMPDIR/wordpress-develop-tags-$WP_VERSION/tests/phpunit/includes" "$WP_TESTS_DIR/includes"
-    mv "$TMPDIR/wordpress-develop-tags-$WP_VERSION/tests/phpunit/data" "$WP_TESTS_DIR/data"
-  fi
+  # شامل‌ها و دیتا از develop گرفته می‌شود
+  download $TMPDIR/wpt.zip https://github.com/WordPress/wordpress-develop/archive/refs/heads/trunk.zip
+  unzip -q $TMPDIR/wpt.zip -d $TMPDIR
+  mv "$TMPDIR/wordpress-develop-trunk/tests/phpunit/includes" "$WP_TESTS_DIR/includes"
+  mv "$TMPDIR/wordpress-develop-trunk/tests/phpunit/data" "$WP_TESTS_DIR/data"
+
   download "$WP_TESTS_DIR/wp-tests-config.php" https://raw.githubusercontent.com/wp-cli/wp-cli-tests/master/utils/wp-tests-config.php
   sed -i'' -e "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR':" "$WP_TESTS_DIR/wp-tests-config.php"
   sed -i'' -e "s/youremptytestdbnamehere/$DB_NAME/" "$WP_TESTS_DIR/wp-tests-config.php"
