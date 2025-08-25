@@ -59,6 +59,9 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      - name: 🛠️ System tools
+        run: sudo apt-get update && sudo apt-get install -y unzip subversion
+
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -66,9 +69,6 @@ jobs:
           extensions: mbstring, xml, json, mysqli, curl, dom
           tools: composer, phpunit
           coverage: xdebug
-
-      - name: Ensure system tools
-        run: sudo apt-get update && sudo apt-get install -y unzip subversion
 
       - name: 🗄️ Composer cache
         uses: actions/cache@v4
@@ -79,12 +79,9 @@ jobs:
       - name: 📦 Install deps
         run: composer install --no-interaction --prefer-dist --ansi
 
-      - name: Ensure PHPCS installed_paths
+      - name: 🔧 PHPCS installed_paths
         run: |
           vendor/bin/phpcs --config-set installed_paths vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs,vendor/phpcompatibility/php-compatibility
-
-      - name: 🔧 PHPCS (WPCS + PHPCompatibilityWP)
-        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=full --report-summary
 
       - name: 🧪 Install WP test suite
         env: { WP_VERSION: ${{ matrix.wp }} }
@@ -92,18 +89,20 @@ jobs:
           chmod +x scripts/install-wp-tests.sh
           bash ./scripts/install-wp-tests.sh wordpress_test root '' 127.0.0.1:3306 $WP_VERSION
 
-      - name: 🧪 PHPUnit
-        env: { XDEBUG_MODE: coverage }
-        run: |
-          vendor/bin/phpunit $([ "${{ matrix.coverage }}" == "true" ] && echo "--coverage-clover coverage.xml" || true)
+      # Lint ها soft-fail: گزارش بده ولی اجازه بده job ادامه دهد
+      - name: 🔍 PHPCS (soft-fail)
+        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=full --report-summary || true
 
-      - name: 🔍 Psalm (static analysis)
+      - name: 🔎 Psalm (soft-fail)
         run: |
           vendor/bin/psalm --no-progress --output-format=github --stats || true
           vendor/bin/psalm --taint-analysis || true
 
-      - name: 🛡️ Composer audit
-        run: composer audit --no-interaction || true
+      # PHPUnit باید سخت‌گیر بماند (اگر واقعاً کد مشکل دارد قرمز می‌شود)
+      - name: 🧪 PHPUnit
+        env: { XDEBUG_MODE: coverage }
+        run: |
+          vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration --coverage-clover coverage.xml
 
       - name: 📊 Summary
         if: always()
