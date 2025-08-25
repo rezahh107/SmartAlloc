@@ -1,12 +1,15 @@
 <?xml version="1.0"?>
 <ruleset name="SmartAlloc">
-  <description>WPCS + PHPCompatibility for SmartAlloc</description>
+  <description>VIP + WPCS + PHPCompatibility</description>
   <file>src</file>
   <ignore>vendor</ignore>
+
   <rule ref="WordPressVIPMinimum"/>
   <rule ref="PHPCompatibilityWP"/>
+
   <config name="testVersion" value="8.1-"/>
   <arg value="sp"/>
   <arg name="colors"/>
+
   <exclude-pattern>*/tests/*</exclude-pattern>
 </ruleset>
