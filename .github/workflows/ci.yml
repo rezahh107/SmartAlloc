@@ -56,11 +56,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Setup PHP 8.2 and install dependencies before smoke tests
+      # Setup PHP (use matrix) and install dependencies before smoke tests
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: ${{ matrix.php }}
           tools: composer, phpunit
           coverage: none
 
