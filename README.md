@@ -410,3 +410,25 @@ This plugin is licensed under the MIT License. See `LICENSE` for details.
 - REST API endpoints
 - WP-CLI commands
 - Comprehensive testing 
+
+## Developer quickstart
+
+```bash
+composer install
+# generate feature/ADR artifacts locally
+php scripts/generate_features_md.php
+php scripts/ai_context_sync.php
+# build state snapshot
+make state
+# add a new ADR
+bash scripts/new_adr.sh "Choose database library"
+```
+
+Artifacts:
+
+FEATURES.md: feature readiness scores
+
+ai_context.json: ADR-derived AI context
+
+PROJECT_STATE.md: snapshot summary (CI also uploads as artifact)
+

@@ -3,9 +3,18 @@ set -euo pipefail
 slug="${*:-new-decision}"
 date="$(date -u +%Y%m%d)"
 safe="$(echo "$slug" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g')"
-file="docs/architecture/decisions/${date}_${safe}.md"
-mkdir -p docs/architecture/decisions
-cat > "$file" <<'MD'
+dir="docs/architecture/decisions"
+file="${dir}/${date}_${safe}.md"
+tmpl="${dir}/_template.md"
+
+mkdir -p "$dir"
+
+if [[ -f "$tmpl" ]]; then
+  title="${slug}"
+  today="$(date -u +%Y-%m-%d)"
+  sed "s/{TITLE}/${title}/g; s/{YYYY-MM-DD}/${today}/g" "$tmpl" > "$file"
+else
+  cat > "$file" <<'MD'
 # REPLACE ME
 
 - **Status:** proposed
@@ -14,5 +23,7 @@ cat > "$file" <<'MD'
 - **Decision:** …
 - **Consequences:** …
 MD
-sed -i.bak "s/REPLACE ME/${slug}/; s/REPLACE-ME/$(date -u +%Y-%m-%d)/" "$file" && rm -f "$file.bak"
+  sed -i.bak "s/REPLACE ME/${slug}/; s/REPLACE-ME/$(date -u +%Y-%m-%d)/" "$file" && rm -f "$file.bak"
+fi
+
 echo "Created $file"
