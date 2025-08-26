@@ -55,6 +55,7 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      # Setup environment and install dependencies before running smoke tests
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
