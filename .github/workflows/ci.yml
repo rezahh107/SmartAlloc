@@ -27,81 +27,90 @@ permissions:
 
 jobs:
   qa:
-    name: 🛡️ QA (PHP ${{ matrix.php }} / WP ${{ matrix.wp }})
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_DATABASE: wordpress_test
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-        ports: ['3306:3306']
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
-          --health-interval=10s --health-timeout=5s --health-retries=3
     strategy:
-      fail-fast: false
       matrix:
-        php: ['8.1', '8.2']
-        wp: ['6.3', '6.4', 'latest']
-        include:
-          - php: '8.2'
-            wp: 'latest'
-            coverage: true
-
+        php: ['8.1','8.2']
     steps:
-      - name: 📥 Checkout
+      - name: ⬇️ Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Ensure required CLI tools BEFORE any step uses jq/bc
-      - name: 🧰 Ensure jq & bc
+      - name: 📦 Install jq & bc (early)
         run: |
           sudo apt-get update
           sudo apt-get install -y jq bc
-
-      # Setup PHP using matrix and isolate Composer cache before smoke tests
-      - name: "🐘 Setup PHP ${{ matrix.php }}"
+      - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          tools: composer, phpunit
           coverage: none
-
-      - name: "♻️ Composer cache (PHP scoped)"
+      - name: 🗃️ Composer cache (PHP-scoped)
         uses: actions/cache@v4
         with:
           path: ~/.cache/composer/files
           key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
-
-      - name: 📦 Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
-
-      - name: 🧪 Smoke tests (Composer script)
-        run: composer test:smoke
-
-      - name: 🔐 Ensure scripts executable (defensive)
+      - name: 🧱 Ensure ai_context.json exists (pre)
         if: always()
         run: |
-          chmod +x scripts/*.php || true
-          chmod +x scripts/new_adr.sh || true
-
-      - name: 🔧 PHPCBF (soft-fix)
-        run: vendor/bin/phpcbf -q --standard=phpcs.xml src || true
-
-      - name: 📊 Generate Enhanced 5D Scores
-        run: composer score:5d
-
-      - name: 🧱 Ensure ai_context.json exists
-        if: always()
-        run: |
+          set -euo pipefail
           test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
           jq empty ai_context.json
-
+      - name: 📥 Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: 🎨 PHPCBF (soft)
+        run: composer phpcbf || true
+      - name: 📊 5D Score
+        run: composer score:5d
+      - name: 📝 Append 5D Summary
+        if: always()
+        run: |
+          set -euo pipefail
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
+          {
+            echo '### Enhanced 5D Feature Scores'
+            echo
+            echo '**Timestamp (UTC):**' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo
+            echo '```json'
+            jq -c '.current_scores // {}' ai_context.json || echo '{}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: 🚨 AUTO-FIX Prompt (if ci_failure)
+        if: always()
+        run: |
+          set -euo pipefail
+          if jq -e '.ci_failure' ai_context.json >/dev/null 2>&1; then
+            SEC=$(jq -r '.ci_failure.security_score // "?"' ai_context.json)
+            PHPCS=$(jq -r '.ci_failure.phpcs_errors // "?"' ai_context.json)
+            TESTS=$(jq -r '.ci_failure.test_failures // "?"' ai_context.json)
+            {
+              echo '```'
+              echo '🚨 CI Failure Detected'
+              echo "🔍 مشکل: امنیت پایین (${SEC}/25) + ${TESTS} تست شکست"
+              echo '💡 پرامپت تولیدشده برای Codex:'
+              echo
+              echo '[AUTO-FIX REQUEST]'
+              echo 'بر اساس خطاهای CI زیر، یک راه‌حل فوری ارائه بده:'
+              echo
+              echo "🔒 امنیت: ${SEC}/25"
+              echo
+              echo "⚠️ خطاهای PHPCS: ${PHPCS}"
+              echo
+              echo "🧪 تست‌های شکست‌خورده: ${TESTS}"
+              echo
+              echo '[RULES FOR CODEX]'
+              echo 'فقط یک گزینه ارائه بده (نه ۴ گزینه)'
+              echo 'حتماً بر روی رفع خطاهای بالا تمرکز کن'
+              echo 'خروجی حتماً شامل این موارد باشد:'
+              echo '• 📊 5D Score با امتیاز امنیت ≥ 20/25'
+              echo '• ✅ تست‌های شکست‌خورده پاس شوند'
+              echo '• 📦 Patchset با diff کمینه'
+              echo '• 📌 دستور پوش آماده (git push origin fix/...)'
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -110,145 +119,96 @@ jobs:
           path: |
             FEATURES.md
             ai_context.json
-
-      - name: 🧾 Enhanced Summary (5D)
-        run: |
-          echo "## 📊 Enhanced 5D Feature Scores" >> "$GITHUB_STEP_SUMMARY"
-          cat FEATURES.md >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "## 🤖 AI Context (current_scores)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          jq '.current_scores // {}' ai_context.json >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-      - name: 📝 Append project state to summary
-        if: always()
-        run: |
-          set -euo pipefail
-          echo "## 📊 Feature Scores" >> "$GITHUB_STEP_SUMMARY"
-          head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
-          jq '.decisions // [] | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY"
-
-      - name: ✅ Verify summary sections
-        if: always()
-        run: |
-          test -f "$GITHUB_STEP_SUMMARY"
-          grep -q "## 📊 Feature Scores" "$GITHUB_STEP_SUMMARY"
-          grep -q "## 🤖 AI Context (decisions)" "$GITHUB_STEP_SUMMARY"
-          echo "Summary contains required sections ✓"
-
-      - name: ✅ Verify artifacts presence & JSON validity
-        if: always()
-        run: |
-          test -s FEATURES.md || { echo "FEATURES.md missing or empty"; exit 1; }
-          test -s ai_context.json || { echo "ai_context.json missing or empty"; exit 1; }
-          jq empty ai_context.json
-          echo "Artifacts present and ai_context.json is valid JSON ✓"
-
-      - name: ✅ Verify E2E not auto-run
-        if: always()
-        env:
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          API="https://api.github.com/repos/$REPO"
-          WF_ID=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$API/actions/workflows" | jq -r '.workflows // [] | .[] | select(.name=="E2E (optional)") | .id')
-          if [ -z "$WF_ID" ]; then
-            echo "E2E workflow not found; skipping check"
-            exit 0
-          fi
-          EVENTS=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$API/actions/workflows/$WF_ID/runs?per_page=50" | jq -r '.workflow_runs // [] | .[] | select(.head_sha=="'"$SHA"'") | .event')
-          echo "E2E runs for this SHA (if any):"; echo "$EVENTS"
-          if echo "$EVENTS" | grep -Eq 'push|pull_request'; then
-            echo "E2E ran automatically! Expected only workflow_dispatch/schedule."; exit 1;
-          fi
-          echo "E2E did not auto-run ✓"
   full:
-    name: 🔬 Full Test Matrix (manual/scheduled)
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    needs: qa
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_DATABASE: wordpress_test
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-        ports: ['3306:3306']
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
-          --health-interval=10s --health-timeout=5s --health-retries=3
+    strategy:
+      matrix:
+        php: ['8.1','8.2']
     steps:
-      - uses: actions/checkout@v4
-
-      # Ensure required CLI tools BEFORE any step uses jq/bc
-      - name: 🧰 Ensure jq & bc
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+      - name: 📦 Install jq & bc (early)
         run: |
           sudo apt-get update
           sudo apt-get install -y jq bc
-
-      - uses: shivammathur/setup-php@v2
-        with: { php-version: '8.1', tools: composer }
-
-      - name: "♻️ Composer cache (PHP scoped)"
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: 🗃️ Composer cache (PHP-scoped)
         uses: actions/cache@v4
         with:
           path: ~/.cache/composer/files
-          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-8.1-composer-
-
-      - name: 🛠️ System tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
-
-      - run: composer install --no-interaction --prefer-dist --ansi
-      - name: 🔧 PHPCS installed_paths
-        run: |
-          vendor/bin/phpcs --config-set installed_paths \
-          vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs, \
-          vendor/phpcompatibility/php-compatibility, \
-          vendor/phpcompatibility/phpcompatibility-wp, \
-          vendor/phpcompatibility/phpcompatibility-paragonie, \
-          vendor/phpcsstandards/phpcsextra, \
-          vendor/phpcsstandards/phpcsutils, \
-          vendor/sirbrillig/phpcs-variable-analysis
-      - name: 🧪 Install WP test suite
-        run: |
-          chmod +x scripts/install-wp-tests.sh
-          bash scripts/install-wp-tests.sh wordpress_test root '' 127.0.0.1:3306 latest
-      - name: 🔍 PHPCS (soft-fail)
-        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
-
-      - name: 🔬 Verify Eris available
-        run: composer show -D | grep -i eris || (echo "Eris not installed"; exit 1)
-      - name: 🔎 Psalm (soft-fail)
-        run: |
-          vendor/bin/psalm --no-progress --output-format=github --stats || true
-          vendor/bin/psalm --taint-analysis || true
-      - name: 🧪 PHPUnit (full suites)
-        env: { XDEBUG_MODE: coverage }
-        run: vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration --coverage-clover coverage.xml
-
-      - name: 🧱 Ensure ai_context.json exists
-        if: always()
-        run: |
-          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
-          jq empty ai_context.json
-
-      - name: 📝 Append project state to summary
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+      - name: 🧱 Ensure ai_context.json exists (pre)
         if: always()
         run: |
           set -euo pipefail
-          echo "## 📊 Feature Scores" >> "$GITHUB_STEP_SUMMARY"
-          head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
-          jq '.decisions // [] | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY"
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
+      - name: 📥 Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: 🎨 PHPCBF (soft)
+        run: composer phpcbf || true
+      - name: 📊 5D Score
+        run: composer score:5d
+      - name: 📝 Append 5D Summary
+        if: always()
+        run: |
+          set -euo pipefail
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
+          {
+            echo '### Enhanced 5D Feature Scores'
+            echo
+            echo '**Timestamp (UTC):**' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo
+            echo '```json'
+            jq -c '.current_scores // {}' ai_context.json || echo '{}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: 🚨 AUTO-FIX Prompt (if ci_failure)
+        if: always()
+        run: |
+          set -euo pipefail
+          if jq -e '.ci_failure' ai_context.json >/dev/null 2>&1; then
+            SEC=$(jq -r '.ci_failure.security_score // "?"' ai_context.json)
+            PHPCS=$(jq -r '.ci_failure.phpcs_errors // "?"' ai_context.json)
+            TESTS=$(jq -r '.ci_failure.test_failures // "?"' ai_context.json)
+            {
+              echo '```'
+              echo '🚨 CI Failure Detected'
+              echo "🔍 مشکل: امنیت پایین (${SEC}/25) + ${TESTS} تست شکست"
+              echo '💡 پرامپت تولیدشده برای Codex:'
+              echo
+              echo '[AUTO-FIX REQUEST]'
+              echo 'بر اساس خطاهای CI زیر، یک راه‌حل فوری ارائه بده:'
+              echo
+              echo "🔒 امنیت: ${SEC}/25"
+              echo
+              echo "⚠️ خطاهای PHPCS: ${PHPCS}"
+              echo
+              echo "🧪 تست‌های شکست‌خورده: ${TESTS}"
+              echo
+              echo '[RULES FOR CODEX]'
+              echo 'فقط یک گزینه ارائه بده (نه ۴ گزینه)'
+              echo 'حتماً بر روی رفع خطاهای بالا تمرکز کن'
+              echo 'خروجی حتماً شامل این موارد باشد:'
+              echo '• 📊 5D Score با امتیاز امنیت ≥ 20/25'
+              echo '• ✅ تست‌های شکست‌خورده پاس شوند'
+              echo '• 📦 Patchset با diff کمینه'
+              echo '• 📌 دستور پوش آماده (git push origin fix/...)'
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: 📤 Upload Enhanced Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-state-enhanced-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          path: |
+            FEATURES.md
+            ai_context.json

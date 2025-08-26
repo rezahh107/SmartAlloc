@@ -8,7 +8,7 @@ TESTS_DIR="${TESTS_DIR:-$ROOT/tests}"
 FEATURES_MD="$ROOT/FEATURES.md"
 AI_CTX="$ROOT/ai_context.json"
 phpcs_cmd="${PHPCS_CMD:-$ROOT/vendor/bin/phpcs}"
-TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+UTC_NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 # Soft-fix coding style before scoring
 if [ -x "${ROOT}/vendor/bin/phpcbf" ]; then
@@ -99,13 +99,13 @@ jq --argjson sec "$SECURITY_SCORE" \
    --arg total "$TOTAL_SCORE_INT" \
    --arg weighted "$weighted" \
    --argjson flags "$(printf '%s\n' "${flags[@]:-}" | jq -R . | jq -s .)" \
-   --arg ts "$TS" \
+   --arg now "$UTC_NOW" \
    '
    .current_scores = {
      security:$sec, logic:$log, performance:$perf, readability:$read, goal:$goal,
      total: ($total|tonumber), weighted_percent: ($weighted|tonumber), red_flags: $flags
    }
-   | .last_updated_utc = $ts
+   | .last_updated_utc = $now
    ' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
 
 # ---------- Write FEATURES.md (summary block at top) ----------
@@ -134,7 +134,7 @@ jq --argjson sec "$SECURITY_SCORE" \
   fi
   echo
   echo "---"
-  echo "*Last updated: ${TS}*"
+  echo "Last Updated (UTC): ${UTC_NOW}"
 } > "$FEATURES_MD"
 
 echo "✅ 5D scoring completed."
