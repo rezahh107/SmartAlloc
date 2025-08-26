@@ -57,14 +57,14 @@ jobs:
           fetch-depth: 0
 
       # Setup PHP using matrix and isolate Composer cache before smoke tests
-      - name: 🐘 Setup PHP
+      - name: "🐘 Setup PHP ${{ matrix.php }}"
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           tools: composer, phpunit
           coverage: none
 
-      - name: ♻️ Composer cache
+      - name: "♻️ Composer cache (PHP ${{ matrix.php }})"
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
