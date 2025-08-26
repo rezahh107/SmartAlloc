@@ -56,7 +56,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Setup PHP using matrix and install dependencies before smoke tests
+      # Setup PHP using matrix and isolate Composer cache before smoke tests
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
