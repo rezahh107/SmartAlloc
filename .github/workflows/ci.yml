@@ -79,12 +79,13 @@ jobs:
       - name: 📦 Composer install
         run: composer install --no-interaction --prefer-dist --ansi
 
-      - name: 🔧 PHPCS installed_paths (safety)
+      - name: 🔧 PHPCS installed_paths
         run: |
           vendor/bin/phpcs --config-set installed_paths \
           vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs, \
           vendor/phpcompatibility/php-compatibility, \
           vendor/phpcompatibility/phpcompatibility-wp, \
+          vendor/phpcompatibility/phpcompatibility-paragonie, \
           vendor/phpcsstandards/phpcsextra, \
           vendor/phpcsstandards/phpcsutils, \
           vendor/sirbrillig/phpcs-variable-analysis
@@ -96,7 +97,10 @@ jobs:
           bash scripts/install-wp-tests.sh wordpress_test root '' 127.0.0.1:3306 $WP_VERSION
 
       - name: 🔍 PHPCS (soft-fail)
-        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=full --report-summary || true
+        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
+
+      - name: 🔬 Verify Eris available
+        run: composer show -D | grep -i eris || (echo "Eris not installed"; exit 1)
 
       - name: 🔎 Psalm (soft-fail)
         run: |
@@ -107,12 +111,7 @@ jobs:
         run: composer lint:php
 
       - name: 🧪 PHPUnit (smoke only)
-        env:
-          XDEBUG_MODE: coverage
-        run: |
-          vendor/bin/phpunit \
-            tests/Unit/BrainMonkeySmokeTest.php \
-            tests/WordPress/Smoke/BootTest.php
+        run: composer test:smoke
 
       - name: 🔐 Ensure scripts executable (defensive)
         if: always()
@@ -221,12 +220,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
       - run: composer install --no-interaction --prefer-dist --ansi
-      - name: 🔧 PHPCS installed_paths (safety)
+      - name: 🔧 PHPCS installed_paths
         run: |
           vendor/bin/phpcs --config-set installed_paths \
           vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs, \
           vendor/phpcompatibility/php-compatibility, \
           vendor/phpcompatibility/phpcompatibility-wp, \
+          vendor/phpcompatibility/phpcompatibility-paragonie, \
           vendor/phpcsstandards/phpcsextra, \
           vendor/phpcsstandards/phpcsutils, \
           vendor/sirbrillig/phpcs-variable-analysis
@@ -235,7 +235,10 @@ jobs:
           chmod +x scripts/install-wp-tests.sh
           bash scripts/install-wp-tests.sh wordpress_test root '' 127.0.0.1:3306 latest
       - name: 🔍 PHPCS (soft-fail)
-        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=full --report-summary || true
+        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
+
+      - name: 🔬 Verify Eris available
+        run: composer show -D | grep -i eris || (echo "Eris not installed"; exit 1)
       - name: 🔎 Psalm (soft-fail)
         run: |
           vendor/bin/psalm --no-progress --output-format=github --stats || true

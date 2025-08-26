@@ -24,12 +24,14 @@
         "brain\/monkey": "^2.6",
         "wp-coding-standards\/wpcs": "^3.0",
         "automattic\/vipwpcs": "^3.0",
+        "phpcompatibility\/php-compatibility": "^9.3",
         "phpcompatibility\/phpcompatibility-wp": "^2.1",
-        "dealerdirect\/phpcodesniffer-composer-installer": "^1.0",
+        "phpcsstandards\/phpcsextra": "^1.2",
         "phpcsstandards\/phpcsutils": "^1.0",
-        "phpcsstandards\/phpcsextra": "^1.1",
+        "sirbrillig\/phpcs-variable-analysis": "^2.11",
         "vimeo\/psalm": "^5.18",
-        "php-stubs\/wordpress-stubs": "^6.6"
+        "php-stubs\/wordpress-stubs": "^6.6",
+        "giorgiosironi\/eris": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -37,12 +39,12 @@
         }
     },
     "scripts": {
-        "lint:php": "php -d detect_unicode=0 -l $(git ls-files '*.php')",
+        "lint:php": "php -l $(git ls-files '*.php')",
         "phpcs": "vendor/bin/phpcs -q --standard=phpcs.xml",
         "psalm": "vendor/bin/psalm --no-progress",
         "psalm:taint": "vendor/bin/psalm --taint-analysis",
         "test": "vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration",
-        "smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
+        "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
         "gen:features": "php scripts/generate_features_md.php",
         "gen:context": "php scripts/ai_context_sync.php",
         "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
