@@ -1,23 +1,17 @@
 <?xml version="1.0"?>
 <ruleset name="SmartAlloc">
-  <description>VIP + WPCS + PHPCompatibility for SmartAlloc</description>
-
-  <!-- محدوده بررسی -->
+  <description>SmartAlloc coding standard</description>
   <file>src</file>
-  <ignore>vendor</ignore>
+  <exclude-pattern>vendor/*</exclude-pattern>
+  <exclude-pattern>tests/*</exclude-pattern>
+  <exclude-pattern>*.min.php</exclude-pattern>
 
-  <!-- استانداردها -->
   <rule ref="WordPressVIPMinimum"/>
   <rule ref="PHPCompatibilityWP"/>
-
-  <!-- اطمینان از مسیرها (اضافی/اطمینانی) -->
-  <config name="installed_paths"
-          value="vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs,vendor/phpcompatibility/php-compatibility,vendor/phpcsstandards/phpcsextra,vendor/phpcsstandards/phpcsutils"/>
-
   <config name="testVersion" value="8.1-"/>
-  <arg value="sp"/>
-  <arg name="colors"/>
 
-  <!-- تست‌ها هم بد نیست بررسی شوند؛ اگر پرهزینه بود بعداً حذف می‌کنیم -->
-  <file>tests</file>
+  <arg name="basepath" value="."/>
+  <arg value="sp"/>
+
+  <rule ref="VariableAnalysis"/>
 </ruleset>

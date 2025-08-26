@@ -15,6 +15,9 @@ if (!class_exists('WP_UnitTestCase')) {
     abstract class WP_UnitTestCase extends BaseTestCase {}
 }
 
+/**
+ * @group wp
+ */
 final class AllocationPropertiesTest extends WP_UnitTestCase
 {
     use TestTrait;
@@ -64,6 +67,7 @@ final class AllocationPropertiesTest extends WP_UnitTestCase
         return $this->db->mentors[$mentorId]['assigned'] ?? 0;
     }
 
+    /** @test */
     public function test_capacity_never_exceeded_property(): void
     {
         $this
@@ -89,6 +93,7 @@ final class AllocationPropertiesTest extends WP_UnitTestCase
             });
     }
 
+    /** @test */
     public function test_allocation_deterministic_property(): void
     {
         $this

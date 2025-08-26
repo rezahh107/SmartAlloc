@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 use SmartAlloc\Tests\BaseTestCase;
 
+/**
+ * @group wp
+ */
 final class UninstallMultisiteTest extends BaseTestCase
 {
     protected function setUp(): void
@@ -18,6 +21,7 @@ final class UninstallMultisiteTest extends BaseTestCase
         }
     }
 
+    /** @test */
     public function test_uninstall_cleans_options_with_mocks(): void
     {
         \Brain\Monkey\setUp();
@@ -43,6 +47,7 @@ final class UninstallMultisiteTest extends BaseTestCase
         $this->assertTrue(true);
     }
 
+    /** @test */
     public function test_multisite_activation_deactivation_smoke(): void
     {
         // Guard again for clarity (cheap).

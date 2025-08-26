@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 use SmartAlloc\Tests\BaseTestCase;
 
+/**
+ * @group wp
+ */
 final class UninstallTightTest extends BaseTestCase
 {
     protected function setUp(): void
@@ -17,6 +20,7 @@ final class UninstallTightTest extends BaseTestCase
         if (function_exists('\\Brain\\Monkey\\tearDown')) { \Brain\Monkey\tearDown(); }
     }
 
+    /** @test */
     public function test_uninstall_deletes_expected_keys_or_skip(): void
     {
         $fixture = __DIR__ . '/../fixtures/uninstall-expected.php';
