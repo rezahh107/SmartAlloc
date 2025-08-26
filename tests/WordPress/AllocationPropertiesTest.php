@@ -61,19 +61,18 @@ final class AllocationPropertiesTest extends WP_UnitTestCase
             $this->markTestSkipped('Assignment API not available');
         }
 
-        $this
-            ->forAll(
-                Generator\seq(
-                    Generator\associative([
-                        'id' => Generator\int(),
-                        'gender' => Generator\elements(['M', 'F']),
-                        'center' => Generator\elements(['1']),
-                    ]),
-                    1,
-                    20
-                )
+        $this->forAll(
+            Generator\seq(
+                Generator\associative([
+                    'id' => Generator\int(),
+                    'gender' => Generator\elements(['M', 'F']),
+                    'center' => Generator\elements(['1']),
+                ]),
+                1,
+                20
             )
-            ->then(function ($students): void {
+        )
+        ->then(function ($students): void {
                 $this->processAllocations($students);
                 foreach ($this->getAllMentors() as $mentor) {
                     $this->assertLessThanOrEqual(
@@ -90,8 +89,7 @@ final class AllocationPropertiesTest extends WP_UnitTestCase
             $this->markTestSkipped('Assignment API not available');
         }
 
-        $this
-            ->forAll(Generator\int())
+        $this->forAll(Generator\int())
             ->then(function ($seed): void {
                 $student = $this->makeStudentFromSeed($seed);
                 $engine1 = $this->makeAllocationEngine();
