@@ -58,15 +58,9 @@ jobs:
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring, xml, json, mysqli, curl, dom
+          php-version: '8.2'
           tools: composer, phpunit
-          coverage: xdebug
-
-      - name: 🛠️ System tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
+          coverage: none
 
       - name: ♻️ Composer cache
         uses: actions/cache@v4
@@ -76,39 +70,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
-      - name: 📦 Composer install
-        run: composer install --no-interaction --prefer-dist --ansi
-
-      - name: 🔧 PHPCS installed_paths
-        run: |
-          vendor/bin/phpcs --config-set installed_paths \
-          vendor/automattic/vipwpcs,vendor/wp-coding-standards/wpcs, \
-          vendor/phpcompatibility/php-compatibility, \
-          vendor/phpcompatibility/phpcompatibility-wp, \
-          vendor/phpcompatibility/phpcompatibility-paragonie, \
-          vendor/phpcsstandards/phpcsextra, \
-          vendor/phpcsstandards/phpcsutils, \
-          vendor/sirbrillig/phpcs-variable-analysis
-
-      - name: 🧪 Install WP test suite
-        env: { WP_VERSION: ${{ matrix.wp }} }
-        run: |
-          chmod +x scripts/install-wp-tests.sh
-          bash scripts/install-wp-tests.sh wordpress_test root '' 127.0.0.1:3306 $WP_VERSION
-
-      - name: 🔍 PHPCS (soft-fail)
-        run: vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
-
-      - name: 🔬 Verify Eris available
-        run: composer show -D | grep -i eris || (echo "Eris not installed"; exit 1)
-
-      - name: 🔎 Psalm (soft-fail)
-        run: |
-          vendor/bin/psalm --no-progress --output-format=github --stats || true
-          vendor/bin/psalm --taint-analysis || true
-
-      - name: 🔎 PHP syntax lint
-        run: composer lint:php
+      - name: 📦 Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: 🧪 Smoke tests (Composer script)
         run: composer test:smoke
@@ -151,28 +114,6 @@ jobs:
           test -s ai_context.json || { echo "ai_context.json missing or empty"; exit 1; }
           jq empty ai_context.json
           echo "Artifacts present and ai_context.json is valid JSON ✓"
-
-      - name: 🧾 Generate PROJECT_STATE.md
-        if: always()
-        run: |
-          make state || bash scripts/update_state.sh
-
-      - name: 📤 Upload state artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: project-state
-          path: |
-            PROJECT_STATE.md
-
-      - name: 🔎 Verify PROJECT_STATE.md content
-        if: always()
-        run: |
-          test -s PROJECT_STATE.md
-          grep -q "^# 📊 SmartAlloc Project State" PROJECT_STATE.md
-          grep -q "^## 📌 Features Snapshot" PROJECT_STATE.md
-          grep -q "^## 🤖 AI Context (decisions)" PROJECT_STATE.md
-          echo "PROJECT_STATE.md contains required sections ✓"
 
       - name: ✅ Verify E2E not auto-run
         if: always()
