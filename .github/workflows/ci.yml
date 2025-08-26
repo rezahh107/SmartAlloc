@@ -56,6 +56,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Ensure required CLI tools BEFORE any step uses jq/bc
+      - name: 🧰 Ensure jq & bc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq bc
+
       # Setup PHP using matrix and isolate Composer cache before smoke tests
       - name: "🐘 Setup PHP ${{ matrix.php }}"
         uses: shivammathur/setup-php@v2
@@ -64,10 +70,10 @@ jobs:
           tools: composer, phpunit
           coverage: none
 
-      - name: "♻️ Composer cache (PHP ${{ matrix.php }})"
+      - name: "♻️ Composer cache (PHP scoped)"
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache/files
+          path: ~/.cache/composer/files
           key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
@@ -83,11 +89,6 @@ jobs:
         run: |
           chmod +x scripts/*.php || true
           chmod +x scripts/new_adr.sh || true
-
-      - name: 🧰 Ensure jq & bc
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq bc
 
       - name: 🔧 PHPCBF (soft-fix)
         run: vendor/bin/phpcbf -q --standard=phpcs.xml src || true
@@ -116,11 +117,12 @@ jobs:
       - name: 📝 Append project state to summary
         if: always()
         run: |
+          set -euo pipefail
           echo "## 📊 Feature Scores" >> "$GITHUB_STEP_SUMMARY"
           head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
-          cat ai_context.json | jq '.decisions | {count: length, items: .[0:5]}' >> "$GITHUB_STEP_SUMMARY" || true
+          jq '.decisions | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: ✅ Verify summary sections
         if: always()
@@ -177,12 +179,29 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v4
+
+      # Ensure required CLI tools BEFORE any step uses jq/bc
+      - name: 🧰 Ensure jq & bc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq bc
+
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.1', tools: composer }
+
+      - name: "♻️ Composer cache (PHP scoped)"
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
       - name: 🛠️ System tools
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip zip subversion curl tar mysql-client jq
+
       - run: composer install --no-interaction --prefer-dist --ansi
       - name: 🔧 PHPCS installed_paths
         run: |
@@ -210,3 +229,13 @@ jobs:
       - name: 🧪 PHPUnit (full suites)
         env: { XDEBUG_MODE: coverage }
         run: vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration --coverage-clover coverage.xml
+
+      - name: 📝 Append project state to summary
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "## 📊 Feature Scores" >> "$GITHUB_STEP_SUMMARY"
+          head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
+          jq '.decisions | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY" || true

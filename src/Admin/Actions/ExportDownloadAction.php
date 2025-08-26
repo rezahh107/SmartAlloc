@@ -8,9 +8,10 @@ final class ExportDownloadAction
 {
     public static function handle(): void
     {
-        $id = isset($_GET['export_id']) ? absint($_GET['export_id']) : 0;
+        $idRaw = filter_input(INPUT_GET, 'export_id', FILTER_SANITIZE_NUMBER_INT);
+        $id    = is_null($idRaw) ? 0 : absint(wp_unslash($idRaw));
 
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
@@ -18,7 +19,11 @@ final class ExportDownloadAction
             wp_die(esc_html__('Invalid export.', 'smartalloc'));
         }
 
-        check_admin_referer('smartalloc_export_download_' . $id);
+        $nonce = filter_input(INPUT_GET, '_wpnonce', FILTER_SANITIZE_STRING);
+        $nonce = is_null($nonce) ? '' : wp_unslash($nonce);
+        if (!wp_verify_nonce($nonce, 'smartalloc_export_download_' . $id)) {
+            wp_die(esc_html__('Invalid nonce.', 'smartalloc'));
+        }
 
         global $wpdb;
         $table = $wpdb->prefix . 'smartalloc_exports';

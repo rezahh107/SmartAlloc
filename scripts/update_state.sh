@@ -10,6 +10,11 @@ AI_CTX="$ROOT/ai_context.json"
 phpcs_cmd="${PHPCS_CMD:-$ROOT/vendor/bin/phpcs}"
 TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
+# Soft-fix coding style before scoring
+if [ -x "${ROOT}/vendor/bin/phpcbf" ]; then
+  "${ROOT}/vendor/bin/phpcbf" -q --standard="$ROOT/phpcs.xml" src || true
+fi
+
 if ! command -v jq >/dev/null 2>&1 || ! command -v bc >/dev/null 2>&1; then
   echo "Missing required tools: jq and bc. Please install them." >&2
   exit 2

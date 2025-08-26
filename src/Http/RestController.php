@@ -114,8 +114,10 @@ final class RestController
      */
     private function getMetrics(): array
     {
-        $key = sanitize_text_field($_GET['key'] ?? '');
-        $limit = max(1, min(1000, (int) ($_GET['limit'] ?? 100)));
+        $keyRaw   = filter_input(INPUT_GET, 'key', FILTER_SANITIZE_STRING);
+        $key      = sanitize_text_field($keyRaw ? wp_unslash($keyRaw) : '');
+        $limitRaw = filter_input(INPUT_GET, 'limit', FILTER_SANITIZE_NUMBER_INT);
+        $limit    = max(1, min(1000, (int) ($limitRaw ? wp_unslash($limitRaw) : 100)));
         
         $metrics = $this->container->get(Metrics::class);
         

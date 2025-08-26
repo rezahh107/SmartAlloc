@@ -30,10 +30,11 @@ final class Form150
     {
         $ids = [143, 20, 21, 23, 22, 60, 61, 76];
         foreach ($ids as $id) {
-            $key = 'input_' . $id;
-            if (isset($_POST[$key])) {
-                $value        = (string) wp_unslash($_POST[$key]);
-                $_POST[$key]  = $this->normalizeDigits($value);
+            $key  = 'input_' . $id;
+            $raw  = filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW);
+            if ($raw !== null) {
+                $value       = (string) wp_unslash($raw);
+                $_POST[$key] = $this->normalizeDigits($value);
             }
         }
 

@@ -24,13 +24,15 @@ final class AllocationAction
 
     public function handle(): void
     {
-        $nonce = $_POST['_wpnonce'] ?? '';
-        if (!wp_verify_nonce($nonce, 'smartalloc_allocate') || !current_user_can('manage_smartalloc')) {
+        $nonce = filter_input(INPUT_POST, '_wpnonce', FILTER_SANITIZE_STRING);
+        $nonce = is_null($nonce) ? '' : wp_unslash($nonce);
+        if (!wp_verify_nonce($nonce, 'smartalloc_allocate') || !current_user_can('smartalloc_manage')) {
             wp_send_json_error('forbidden', 403);
         }
 
         $request = new WP_REST_Request('POST', '/');
-        $request->set_body((string) ($_POST['payload'] ?? ''));
+        $payload = filter_input(INPUT_POST, 'payload', FILTER_UNSAFE_RAW);
+        $request->set_body((string) ($payload === null ? '' : wp_unslash($payload)));
         $response = $this->controller->handle($request);
         if ($response instanceof WP_Error) {
             wp_send_json_error($response->get_error_message(), 400);
