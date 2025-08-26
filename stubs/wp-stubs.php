@@ -25,11 +25,6 @@ if (!function_exists('add_filter')) {
     }
 }
 
-if (!function_exists('do_action')) {
-    function do_action($hook, ...$args) {
-        return true;
-    }
-}
 
 if (!function_exists('get_option')) {
     function get_option($key, $default = false) {
@@ -69,6 +64,14 @@ if (!class_exists('wpdb')) {
         public function query($query) { return 0; }
         public function get_var($query) { return 0; }
     }
+    // make a global instance like WordPress does
+    $GLOBALS['wpdb'] = new wpdb();
+}
+if (!function_exists('do_action')) {
+    function do_action(string $hook, ...$args): void { /* no-op stub */ }
+}
+if (!function_exists('__return_true')) {
+    function __return_true() { return true; }
 }
 
 if (!function_exists('rest_get_server')) {
