@@ -38,7 +38,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y jq bc
-      - name: 🐘 Setup PHP
+      - name: 🔧 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -124,9 +124,6 @@ jobs:
             ai_context.json
   full:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ['8.1','8.2']
     steps:
       - name: ⬇️ Checkout
         uses: actions/checkout@v4
@@ -134,18 +131,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y jq bc
-      - name: 🐘 Setup PHP
+      - name: 🔧 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.2'
           coverage: none
       - name: 🗃️ Composer cache (PHP-scoped)
         uses: actions/cache@v4
         with:
           path: ~/.cache/composer/files
-          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-8.2-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+            ${{ runner.os }}-php-8.2-composer-
       - name: 🧱 Ensure ai_context.json exists (pre)
         if: always()
         run: |
