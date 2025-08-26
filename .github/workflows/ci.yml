@@ -82,6 +82,8 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
           if jq -e '.ci_failure' ai_context.json >/dev/null 2>&1; then
             SEC=$(jq -r '.ci_failure.security_score // "?"' ai_context.json)
             PHPCS=$(jq -r '.ci_failure.phpcs_errors // "?"' ai_context.json)
@@ -176,6 +178,8 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
           if jq -e '.ci_failure' ai_context.json >/dev/null 2>&1; then
             SEC=$(jq -r '.ci_failure.security_score // "?"' ai_context.json)
             PHPCS=$(jq -r '.ci_failure.phpcs_errors // "?"' ai_context.json)

@@ -90,6 +90,7 @@ weighted=$(echo "scale=2; ( ($SECURITY_SCORE*2)+($LOGIC_SCORE*2)+($PERF_SCORE)+(
 
 # ---------- Update ai_context.json ----------
 if [ ! -f "$AI_CTX" ]; then echo '{"decisions":[]}' > "$AI_CTX"; fi
+jq empty "$AI_CTX"
 tmp="$AI_CTX.tmp"
 jq --argjson sec "$SECURITY_SCORE" \
    --argjson log "$LOGIC_SCORE" \

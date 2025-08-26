@@ -1,8 +1,20 @@
 {
-    "last_updated_utc": "2025-08-25T15:35:01Z",
-    "decisions": [],
-    "notes": {
-        "source": "ADR markdown files",
-        "policy": "No auto-commit; artifacts uploaded in CI"
-    }
+  "last_updated_utc": "2025-08-26T19:52:39Z",
+  "decisions": [],
+  "notes": {
+    "source": "ADR markdown files",
+    "policy": "No auto-commit; artifacts uploaded in CI"
+  },
+  "current_scores": {
+    "security": 25.00,
+    "logic": 25,
+    "performance": 25,
+    "readability": 12,
+    "goal": 25,
+    "total": 102,
+    "weighted_percent": 93.00,
+    "red_flags": [
+      "Direct superglobal access (-10)"
+    ]
+  }
 }
