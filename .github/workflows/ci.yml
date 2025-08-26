@@ -56,15 +56,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Setup PHP using matrix and install dependencies before smoke tests
-      - name: 🐘 Setup PHP
+      # Use matrix PHP versions; install dependencies before smoke tests
+      - name: 🐘 Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           tools: composer, phpunit
           coverage: none
 
-      - name: ♻️ Composer cache
+      - name: ♻️ Composer cache (PHP scoped)
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
