@@ -15,6 +15,9 @@ if (!class_exists('WP_UnitTestCase')) {
     abstract class WP_UnitTestCase extends BaseTestCase {}
 }
 
+/**
+ * @group wp
+ */
 final class AllocationPropertiesTest extends WP_UnitTestCase
 {
     use TestTrait;

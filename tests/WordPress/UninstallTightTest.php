@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 use SmartAlloc\Tests\BaseTestCase;
 
+/**
+ * @group wp
+ */
 final class UninstallTightTest extends BaseTestCase
 {
     protected function setUp(): void
