@@ -84,13 +84,26 @@ jobs:
           chmod +x scripts/*.php || true
           chmod +x scripts/new_adr.sh || true
 
-      - name: 🔄 Generate FEATURES.md
-        if: always()
-        run: php scripts/generate_features_md.php
+      - name: 📊 Generate Enhanced 5D Scores
+        run: composer score:5d
 
-      - name: 🔁 Sync AI context (ADRs → ai_context.json)
-        if: always()
-        run: php scripts/ai_context_sync.php
+      - name: 📤 Upload Enhanced Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-state-enhanced
+          path: |
+            FEATURES.md
+            ai_context.json
+
+      - name: 🧾 Enhanced Summary (5D)
+        run: |
+          echo "## 📊 Enhanced 5D Feature Scores" >> "$GITHUB_STEP_SUMMARY"
+          cat FEATURES.md >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🤖 AI Context (current_scores)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          jq '.current_scores' ai_context.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: 📝 Append project state to summary
         if: always()
