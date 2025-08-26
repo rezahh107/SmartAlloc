@@ -110,7 +110,7 @@ jobs:
       - name: 🔎 PHP syntax lint
         run: composer lint:php
 
-      - name: 🧪 PHPUnit (smoke only)
+      - name: 🧪 Smoke tests (Composer script)
         run: composer test:smoke
 
       - name: 🔐 Ensure scripts executable (defensive)
