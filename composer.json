@@ -41,6 +41,9 @@
     }
   },
   "scripts": {
+    "score:5d": "bash scripts/update_state.sh",
+    "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
+    "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "lint:php": "php -l $(git ls-files '*.php')",
     "phpcs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "psalm": "vendor/bin/psalm --no-progress",
@@ -48,10 +51,7 @@
     "test": "vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration",
     "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
     "gen:features": "php scripts/generate_features_md.php",
-    "gen:context": "php scripts/ai_context_sync.php",
-    "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
-    "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
-    "score:5d": "bash scripts/update_state.sh"
+    "gen:context": "php scripts/ai_context_sync.php"
   },
   "autoload-dev": {
     "psr-4": {
