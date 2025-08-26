@@ -53,7 +53,8 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       # Setup PHP 8.2 and install dependencies before smoke tests
       - name: 🐘 Setup PHP
