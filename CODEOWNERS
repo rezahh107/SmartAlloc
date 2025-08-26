@@ -1,3 +1,0 @@
-*        @your-org/wordpress
-/src/*   @your-org/backend-leads
-/tests/* @your-org/qa

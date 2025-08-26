@@ -153,6 +153,28 @@ jobs:
           jq empty ai_context.json
           echo "Artifacts present and ai_context.json is valid JSON ✓"
 
+      - name: 🧾 Generate PROJECT_STATE.md
+        if: always()
+        run: |
+          make state || bash scripts/update_state.sh
+
+      - name: 📤 Upload state artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-state
+          path: |
+            PROJECT_STATE.md
+
+      - name: 🔎 Verify PROJECT_STATE.md content
+        if: always()
+        run: |
+          test -s PROJECT_STATE.md
+          grep -q "^# 📊 SmartAlloc Project State" PROJECT_STATE.md
+          grep -q "^## 📌 Features Snapshot" PROJECT_STATE.md
+          grep -q "^## 🤖 AI Context (decisions)" PROJECT_STATE.md
+          echo "PROJECT_STATE.md contains required sections ✓"
+
       - name: ✅ Verify E2E not auto-run
         if: always()
         env:
