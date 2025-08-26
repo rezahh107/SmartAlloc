@@ -96,10 +96,17 @@ jobs:
       - name: 📊 Generate Enhanced 5D Scores
         run: composer score:5d
 
+      - name: 🧱 Ensure ai_context.json exists
+        if: always()
+        run: |
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
+
       - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: project-state-enhanced
+          name: project-state-enhanced-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
           path: |
             FEATURES.md
             ai_context.json
@@ -111,7 +118,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## 🤖 AI Context (current_scores)" >> "$GITHUB_STEP_SUMMARY"
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          jq '.current_scores' ai_context.json >> "$GITHUB_STEP_SUMMARY"
+          jq '.current_scores // {}' ai_context.json >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: 📝 Append project state to summary
@@ -122,7 +129,7 @@ jobs:
           head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
-          jq '.decisions | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY" || true
+          jq '.decisions // [] | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY"
 
       - name: ✅ Verify summary sections
         if: always()
@@ -150,13 +157,13 @@ jobs:
           set -e
           API="https://api.github.com/repos/$REPO"
           WF_ID=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$API/actions/workflows" | jq -r '.workflows[] | select(.name=="E2E (optional)") | .id')
+            "$API/actions/workflows" | jq -r '.workflows // [] | .[] | select(.name=="E2E (optional)") | .id')
           if [ -z "$WF_ID" ]; then
             echo "E2E workflow not found; skipping check"
             exit 0
           fi
           EVENTS=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$API/actions/workflows/$WF_ID/runs?per_page=50" | jq -r '.workflow_runs[] | select(.head_sha=="'"$SHA"'") | .event')
+            "$API/actions/workflows/$WF_ID/runs?per_page=50" | jq -r '.workflow_runs // [] | .[] | select(.head_sha=="'"$SHA"'") | .event')
           echo "E2E runs for this SHA (if any):"; echo "$EVENTS"
           if echo "$EVENTS" | grep -Eq 'push|pull_request'; then
             echo "E2E ran automatically! Expected only workflow_dispatch/schedule."; exit 1;
@@ -230,6 +237,12 @@ jobs:
         env: { XDEBUG_MODE: coverage }
         run: vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration --coverage-clover coverage.xml
 
+      - name: 🧱 Ensure ai_context.json exists
+        if: always()
+        run: |
+          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
+          jq empty ai_context.json
+
       - name: 📝 Append project state to summary
         if: always()
         run: |
@@ -238,4 +251,4 @@ jobs:
           head -n 40 FEATURES.md >> "$GITHUB_STEP_SUMMARY" || true
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## 🤖 AI Context (decisions)" >> "$GITHUB_STEP_SUMMARY"
-          jq '.decisions | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY" || true
+          jq '.decisions // [] | {count: length, items: .[0:5]}' ai_context.json >> "$GITHUB_STEP_SUMMARY"
