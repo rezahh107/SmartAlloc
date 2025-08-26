@@ -17,11 +17,13 @@ final class DebugScreen
 {
     public static function render(): void
     {
-        if (!current_user_can('manage_smartalloc')) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'), '', ['response' => 403]);
         }
-        $bundle = isset($_GET['bundle']) ? sanitize_text_field((string) $_GET['bundle']) : '';
-        $nonce = $_REQUEST['_wpnonce'] ?? '';
+        $bundleRaw = filter_input(INPUT_GET, 'bundle', FILTER_SANITIZE_STRING);
+        $bundle    = $bundleRaw ? sanitize_text_field(wp_unslash($bundleRaw)) : '';
+        $nonceRaw  = filter_input(INPUT_GET, '_wpnonce', FILTER_SANITIZE_STRING);
+        $nonce     = $nonceRaw ? wp_unslash($nonceRaw) : '';
         $action = $bundle ? 'smartalloc_debug_bundle' : 'smartalloc_debug';
         if (!wp_verify_nonce((string) $nonce, $action)) {
             wp_die(esc_html__('Invalid nonce', 'smartalloc'), '', ['response' => 403]);

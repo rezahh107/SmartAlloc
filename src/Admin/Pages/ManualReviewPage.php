@@ -11,7 +11,7 @@ final class ManualReviewPage
 {
     public static function render(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
@@ -19,11 +19,15 @@ final class ManualReviewPage
         wp_enqueue_script('smartalloc-manual-review', plugins_url('assets/admin/manual-review.js', $pluginFile), ['jquery', 'wp-api-fetch'], SMARTALLOC_VERSION, true);
         wp_enqueue_style('smartalloc-manual-review', plugins_url('assets/admin/manual-review.css', $pluginFile), [], SMARTALLOC_VERSION);
 
-        $page    = isset($_GET['paged']) ? max(1, absint($_GET['paged'])) : 1;
-        $filters = [
-            'reason_code' => isset($_GET['reason_code']) ? sanitize_text_field((string) $_GET['reason_code']) : null,
-            'date_from'   => isset($_GET['date_from']) ? sanitize_text_field((string) $_GET['date_from']) : null,
-            'date_to'     => isset($_GET['date_to']) ? sanitize_text_field((string) $_GET['date_to']) : null,
+        $pageRaw = filter_input(INPUT_GET, 'paged', FILTER_SANITIZE_NUMBER_INT);
+        $page    = max(1, absint($pageRaw ? wp_unslash($pageRaw) : 1));
+        $reasonRaw = filter_input(INPUT_GET, 'reason_code', FILTER_SANITIZE_STRING);
+        $fromRaw   = filter_input(INPUT_GET, 'date_from', FILTER_SANITIZE_STRING);
+        $toRaw     = filter_input(INPUT_GET, 'date_to', FILTER_SANITIZE_STRING);
+        $filters   = [
+            'reason_code' => $reasonRaw ? sanitize_text_field(wp_unslash($reasonRaw)) : null,
+            'date_from'   => $fromRaw ? sanitize_text_field(wp_unslash($fromRaw)) : null,
+            'date_to'     => $toRaw ? sanitize_text_field(wp_unslash($toRaw)) : null,
         ];
 
         $repo = apply_filters('smartalloc_allocations_repository', null);

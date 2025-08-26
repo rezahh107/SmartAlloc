@@ -11,7 +11,7 @@ final class ExportPage
 {
     public static function render(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
@@ -43,7 +43,8 @@ final class ExportPage
             echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__('Exports temporarily disabled. Please retry later.', 'smartalloc') . '</p></div>';
         }
 
-        if (isset($_GET['smartalloc_export_success'])) {
+        $success = filter_input(INPUT_GET, 'smartalloc_export_success', FILTER_SANITIZE_NUMBER_INT);
+        if ($success) {
             echo '<div class="notice notice-success"><p>' . esc_html__('Export generated.', 'smartalloc') . '</p></div>';
         }
 

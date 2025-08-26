@@ -32,9 +32,9 @@ final class ReportsMetricsController
                     '/report-metrics',
                     array(
                         'methods'             => 'GET',
-                        'permission_callback' => function (): bool {
-                            return current_user_can(SMARTALLOC_CAP);
-                        },
+                          'permission_callback' => function (): bool {
+                              return current_user_can('smartalloc_manage');
+                          },
                         'callback'            => array($this, 'handle'),
                     )
                 );
@@ -49,13 +49,13 @@ final class ReportsMetricsController
      */
     public function handle(WP_REST_Request $request)
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             return new WP_Error('forbidden', 'Forbidden', array('status' => 403));
         }
 
         $params = method_exists($request, 'get_params') ? (array) $request->get_params() : array();
         if (empty($params)) {
-            $params = $_GET;
+            $params = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING) ?: array();
         }
 
         $from = $params['date_from'] ?? '';

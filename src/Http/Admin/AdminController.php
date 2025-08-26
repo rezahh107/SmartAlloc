@@ -98,8 +98,11 @@ final class AdminController
     public static function settings(): void
     {
         // Handle form submission
-        if (isset($_POST['smartalloc_settings_nonce']) && wp_verify_nonce($_POST['smartalloc_settings_nonce'], 'smartalloc_save_settings')) {
-            $formId = isset($_POST['smartalloc_form_id']) ? absint($_POST['smartalloc_form_id']) : 0;
+        $nonce = filter_input(INPUT_POST, 'smartalloc_settings_nonce', FILTER_SANITIZE_STRING);
+        $nonce = is_null($nonce) ? '' : wp_unslash($nonce);
+        if ($nonce && wp_verify_nonce($nonce, 'smartalloc_save_settings')) {
+            $formRaw = filter_input(INPUT_POST, 'smartalloc_form_id', FILTER_SANITIZE_NUMBER_INT);
+            $formId  = $formRaw ? absint(wp_unslash($formRaw)) : 0;
             update_option('smartalloc_form_id', $formId);
             echo '<div class="notice notice-success is-dismissible"><p>تنظیمات با موفقیت ذخیره شد.</p></div>';
         }

@@ -13,16 +13,22 @@ final class ManualRejectAction
 
     public static function handle(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_send_json_error(['error' => 'forbidden'], 403);
         }
 
-        check_ajax_referer('smartalloc_manual_action', 'nonce');
+        $nonce = filter_input(INPUT_POST, 'nonce', FILTER_SANITIZE_STRING);
+        $nonce = is_null($nonce) ? '' : wp_unslash($nonce);
+        if (!wp_verify_nonce($nonce, 'smartalloc_manual_action')) {
+            wp_send_json_error(['error' => 'invalid_nonce'], 400);
+        }
 
-        $entryIds = isset($_POST['entry_ids']) ? (array) $_POST['entry_ids'] : [];
-        $entryIds = array_map('absint', $entryIds);
-        $reason   = sanitize_key((string) ($_POST['reason_code'] ?? ''));
-        $notes    = isset($_POST['notes']) ? sanitize_textarea_field((string) $_POST['notes']) : null;
+        $entryIds = filter_input(INPUT_POST, 'entry_ids', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+        $entryIds = is_array($entryIds) ? array_map('absint', wp_unslash($entryIds)) : [];
+        $reason   = filter_input(INPUT_POST, 'reason_code', FILTER_SANITIZE_STRING);
+        $reason   = is_null($reason) ? '' : sanitize_key(wp_unslash($reason));
+        $notesRaw = filter_input(INPUT_POST, 'notes', FILTER_UNSAFE_RAW);
+        $notes    = is_null($notesRaw) ? null : sanitize_textarea_field(wp_unslash($notesRaw));
 
         if (!in_array($reason, self::ALLOWED_REASONS, true)) {
             wp_send_json_error(['error' => 'invalid_reason']);

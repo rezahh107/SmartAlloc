@@ -16,17 +16,17 @@ final class ReportsPage
      */
     public static function render(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
         $filters = array(
-            'date_from' => sanitize_text_field($_GET['date_from'] ?? ''),
-            'date_to'   => sanitize_text_field($_GET['date_to'] ?? ''),
-            'center'    => sanitize_text_field($_GET['center'] ?? ''),
-            'group'     => sanitize_text_field($_GET['group'] ?? ''),
-            'gender'    => sanitize_text_field($_GET['gender'] ?? ''),
-            'group_by'  => sanitize_text_field($_GET['group_by'] ?? 'day'),
+            'date_from' => sanitize_text_field((string) (filter_input(INPUT_GET, 'date_from', FILTER_SANITIZE_STRING) ?? '')),
+            'date_to'   => sanitize_text_field((string) (filter_input(INPUT_GET, 'date_to', FILTER_SANITIZE_STRING) ?? '')),
+            'center'    => sanitize_text_field((string) (filter_input(INPUT_GET, 'center', FILTER_SANITIZE_STRING) ?? '')),
+            'group'     => sanitize_text_field((string) (filter_input(INPUT_GET, 'group', FILTER_SANITIZE_STRING) ?? '')),
+            'gender'    => sanitize_text_field((string) (filter_input(INPUT_GET, 'gender', FILTER_SANITIZE_STRING) ?? '')),
+            'group_by'  => sanitize_text_field((string) (filter_input(INPUT_GET, 'group_by', FILTER_SANITIZE_STRING) ?? 'day')),
         );
 
         $metrics = apply_filters('smartalloc_reports_metrics', null, $filters);
@@ -109,19 +109,19 @@ final class ReportsPage
      */
     public static function downloadCsv(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
         check_admin_referer('smartalloc_reports_csv', 'smartalloc_reports_nonce');
 
         $filters = array(
-            'date_from' => sanitize_text_field($_GET['date_from'] ?? ''),
-            'date_to'   => sanitize_text_field($_GET['date_to'] ?? ''),
-            'center'    => sanitize_text_field($_GET['center'] ?? ''),
-            'group'     => sanitize_text_field($_GET['group'] ?? ''),
-            'gender'    => sanitize_text_field($_GET['gender'] ?? ''),
-            'group_by'  => sanitize_text_field($_GET['group_by'] ?? 'day'),
+            'date_from' => sanitize_text_field((string) (filter_input(INPUT_GET, 'date_from', FILTER_SANITIZE_STRING) ?? '')),
+            'date_to'   => sanitize_text_field((string) (filter_input(INPUT_GET, 'date_to', FILTER_SANITIZE_STRING) ?? '')),
+            'center'    => sanitize_text_field((string) (filter_input(INPUT_GET, 'center', FILTER_SANITIZE_STRING) ?? '')),
+            'group'     => sanitize_text_field((string) (filter_input(INPUT_GET, 'group', FILTER_SANITIZE_STRING) ?? '')),
+            'gender'    => sanitize_text_field((string) (filter_input(INPUT_GET, 'gender', FILTER_SANITIZE_STRING) ?? '')),
+            'group_by'  => sanitize_text_field((string) (filter_input(INPUT_GET, 'group_by', FILTER_SANITIZE_STRING) ?? 'day')),
         );
         $metrics = apply_filters('smartalloc_reports_metrics', null, $filters);
         if ($metrics === null) {

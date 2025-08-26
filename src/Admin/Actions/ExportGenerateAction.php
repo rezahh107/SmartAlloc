@@ -10,16 +10,20 @@ final class ExportGenerateAction
 {
     public static function handle(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
         check_admin_referer('smartalloc_export_generate', 'smartalloc_export_nonce');
 
-        $mode    = sanitize_text_field($_POST['mode'] ?? '');
-        $from    = sanitize_text_field($_POST['date_from'] ?? '');
-        $to      = sanitize_text_field($_POST['date_to'] ?? '');
-        $batchId = isset($_POST['batch_id']) ? absint($_POST['batch_id']) : 0;
+        $modeRaw = filter_input(INPUT_POST, 'mode', FILTER_SANITIZE_STRING);
+        $mode    = is_null($modeRaw) ? '' : sanitize_text_field(wp_unslash($modeRaw));
+        $fromRaw = filter_input(INPUT_POST, 'date_from', FILTER_SANITIZE_STRING);
+        $from    = is_null($fromRaw) ? '' : sanitize_text_field(wp_unslash($fromRaw));
+        $toRaw   = filter_input(INPUT_POST, 'date_to', FILTER_SANITIZE_STRING);
+        $to      = is_null($toRaw) ? '' : sanitize_text_field(wp_unslash($toRaw));
+        $batchRaw = filter_input(INPUT_POST, 'batch_id', FILTER_SANITIZE_NUMBER_INT);
+        $batchId  = is_null($batchRaw) ? 0 : absint(wp_unslash($batchRaw));
 
         $filters = [];
         if ($mode === 'date-range') {
@@ -64,7 +68,7 @@ final class ExportGenerateAction
             'filters'    => wp_json_encode($filters),
             'size'       => $size,
             'checksum'   => $checksum ?: null,
-            'created_at' => current_time('mysql'),
+            'created_at' => current_time('mysql', 1),
         ]);
 
         $url = add_query_arg(
