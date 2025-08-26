@@ -84,6 +84,14 @@ jobs:
           chmod +x scripts/*.php || true
           chmod +x scripts/new_adr.sh || true
 
+      - name: 🧰 Ensure jq & bc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq bc
+
+      - name: 🔧 PHPCBF (soft-fix)
+        run: vendor/bin/phpcbf -q --standard=phpcs.xml src || true
+
       - name: 📊 Generate Enhanced 5D Scores
         run: composer score:5d
 

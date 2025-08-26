@@ -7,13 +7,13 @@ SRC_DIR="${SRC_DIR:-$ROOT/src}"
 TESTS_DIR="${TESTS_DIR:-$ROOT/tests}"
 FEATURES_MD="$ROOT/FEATURES.md"
 AI_CTX="$ROOT/ai_context.json"
-
 phpcs_cmd="${PHPCS_CMD:-$ROOT/vendor/bin/phpcs}"
-phpunit_cmd="${PHPUNIT_CMD:-$ROOT/vendor/bin/phpunit}"
+TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-exists() { command -v "$1" >/dev/null 2>&1; }
-
-jget() { jq -r "$1" 2>/dev/null || true; }
+if ! command -v jq >/dev/null 2>&1 || ! command -v bc >/dev/null 2>&1; then
+  echo "Missing required tools: jq and bc. Please install them." >&2
+  exit 2
+fi
 
 score_part() { # clamp to 0..max
   local v="$1" max="$2"
@@ -94,11 +94,14 @@ jq --argjson sec "$SECURITY_SCORE" \
    --arg total "$TOTAL_SCORE_INT" \
    --arg weighted "$weighted" \
    --argjson flags "$(printf '%s\n' "${flags[@]:-}" | jq -R . | jq -s .)" \
+   --arg ts "$TS" \
    '
    .current_scores = {
      security:$sec, logic:$log, performance:$perf, readability:$read, goal:$goal,
      total: ($total|tonumber), weighted_percent: ($weighted|tonumber), red_flags: $flags
-   }' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
+   }
+   | .last_updated_utc = $ts
+   ' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
 
 # ---------- Write FEATURES.md (summary block at top) ----------
 {
@@ -126,7 +129,7 @@ jq --argjson sec "$SECURITY_SCORE" \
   fi
   echo
   echo "---"
-  echo "*Last updated: $(date -u +"%Y-%m-%d %H:%M UTC")*"
+  echo "*Last updated: ${TS}*"
 } > "$FEATURES_MD"
 
 echo "✅ 5D scoring completed."
