@@ -10,6 +10,7 @@
 - Codex prompt helpers (prepare_codex_prompt.sh, record_feedback.sh)
 - PowerShell dispatch script (run_ci_dispatch.ps1) with GH CLI integration
 - Documentation updates: Session Continuation Protocol, Codex handoff, CI Dispatch usage
+- Tech Spec/Test Plan generator with Codex prompt extraction
 
 ### Changed
 - CI workflow (.github/workflows/ci.yml) hardened with enforce gates and unique artifact names
