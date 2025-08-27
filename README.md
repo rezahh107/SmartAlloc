@@ -19,6 +19,8 @@ SmartAlloc is a comprehensive WordPress plugin designed for automatic mentor all
 - **Comprehensive Logging**: Structured logging with data masking
 - **Internal Debug Kit**: Optional admin-only tool that captures recent PHP errors and builds copyable Markdown prompts for local debugging
 
+For cross-session handoffs, see [Session Continuation Protocol Activated](docs/Session%20Continuation%20Protocol%20Activated.txt).
+
 ## Requirements
 
 - WordPress 6.3+
