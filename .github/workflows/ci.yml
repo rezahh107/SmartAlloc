@@ -73,8 +73,7 @@ jobs:
           if [ "${{ inputs.inject_ci_failure }}" = "true" ]; then
             echo '{"ci_failure":{"security_score":15,"phpcs_errors":2,"test_failures":1}}' > ai_context.json
           fi
-          .github/scripts/emit_summary.sh
-          .github/scripts/emit_autofix.sh
+          .github/scripts/emit_summary.sh && .github/scripts/emit_autofix.sh
       - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -122,8 +121,7 @@ jobs:
           if [ "${{ inputs.inject_ci_failure }}" = "true" ]; then
             echo '{"ci_failure":{"security_score":15,"phpcs_errors":2,"test_failures":1}}' > ai_context.json
           fi
-          .github/scripts/emit_summary.sh
-          .github/scripts/emit_autofix.sh
+          .github/scripts/emit_summary.sh && .github/scripts/emit_autofix.sh
       - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
