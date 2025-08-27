@@ -434,6 +434,24 @@ ai_context.json: ADR-derived AI context
 
 PROJECT_STATE.md: snapshot summary (CI also uploads as artifact)
 
+## Codex Prompt Handoff
+
+Generate a context-aware prompt for Codex:
+
+```bash
+bash scripts/prepare_codex_prompt.sh > codex_prompt.md
+```
+
+Review the output and paste it into Codex. After reviewing Codex's response, record your decision:
+
+```bash
+bash scripts/record_feedback.sh approve
+# or
+bash scripts/record_feedback.sh needs-changes
+```
+
+This stores your decision with a UTC timestamp in ai_context.json.
+
 ## GitHub CLI CI dispatch
 
 To run SmartAlloc's CI jobs from your terminal, generate a Personal Access Token with **repo** and **workflow** scopes and
