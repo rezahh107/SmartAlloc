@@ -132,6 +132,11 @@ jobs:
             echo '{"ci_failure":{"security_score":15,"phpcs_errors":2,"test_failures":1}}' > ai_context.json
           fi
           .github/scripts/emit_summary.sh && .github/scripts/emit_autofix.sh
+      - name: ❌ Enforce 5D gates (full only)
+        if: always()
+        run: |
+          chmod +x scripts/fail_on_ci_failure.sh
+          scripts/fail_on_ci_failure.sh
       - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
