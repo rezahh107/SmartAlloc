@@ -1,5 +1,5 @@
 {
-  "last_updated_utc": "2025-08-27T06:22:27Z",
+  "last_updated_utc": "2025-08-27T06:38:55Z",
   "decisions": [
     {
       "file": "docs/architecture/decisions/20250825_choose-database-library.md",
@@ -28,10 +28,13 @@
     "security": 25.00,
     "logic": 25,
     "performance": 25,
-    "readability": 20,
+    "readability": 12,
     "goal": 25,
-    "total": 110,
-    "weighted_percent": 97.00,
-    "red_flags": []
-  }
+    "total": 102,
+    "weighted_percent": 93.00,
+    "red_flags": [
+      ""
+    ]
+  },
+  "phpcs_errors": 51432
 }

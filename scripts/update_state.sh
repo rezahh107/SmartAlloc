@@ -15,11 +15,6 @@ if ! command -v jq >/dev/null 2>&1 || ! command -v bc >/dev/null 2>&1; then
   exit 2
 fi
 
-# Soft-fix coding style before scoring
-if [ -x "${ROOT}/vendor/bin/phpcbf" ]; then
-  "${ROOT}/vendor/bin/phpcbf" -q --standard="$ROOT/phpcs.xml" src || true
-fi
-
 score_part() { # clamp to 0..max
   local v="$1" max="$2"
   if [ "$v" -lt 0 ]; then echo 0
