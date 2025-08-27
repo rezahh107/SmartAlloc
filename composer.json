@@ -41,11 +41,12 @@
     }
   },
   "scripts": {
-    "score:5d": "bash scripts/update_state.sh",
+    "score:5d": ["@phpcbf", "bash scripts/update_state.sh"],
     "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
     "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "lint:php": "php -l $(git ls-files '*.php')",
-    "phpcs": "vendor/bin/phpcs -q --standard=phpcs.xml",
+    "phpcs": "vendor/bin/phpcs --standard=WordPress --extensions=php src tests",
+    "phpcbf": "vendor/bin/phpcbf --standard=WordPress --extensions=php src tests",
     "psalm": "vendor/bin/psalm --no-progress",
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "test": "vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration",

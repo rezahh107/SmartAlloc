@@ -5,7 +5,10 @@ test -s "$AI_CTX" || echo '{"decisions":[]}' > "$AI_CTX"
 jq empty "$AI_CTX"
 SEC="$(jq -r '.current_scores.security // 0' "$AI_CTX")"
 WGT="$(jq -r '.current_scores.weighted_percent // 0' "$AI_CTX")"
-PHPCS_FAILS="$(jq -r '.current_scores.readability // 0' "$AI_CTX" | awk '{print 0}')"
+PHPCS_JSON="$(vendor/bin/phpcs --standard=WordPress --extensions=php src tests --report=json 2>/dev/null || true)"
+PHPCS_FAILS="$(jq -r '.totals.errors + .totals.warnings' <<<"$PHPCS_JSON" 2>/dev/null || echo 0)"
+tmp="$AI_CTX.tmp"
+jq --argjson phpcs "$PHPCS_FAILS" '.phpcs_errors=$phpcs' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
 TEST_FAILS="${TEST_FAILS:-0}"
 if (( $(printf '%.0f' "$SEC") < 20 )) || (( $(printf '%.0f' "$WGT") < 85 )); then
   jq -n --argjson sec "${SEC:-0}" \
