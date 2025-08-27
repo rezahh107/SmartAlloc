@@ -66,6 +66,11 @@ jobs:
         run: composer phpcbf || true
       - name: 📊 5D Score
         run: composer score:5d
+      - name: ✅ Evaluate 5D gates
+        if: always()
+        run: |
+          chmod +x scripts/evaluate_scores.sh
+          scripts/evaluate_scores.sh
       - name: 📝 Append 5D Summary & AUTO-FIX
         if: always()
         run: |
@@ -114,6 +119,11 @@ jobs:
         run: composer phpcbf || true
       - name: 📊 5D Score
         run: composer score:5d
+      - name: ✅ Evaluate 5D gates
+        if: always()
+        run: |
+          chmod +x scripts/evaluate_scores.sh
+          scripts/evaluate_scores.sh
       - name: 📝 Append 5D Summary & AUTO-FIX
         if: always()
         run: |
