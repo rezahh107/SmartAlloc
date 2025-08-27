@@ -92,20 +92,24 @@ weighted=$(echo "scale=2; ( ($SECURITY_SCORE*2)+($LOGIC_SCORE*2)+($PERF_SCORE)+(
 if [ ! -f "$AI_CTX" ]; then echo '{"decisions":[]}' > "$AI_CTX"; fi
 jq empty "$AI_CTX"
 tmp="$AI_CTX.tmp"
-jq --argjson sec "$SECURITY_SCORE" \
+ flag_json="[]"
+ if [ ${#flags[@]} -gt 0 ]; then
+   flag_json=$(printf '%s\n' "${flags[@]}" | jq -R . | jq -s .)
+ fi
+ jq --argjson sec "$SECURITY_SCORE" \
    --argjson log "$LOGIC_SCORE" \
    --argjson perf "$PERF_SCORE" \
    --argjson read "$READABILITY_SCORE" \
    --argjson goal "$GOAL_SCORE" \
    --arg total "$TOTAL_SCORE_INT" \
    --arg weighted "$weighted" \
-   --argjson flags "$(printf '%s\n' "${flags[@]:-}" | jq -R . | jq -s .)" \
+   --argjson flags "$flag_json" \
    --arg now "$UTC_NOW" \
    '
-   .current_scores = {
-     security:$sec, logic:$log, performance:$perf, readability:$read, goal:$goal,
-     total: ($total|tonumber), weighted_percent: ($weighted|tonumber), red_flags: $flags
-   }
+    .current_scores = {
+      security:$sec, logic:$log, performance:$perf, readability:$read, goal:$goal,
+      total: ($total|tonumber), weighted_percent: ($weighted|tonumber), red_flags: $flags
+    }
    | .last_updated_utc = $now
    ' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
 

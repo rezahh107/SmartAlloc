@@ -55,7 +55,7 @@ final class AllocationControllerTest extends BaseTestCase
     /** @test */
     public function returns_201_on_valid_request_with_form_id_and_nonce_and_cap(): void
     {
-        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
+        Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(true);
         Functions\expect('wp_verify_nonce')->with('good', 'smartalloc_allocate_200')->andReturn(true);
         $this->register();
         $req = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'good']);
@@ -67,7 +67,7 @@ final class AllocationControllerTest extends BaseTestCase
     /** @test */
     public function returns_403_on_missing_capability(): void
     {
-        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(false);
+        Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(false);
         $this->register();
         $req = new \WP_REST_Request();
         $res = ($this->cb)($req);
@@ -77,7 +77,7 @@ final class AllocationControllerTest extends BaseTestCase
     /** @test */
     public function returns_403_on_bad_nonce(): void
     {
-        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
+        Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(true);
         Functions\expect('wp_verify_nonce')->with('bad', 'smartalloc_allocate_200')->andReturn(false);
         $this->register();
         $req = new \WP_REST_Request(['form_id' => 200, '_wpnonce' => 'bad']);
@@ -88,7 +88,7 @@ final class AllocationControllerTest extends BaseTestCase
     /** @test */
     public function returns_400_on_bad_form_id(): void
     {
-        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
+        Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(true);
         Functions\expect('wp_verify_nonce')->with('n', 'smartalloc_allocate_0')->andReturn(true);
         $this->register();
         $req = new \WP_REST_Request(['form_id' => 0, '_wpnonce' => 'n']);
@@ -114,7 +114,7 @@ final class AllocationControllerTest extends BaseTestCase
     /** @test */
     public function passes_form_id_through_to_service(): void
     {
-        Functions\expect('current_user_can')->with('manage_smartalloc')->andReturn(true);
+        Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(true);
         Functions\expect('wp_verify_nonce')->andReturn(true);
         $this->register();
         $req = new \WP_REST_Request(['form_id' => 123, '_wpnonce' => 'n']);
