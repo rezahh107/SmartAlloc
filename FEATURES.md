@@ -1,18 +1,19 @@
+<!-- AUTO-GEN:FEATURES START -->
 # Feature Status Dashboard
 
-## 📊 Current Project Score: 102/125 (81%)
+| Feature | Status | Notes |
+| --- | --- | --- |
+| DB Safety | 🟢 Green | All queries DbSafe::mustPrepare |
+| Logging | 🟢 Green | Structured Monolog |
+| Exporter | 🟢 Green | Export endpoints live |
+| Gravity Forms | 🟢 Green | Bridge deployed |
+| Allocation Core | 🟢 Green | Stable allocations |
+| Rule Engine | 🟡 Amber | Edge-case handling pending |
+| Notifications | 🟡 Amber | Delivery flow partial |
+| Circuit Breaker | 🔴 Red | Not started |
+| Observability | 🟢 Green | Metrics & tracing enabled |
+| Performance Budgets | 🔴 Red | Not started |
+| CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 
-### **📊 Detailed Validation Score**
-🔒 **Security Score**: 25.00/25
-🧠 **Logic Score**: 25.00/25
-⚡ **Performance Score**: 25.00/25
-📖 **Readability Score**: 12.00/25
-🎯 **Goal Achievement**: 25.00/25
-
-**🏆 Total Score**: 102/125
-**📈 Weighted Average**: 93.00%
-
-### ✅ No Red Flags Detected
-
----
-Last Updated (UTC): 2025-08-27T06:38:55Z
+_Last Updated (UTC): 2025-08-27_
+<!-- AUTO-GEN:FEATURES END -->

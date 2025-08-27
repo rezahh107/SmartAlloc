@@ -52,3 +52,21 @@ Added a comprehensive log entry capturing completion of the CI Hardening & Dispa
 - Settings: configurable options.
 - Health/Metrics: basic health and metrics endpoints.
 - Hardening (DX): CLI doctor, webhook protections.
+
+
+<!-- AUTO-GEN:CHANGELOG START -->
+## [Unreleased]
+
+### Added
+- ADR for 5D CI gate with AUTO-FIX.
+- sync_memory_files.sh to keep project state artifacts in sync.
+
+### Changed
+- Updated memory files with latest project status.
+
+### Security/Quality
+- 5D CI gate ensures baseline quality.
+
+### Housekeeping
+- Routine synchronization of state reports.
+<!-- AUTO-GEN:CHANGELOG END -->
