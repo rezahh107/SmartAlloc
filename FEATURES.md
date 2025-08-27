@@ -1,7 +1,6 @@
-
-<!-- AUTO-GEN:RAG START -->
 # Feature Status Dashboard
 
+<!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
 | --- | --- | --- |
 | DB Safety | 🟢 Green | All queries DbSafe::mustPrepare |
@@ -15,6 +14,4 @@
 | Observability | 🟢 Green | Metrics & tracing enabled |
 | Performance Budgets | 🔴 Red | Not started |
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
-
-_Last Updated (UTC): 2025-08-27_
 <!-- AUTO-GEN:RAG END -->
