@@ -1,0 +1,33 @@
+# Session Continuation Protocol Activated
+
+This document outlines the official procedure for transferring conversation context from one Codex session to another.
+
+## Four-Step Transfer
+
+1. **Preparation** – Gather prior chat logs, code snippets, and outstanding tasks. Clarify the objective for the next session.
+2. **Cataloging** – List relevant files, commands run, test results, and decisions that must persist.
+3. **Identify Critical Segments** – Highlight requirements, blockers, and open questions that the next session must address.
+4. **Final Prompt** – Compose a concise handoff message using the template below.
+
+## Standard Codex Prompt Template
+
+```
+🧠 Context
+- <short recap of previous session>
+
+🎯 Goal
+- <primary task or question>
+
+🔧 Work
+- <steps or commands already executed>
+
+⚠️ Risks
+- <edge cases or potential issues>
+
+📋 Next
+- <immediate next action or open questions>
+```
+
+Use Markdown with one bullet per section. Provide enough detail for the new session to continue seamlessly.
+
+For project overview see [README](../README.md) or [FEATURES](../FEATURES.md).
