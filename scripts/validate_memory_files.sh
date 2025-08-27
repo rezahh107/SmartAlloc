@@ -138,7 +138,7 @@ fi
 # Validate FEATURES.md
 if [ -f FEATURES.md ]; then
   ok=1
-  grep -q '<!-- AUTO-GEN:FEATURES START -->' FEATURES.md && grep -q '<!-- AUTO-GEN:FEATURES END -->' FEATURES.md || ok=0
+  grep -q '<!-- AUTO-GEN:RAG START -->' FEATURES.md && grep -q '<!-- AUTO-GEN:RAG END -->' FEATURES.md || ok=0
   for row in "DB Safety" "Logging" "Exporter" "Gravity Forms" "Allocation Core" "Rule Engine" "Notifications" "Circuit Breaker" "Observability" "Performance Budgets" "CI/CD"; do
     grep -q "$row" FEATURES.md || { ok=0; break; }
   done
@@ -171,7 +171,14 @@ fi
 
 # Validate CHANGELOG.md
 if [ -f CHANGELOG.md ]; then
-  if grep -q '<!-- AUTO-GEN:CHANGELOG START -->' CHANGELOG.md && grep -q '<!-- AUTO-GEN:CHANGELOG END -->' CHANGELOG.md && grep -q '\[Unreleased\]' CHANGELOG.md && grep -q '### Added' CHANGELOG.md && grep -q '### Changed' CHANGELOG.md && grep -q '### Security/Quality' CHANGELOG.md && grep -q '### Housekeeping' CHANGELOG.md; then
+  if grep -q '<!-- AUTO-GEN:CHANGELOG START -->' CHANGELOG.md \
+    && grep -q '<!-- AUTO-GEN:CHANGELOG END -->' CHANGELOG.md \
+    && grep -q '\[Unreleased\]' CHANGELOG.md \
+    && grep -q '### Added' CHANGELOG.md \
+    && grep -q '### Changed' CHANGELOG.md \
+    && grep -q '### Security' CHANGELOG.md \
+    && grep -q '### Quality' CHANGELOG.md \
+    && grep -q '### Housekeeping' CHANGELOG.md; then
     pass "CHANGELOG.md"
   else
     fail "CHANGELOG.md" "markers or sections missing"

@@ -1,4 +1,5 @@
-<!-- AUTO-GEN:FEATURES START -->
+
+<!-- AUTO-GEN:RAG START -->
 # Feature Status Dashboard
 
 | Feature | Status | Notes |
@@ -16,4 +17,4 @@
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 
 _Last Updated (UTC): 2025-08-27_
-<!-- AUTO-GEN:FEATURES END -->
+<!-- AUTO-GEN:RAG END -->

@@ -64,7 +64,10 @@ Added a comprehensive log entry capturing completion of the CI Hardening & Dispa
 ### Changed
 - Updated memory files with latest project status.
 
-### Security/Quality
+### Security
+- 5D CI gate enforces security checks.
+
+### Quality
 - 5D CI gate ensures baseline quality.
 
 ### Housekeeping

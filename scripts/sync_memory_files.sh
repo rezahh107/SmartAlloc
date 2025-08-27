@@ -100,8 +100,8 @@ EOF2
 )
 write_file ai_context.json "$AI_CONTEXT"
 
-FEATURES_CONTENT=$(cat <<EOF2
-<!-- AUTO-GEN:FEATURES START -->
+RAG_BLOCK=$(cat <<EOF2
+<!-- AUTO-GEN:RAG START -->
 # Feature Status Dashboard
 
 | Feature | Status | Notes |
@@ -119,10 +119,13 @@ FEATURES_CONTENT=$(cat <<EOF2
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 
 _Last Updated (UTC): ${TODAY}_
-<!-- AUTO-GEN:FEATURES END -->
+<!-- AUTO-GEN:RAG END -->
 EOF2
 )
-write_file FEATURES.md "$FEATURES_CONTENT"
+if [ -f FEATURES.md ]; then
+  sed -e '/<!-- AUTO-GEN:FEATURES START -->/,/<!-- AUTO-GEN:FEATURES END -->/d' FEATURES.md > FEATURES.md.tmp && mv FEATURES.md.tmp FEATURES.md
+fi
+replace_block FEATURES.md "<!-- AUTO-GEN:RAG START -->" "<!-- AUTO-GEN:RAG END -->" "$RAG_BLOCK"
 
 STATE_BLOCK=$(cat <<EOF2
 <!-- AUTO-GEN:STATE START -->
@@ -218,7 +221,10 @@ CHANGELOG_BLOCK=$(cat <<EOF2
 ### Changed
 - Updated memory files with latest project status.
 
-### Security/Quality
+### Security
+- 5D CI gate enforces security checks.
+
+### Quality
 - 5D CI gate ensures baseline quality.
 
 ### Housekeeping
