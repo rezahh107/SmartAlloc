@@ -6,9 +6,9 @@
 CI builds were flaky and manual fixes slowed releases.
 
 ## Decision
-Enforce a five-dimensional quality gate (Security, Logic, Performance, Readability, Goal) in CI. Failed checks trigger an AUTO-FIX loop.
+Adopt a 5D CI gate enforcing security, logic, performance, readability, and goal checks, paired with an AUTO-FIX loop that generates fix prompts on failure.
 
 ## Consequences
-- Higher baseline quality before merge
-- Longer build times from extra verification
-- Developers must review auto-generated patches
+- Ensures measurable quality before merge
+- Developers receive actionable fix prompts
+- Slightly longer pipeline runtime
