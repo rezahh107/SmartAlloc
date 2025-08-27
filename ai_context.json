@@ -1,6 +1,25 @@
 {
-  "last_updated_utc": "2025-08-26T19:52:39Z",
-  "decisions": [],
+  "last_updated_utc": "2025-08-27T06:22:27Z",
+  "decisions": [
+    {
+      "file": "docs/architecture/decisions/20250825_choose-database-library.md",
+      "title": "Choose database library",
+      "date": "2025-08-25",
+      "slug": "20250825-choose-database-library"
+    },
+    {
+      "file": "docs/architecture/decisions/_template.md",
+      "title": "{TITLE}",
+      "date": null,
+      "slug": "-template"
+    },
+    {
+      "file": "docs/architecture/decisions/0000-template.md",
+      "title": "Title of Decision",
+      "date": null,
+      "slug": "0000-template"
+    }
+  ],
   "notes": {
     "source": "ADR markdown files",
     "policy": "No auto-commit; artifacts uploaded in CI"
@@ -9,12 +28,10 @@
     "security": 25.00,
     "logic": 25,
     "performance": 25,
-    "readability": 12,
+    "readability": 20,
     "goal": 25,
-    "total": 102,
-    "weighted_percent": 93.00,
-    "red_flags": [
-      "Direct superglobal access (-10)"
-    ]
+    "total": 110,
+    "weighted_percent": 97.00,
+    "red_flags": []
   }
 }

@@ -31,7 +31,7 @@ if (!function_exists('makeNonce')) {
 if (!function_exists('withCapability')) {
     function withCapability(bool $allowed): void {
         Functions\when('current_user_can')->alias(function (string $cap) use ($allowed) {
-            return $cap === (defined('SMARTALLOC_CAP') ? SMARTALLOC_CAP : 'manage_smartalloc') ? $allowed : false;
+            return $cap === (defined('SMARTALLOC_CAP') ? SMARTALLOC_CAP : 'smartalloc_manage') ? $allowed : false;
         });
     }
 }
