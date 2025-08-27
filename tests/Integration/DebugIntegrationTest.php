@@ -33,15 +33,17 @@ final class DebugIntegrationTest extends BaseTestCase
         Functions\when('get_current_user_id')->alias(fn() => 1);
         Functions\when('wp_verify_nonce')->alias(fn($n,$a) => $n === 'good' && $a === 'smartalloc_debug');
         Functions\when('wp_create_nonce')->alias(fn($a) => 'good');
-        Functions\when('current_user_can')->alias(fn($c) => $c === 'smartalloc_manage');
-        Functions\when('wp_unslash')->alias(fn($v) => $v);
-        Functions\when('filter_input')->alias(function(int $type, string $var, $filter = FILTER_DEFAULT, $options = []) {
-            return match ($type) {
-                INPUT_GET => $_GET[$var] ?? null,
-                INPUT_POST => $_POST[$var] ?? null,
-                default => null,
-            };
-        });
+        Functions\when('current_user_can')->alias(fn(string $c): bool => $c === 'smartalloc_manage');
+        Functions\when('wp_unslash')->alias(fn(string|array $v): string|array => $v);
+        Functions\when('filter_input')->alias(
+            function(int $type, string $var, int $filter = FILTER_DEFAULT, array|int $options = []): ?string {
+                return match ($type) {
+                    INPUT_GET => $_GET[$var] ?? null,
+                    INPUT_POST => $_POST[$var] ?? null,
+                    default => null,
+                };
+            }
+        );
         Functions\when('esc_html__')->alias(fn($v) => $v);
         Functions\when('esc_html')->alias(fn($v) => $v);
         Functions\when('esc_attr')->alias(fn($v) => $v);

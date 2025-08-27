@@ -7,6 +7,11 @@
       <directory name="tests"/>
     </ignoreFiles>
   </projectFiles>
+  <stubs>
+    <file name="vendor/php-stubs/wordpress-stubs/wordpress-stubs.php"/>
+    <file name="stubs/gfapi.php"/>
+    <file name="stubs/wp-stubs.php"/>
+  </stubs>
   <issueHandlers>
     <DeprecatedFunction errorLevel="suppress"/>
     <DeprecatedConstant errorLevel="suppress"/>

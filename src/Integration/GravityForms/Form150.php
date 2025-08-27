@@ -43,14 +43,14 @@ final class Form150
 
         $national = $this->post(143);
         if ($national === '' || !preg_match('/^\d{10}$/', $national) || !$this->isValidNationalCode($national)) {
-            $invalidate(143, __('کد ملی نامعتبر است.', 'smartalloc'));
+            $invalidate(143, \__('کد ملی نامعتبر است.', 'smartalloc'));
         }
 
         $m20 = $this->post(20);
         $m21 = $this->post(21);
         $m23 = $this->post(23);
 
-        $mobileMessage = __('شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.', 'smartalloc');
+        $mobileMessage = \__('شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.', 'smartalloc');
         if ($m20 === '' || !preg_match('/^09\d{9}$/', $m20)) {
             $invalidate(20, $mobileMessage);
         }
@@ -61,34 +61,34 @@ final class Form150
             $invalidate(23, $mobileMessage);
         }
         if ($m20 !== '' && $m21 !== '' && $m20 === $m21) {
-            $invalidate(21, __('شماره‌های تماس رابط نمی‌توانند برابر باشند.', 'smartalloc'));
+            $invalidate(21, \__('شماره‌های تماس رابط نمی‌توانند برابر باشند.', 'smartalloc'));
         }
 
-        $status93 = sanitize_text_field($this->post(93));
+        $status93 = \sanitize_text_field($this->post(93));
         if ($status93 === 'دانش‌آموز' && $this->post(30) === '') {
-            $invalidate(30, __('کد مدرسه الزامی است.', 'smartalloc'));
+            $invalidate(30, \__('کد مدرسه الزامی است.', 'smartalloc'));
         }
 
         $schoolCode = $this->post(30);
         if ($schoolCode === '9000' && $this->post(29) === '') {
-            $invalidate(29, __('نام مدرسه الزامی است.', 'smartalloc'));
+            $invalidate(29, \__('نام مدرسه الزامی است.', 'smartalloc'));
         }
 
         $regStatus = $this->post(75);
         if (!in_array($regStatus, ['0', '1', '3'], true)) {
-            $invalidate(75, __('وضعیت ثبت‌نام نامعتبر است.', 'smartalloc'));
+            $invalidate(75, \__('وضعیت ثبت‌نام نامعتبر است.', 'smartalloc'));
         }
         if ($regStatus === '3' && !preg_match('/^\d{16}$/', $this->post(76))) {
-            $invalidate(76, __('کد رهگیری حکمت باید ۱۶ رقم باشد.', 'smartalloc'));
+            $invalidate(76, \__('کد رهگیری حکمت باید ۱۶ رقم باشد.', 'smartalloc'));
         }
 
         $postal = $this->post(61) ?: $this->post(60);
         if ($postal !== '' && !preg_match('/^\d{10}$/', $postal)) {
-            $invalidate($this->post(61) !== '' ? 61 : 60, __('کد پستی باید ۱۰ رقم باشد.', 'smartalloc'));
+            $invalidate($this->post(61) !== '' ? 61 : 60, \__('کد پستی باید ۱۰ رقم باشد.', 'smartalloc'));
         }
 
         if ($this->post(94) === '') {
-            $invalidate(94, __('مرکز ثبت‌نام الزامی است.', 'smartalloc'));
+            $invalidate(94, \__('مرکز ثبت‌نام الزامی است.', 'smartalloc'));
         }
 
         $validationResult['is_valid'] = $isValid;
@@ -101,6 +101,9 @@ final class Form150
      */
     public function preSubmission(array $form): void
     {
+        // Parameter required by action signature but unused in implementation.
+        unset($form);
+
         $m21 = $this->post(21);
         $m23 = $this->post(23);
         if ($m21 !== '' && $m21 === $m23) {
@@ -147,15 +150,20 @@ final class Form150
     private function post(int $id): string
     {
         $key = 'input_' . $id;
-        $raw = filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW);
-        if ($raw === null) {
+        $raw = filter_input(INPUT_POST, $key, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        if (!is_string($raw) || $raw === '') {
             return '';
         }
-        $value = (string) wp_unslash($raw);
+
+        /** @var string $value */
+        $value = \wp_unslash($raw);
+
         $normalizeIds = [143, 20, 21, 23, 22, 60, 61, 76];
         if (in_array($id, $normalizeIds, true)) {
             $value = $this->normalizeDigits($value);
         }
-        return sanitize_text_field($value);
+
+        return \sanitize_text_field($value);
     }
 }
