@@ -457,3 +457,9 @@ This stores your decision with a UTC timestamp in ai_context.json.
 To run SmartAlloc's CI jobs from your terminal, generate a Personal Access Token with **repo** and **workflow** scopes and
 authenticate the GitHub CLI. Detailed steps and a helper script are provided in [docs/GH_CLI_AUTH.md](docs/GH_CLI_AUTH.md).
 
+Example:
+
+```bash
+GH_TOKEN=yourtoken bash scripts/run_ci_dispatch.sh
+```
+
