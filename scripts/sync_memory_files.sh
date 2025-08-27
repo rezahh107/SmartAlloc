@@ -184,8 +184,10 @@ EOF2
 )
 replace_block reports/STATUS_REPORT.md "<!-- AUTO-GEN:STATUS START -->" "<!-- AUTO-GEN:STATUS END -->" "$STATUS_BLOCK"
 
+mkdir -p docs/architecture/decisions
 ADR_FILE="docs/architecture/decisions/ADR-${TODAY}-ci-gate-and-autofix.md"
-ADR_CONTENT=$(cat <<EOF2
+if [ ! -f "$ADR_FILE" ]; then
+  ADR_CONTENT=$(cat <<EOF
 # ADR: Adopt 5D CI Gate + AUTO-FIX Loop
 - Status: Accepted
 - Date: $TODAY
@@ -194,15 +196,16 @@ ADR_CONTENT=$(cat <<EOF2
 CI builds were flaky and manual fixes slowed releases.
 
 ## Decision
-Enforce a five-dimensional quality gate (Security, Logic, Performance, Readability, Goal) in CI. Failed checks trigger an AUTO-FIX loop.
+Adopt a 5D CI gate enforcing security, logic, performance, readability, and goal checks, paired with an AUTO-FIX loop that generates fix prompts on failure.
 
 ## Consequences
-- Higher baseline quality before merge
-- Longer build times from extra verification
-- Developers must review auto-generated patches
-EOF2
-)
-write_file "$ADR_FILE" "$ADR_CONTENT"
+- Ensures measurable quality before merge
+- Developers receive actionable fix prompts
+- Slightly longer pipeline runtime
+EOF
+  )
+  write_file "$ADR_FILE" "$ADR_CONTENT"
+fi
 
 CHANGELOG_BLOCK=$(cat <<EOF2
 <!-- AUTO-GEN:CHANGELOG START -->
