@@ -1,0 +1,12 @@
+timestamp: 2025-08-28T20:59:44Z
+feature: allocation engine migration
+selected_option: A
+scores:
+  security: 22
+  logic: 17
+  performance: 17
+  readability: 19
+  goal: 14
+weighted_percent: 91
+status: completed
+notes: initial engine scaffold; fuzzy matching to be optimized later
