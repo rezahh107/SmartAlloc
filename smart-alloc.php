@@ -99,6 +99,13 @@ add_action('plugins_loaded', function () {
           );
           $controller->register();
       });
+      add_action('rest_api_init', function() {
+          $container = \SmartAlloc\Bootstrap::container();
+          $controller = new \SmartAlloc\REST\Controllers\OverrideController(
+              $container->get(\SmartAlloc\Services\AllocationService::class)
+          );
+          $controller->register();
+      });
   });
 
 // Run migrations on admin init
@@ -186,5 +193,7 @@ add_action('wp_ajax_smartalloc_manual_approve', ['SmartAlloc\\Admin\\Actions\\Ma
 add_action('wp_ajax_smartalloc_manual_assign', ['SmartAlloc\\Admin\\Actions\\ManualAssignAction', 'handle']);
 add_action('wp_ajax_smartalloc_manual_reject', ['SmartAlloc\\Admin\\Actions\\ManualRejectAction', 'handle']);
 add_action('wp_ajax_smartalloc_manual_candidates', ['SmartAlloc\\Admin\\Actions\\ManualAssignAction', 'candidates']);
+
+(new \SmartAlloc\Admin\OverrideUIController())->boot();
 
 add_action('gform_after_submission_150', [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
