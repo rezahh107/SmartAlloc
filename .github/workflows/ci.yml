@@ -86,7 +86,7 @@ jobs:
       - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: project-state-enhanced-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: project-state-enhanced-${{ github.job }}-php${{ matrix.php }}-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: warn
           path: |
             FEATURES.md
