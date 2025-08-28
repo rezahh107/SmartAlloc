@@ -14,5 +14,5 @@ function smartalloc_run_migration_2025_08_28_add_override_fields_to_allocations_
         "ALTER TABLE {$table} ADD COLUMN overridden_by_user_id BIGINT(20) UNSIGNED NULL DEFAULT NULL AFTER allocated_at_utc, ADD COLUMN override_notes TEXT NULL DEFAULT NULL AFTER overridden_by_user_id",
         []
     );
-    $wpdb->query($sql);
+    $wpdb->query($sql); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 }
