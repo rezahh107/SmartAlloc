@@ -1,0 +1,12 @@
+timestamp: 2025-08-28T21:14:00Z
+feature: allocation engine migration
+selected_option: A
+scores:
+  security: 23
+  logic: 17
+  performance: 17
+  readability: 19
+  goal: 14
+weighted_percent: 90
+status: completed
+notes: added error handling and dbDelta requirement
