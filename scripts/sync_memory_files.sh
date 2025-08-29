@@ -63,7 +63,7 @@ if [ ! -f "$LAST_STATE_FILE" ]; then
   exit 1
 fi
 
-LAST_STATE_DATA=$(python3 - <<'PY'
+LAST_STATE_DATA=$(python3 - "$LAST_STATE_FILE" <<'PY'
 import sys, json
 try:
     import yaml
@@ -75,15 +75,18 @@ file = sys.argv[1]
 try:
     with open(file, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f) or {}
-    missing = [k for k in ('feature', 'status', 'notes') if k not in data]
-    if missing:
-        raise KeyError(', '.join(missing))
-    json.dump({k: data[k] for k in ('feature', 'status', 'notes')}, sys.stdout)
-except Exception as e:
+except (OSError, yaml.YAMLError) as e:
     print(f"Error parsing {file}: {e}", file=sys.stderr)
-    sys.exit(1)
+    sys.exit(2)
+
+missing = [k for k in ('feature', 'status', 'notes') if k not in data]
+if missing:
+    print(f"Error: missing keys {', '.join(missing)} in {file}", file=sys.stderr)
+    sys.exit(3)
+
+json.dump({k: data[k] for k in ('feature', 'status', 'notes')}, sys.stdout)
 PY
-"$LAST_STATE_FILE")
+)
 write_file ai_outputs/last_state.json "$LAST_STATE_DATA"
 
 AI_CONTEXT=$(cat <<EOF2

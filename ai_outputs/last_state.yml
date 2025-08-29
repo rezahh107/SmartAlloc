@@ -1,12 +1,12 @@
-feature: rule-engine-reliability-gates
+feature: memory-sync-parser
 selected_option: A
-timestamp: "2025-08-29T18:44:06Z"
+timestamp: "2025-08-29T19:19:18Z"
 scores:
-  security: 22
-  logic: 18
-  performance: 18
+  security: 23
+  logic: 19
+  performance: 19
   readability: 19
   goal: 14
-weighted_percent: 90.0
+weighted_percent: 94.0
 status: implemented
-notes: "Adds boundary and metrics tests; Rule Engine API placeholders remain"
+notes: "Fixes YAML parsing in sync script and adds coverage."

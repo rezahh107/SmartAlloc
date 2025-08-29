@@ -49,7 +49,7 @@
     "phpcbf": "vendor/bin/phpcbf --standard=WordPress --extensions=php src tests",
     "psalm": "vendor/bin/psalm --no-progress",
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
-    "test": "vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration",
+    "test": "vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration,Scripts",
     "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
     "gen:features": "php scripts/generate_features_md.php",
     "gen:context": "php scripts/ai_context_sync.php"
