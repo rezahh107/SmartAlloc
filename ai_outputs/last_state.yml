@@ -1,12 +1,12 @@
 feature: memory-sync-parser
 selected_option: A
-timestamp: "2025-08-29T19:34:04Z"
+timestamp: "2025-08-29T19:54:20Z"
 scores:
-  security: 24
+  security: 23
   logic: 19
   performance: 19
   readability: 19
   goal: 14
-weighted_percent: 95.0
+weighted_percent: 94.0
 status: implemented
-notes: "Add python3 check in sync script and use realpath in test."
+notes: "Merged propagation test and added PyYAML guard"
