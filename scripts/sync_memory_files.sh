@@ -52,7 +52,7 @@ replace_block() {
 
 TODAY=$(date -u +"%Y-%m-%d")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BRANCH=${SYNC_BRANCH:-main}
 COMMITS=$(git rev-list --count HEAD)
 FILES=$(git ls-files | wc -l | tr -d ' ')
 LAST_COMMIT=$(git rev-parse HEAD)
