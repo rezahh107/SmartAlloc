@@ -10,7 +10,7 @@ final class ExportGenerateAction
 {
     public static function handle(): void
     {
-        if (!current_user_can('smartalloc_manage')) {
+        if (!\SmartAlloc\Security\CapManager::canManage()) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
 
