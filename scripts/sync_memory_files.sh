@@ -145,9 +145,7 @@ _Last Updated (UTC): ${TODAY}_
 <!-- AUTO-GEN:RAG END -->
 EOF2
 )
-if [ -f FEATURES.md ]; then
-  sed -e '/<!-- AUTO-GEN:FEATURES START -->/,/<!-- AUTO-GEN:FEATURES END -->/d' FEATURES.md > FEATURES.md.tmp && mv FEATURES.md.tmp FEATURES.md
-fi
+# replace existing feature table block in-place; no pre-clean needed
 replace_block FEATURES.md "<!-- AUTO-GEN:RAG START -->" "<!-- AUTO-GEN:RAG END -->" "$RAG_BLOCK"
 
 STATE_BLOCK=$(cat <<EOF2
