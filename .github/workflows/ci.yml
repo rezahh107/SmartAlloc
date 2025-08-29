@@ -33,11 +33,13 @@ permissions:
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TZ: UTC
 
 jobs:
   qa:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         php: ['8.1','8.2']
     steps:
@@ -66,6 +68,8 @@ jobs:
           jq empty ai_context.json
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Install Playwright deps
+        run: npx playwright install --with-deps
       - name: 🎨 PHPCBF (soft)
         run: composer phpcbf || true
       - name: 📊 5D Score
@@ -75,6 +79,8 @@ jobs:
         run: |
           chmod +x scripts/evaluate_scores.sh
           scripts/evaluate_scores.sh
+      - name: CI 5D Gates
+        run: bash scripts/ci/ensure_ci_thresholds.sh
       - name: 📝 Append 5D Summary & AUTO-FIX
         if: always()
         run: |
@@ -119,6 +125,8 @@ jobs:
           jq empty ai_context.json
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Install Playwright deps
+        run: npx playwright install --with-deps
       - name: 🎨 PHPCBF (soft)
         run: composer phpcbf || true
       - name: 📊 5D Score
@@ -128,6 +136,8 @@ jobs:
         run: |
           chmod +x scripts/evaluate_scores.sh
           scripts/evaluate_scores.sh
+      - name: CI 5D Gates
+        run: bash scripts/ci/ensure_ci_thresholds.sh
       - name: 📝 Append 5D Summary & AUTO-FIX
         if: always()
         run: |
