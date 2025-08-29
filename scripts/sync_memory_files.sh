@@ -56,13 +56,35 @@ FILES=$(git ls-files | wc -l | tr -d ' ')
 LAST_COMMIT=$(git rev-parse HEAD)
 
 FEATURES_JSON=$(cat features.json)
-NEW_FEATURE=$(grep '^feature:' ai_outputs/last_state.yml | sed 's/^feature:[ ]*//')
-if [ -n "$NEW_FEATURE" ]; then
-  if ! echo "$FEATURES_JSON" | jq -e --arg name "$NEW_FEATURE" '.features[]? | select(.name==$name)' >/dev/null; then
-    FEATURES_JSON=$(echo "$FEATURES_JSON" | jq --arg name "$NEW_FEATURE" '.features += [{name:$name, status:"amber", notes:""}]')
-    printf '%s\n' "$FEATURES_JSON" > features.json
-  fi
+LAST_STATE_JSON=$(python3 - <<'PYTHON'
+import sys, json, yaml, pathlib
+path = pathlib.Path('ai_outputs/last_state.yml')
+try:
+    data = yaml.safe_load(path.read_text())
+    feature = data['feature']
+    status = data['status']
+    notes = data['notes']
+    print(json.dumps({'feature': feature, 'status': status, 'notes': notes}))
+except FileNotFoundError:
+    sys.stderr.write('Error: ai_outputs/last_state.yml not found\n')
+    sys.exit(1)
+except KeyError as e:
+    sys.stderr.write(f"Error: missing {e.args[0]} in ai_outputs/last_state.yml\n")
+    sys.exit(1)
+except Exception as e:
+    sys.stderr.write(f"Error: failed to parse ai_outputs/last_state.yml: {e}\n")
+    sys.exit(1)
+PYTHON
+) || exit 1
+LAST_STATE_FEATURE=$(echo "$LAST_STATE_JSON" | jq -r '.feature')
+LAST_STATE_STATUS=$(echo "$LAST_STATE_JSON" | jq -r '.status')
+LAST_STATE_NOTES=$(echo "$LAST_STATE_JSON" | jq -r '.notes')
+if echo "$FEATURES_JSON" | jq -e --arg name "$LAST_STATE_FEATURE" '.features[]? | select(.name==$name)' >/dev/null; then
+  FEATURES_JSON=$(echo "$FEATURES_JSON" | jq --arg name "$LAST_STATE_FEATURE" --arg status "$LAST_STATE_STATUS" --arg notes "$LAST_STATE_NOTES" '.features = (.features | map(if .name==$name then .status=$status | .notes=$notes else . end))')
+else
+  FEATURES_JSON=$(echo "$FEATURES_JSON" | jq --arg name "$LAST_STATE_FEATURE" --arg status "$LAST_STATE_STATUS" --arg notes "$LAST_STATE_NOTES" '.features += [{name:$name, status:$status, notes:$notes}]')
 fi
+printf '%s\n' "$FEATURES_JSON" > features.json
 FEATURES_ROWS=$(echo "$FEATURES_JSON" | jq -r '.features[] | "| \(.name) | " + (if .status=="green" then "🟢 Green" elif .status=="amber" then "🟡 Amber" elif .status=="red" then "🔴 Red" else "⚪ Unknown" end) + " | \(.notes) |"')
 FEATURES_ARRAY=$(echo "$FEATURES_JSON" | jq '.features')
 
