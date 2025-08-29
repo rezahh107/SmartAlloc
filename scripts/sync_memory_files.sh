@@ -55,6 +55,17 @@ COMMITS=$(git rev-list --count HEAD)
 FILES=$(git ls-files | wc -l | tr -d ' ')
 LAST_COMMIT=$(git rev-parse HEAD)
 
+FEATURES_JSON=$(cat features.json)
+NEW_FEATURE=$(grep '^feature:' ai_outputs/last_state.yml | sed 's/^feature:[ ]*//')
+if [ -n "$NEW_FEATURE" ]; then
+  if ! echo "$FEATURES_JSON" | jq -e --arg name "$NEW_FEATURE" '.features[]? | select(.name==$name)' >/dev/null; then
+    FEATURES_JSON=$(echo "$FEATURES_JSON" | jq --arg name "$NEW_FEATURE" '.features += [{name:$name, status:"amber", notes:""}]')
+    printf '%s\n' "$FEATURES_JSON" > features.json
+  fi
+fi
+FEATURES_ROWS=$(echo "$FEATURES_JSON" | jq -r '.features[] | "| \(.name) | " + (if .status=="green" then "🟢 Green" elif .status=="amber" then "🟡 Amber" elif .status=="red" then "🔴 Red" else "⚪ Unknown" end) + " | \(.notes) |"')
+FEATURES_ARRAY=$(echo "$FEATURES_JSON" | jq '.features')
+
 mkdir -p reports docs/architecture/decisions
 
 AI_CONTEXT=$(cat <<EOF2
@@ -94,7 +105,8 @@ AI_CONTEXT=$(cat <<EOF2
     "goal": 20,
     "weighted_percent": 95.0,
     "red_flags": []
-  }
+  },
+  "features": $FEATURES_ARRAY
 }
 EOF2
 )
@@ -102,21 +114,9 @@ write_file ai_context.json "$AI_CONTEXT"
 
 RAG_BLOCK=$(cat <<EOF2
 <!-- AUTO-GEN:RAG START -->
-# Feature Status Dashboard
-
 | Feature | Status | Notes |
 | --- | --- | --- |
-| DB Safety | 🟢 Green | All queries DbSafe::mustPrepare |
-| Logging | 🟢 Green | Structured Monolog |
-| Exporter | 🟢 Green | Export endpoints live |
-| Gravity Forms | 🟢 Green | Bridge deployed |
-| Allocation Core | 🟢 Green | Stable allocations |
-| Rule Engine | 🟡 Amber | Edge-case handling pending |
-| Notifications | 🟡 Amber | Delivery flow partial |
-| Circuit Breaker | 🔴 Red | Not started |
-| Observability | 🟢 Green | Metrics & tracing enabled |
-| Performance Budgets | 🔴 Red | Not started |
-| CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
+$FEATURES_ROWS
 
 _Last Updated (UTC): ${TODAY}_
 <!-- AUTO-GEN:RAG END -->

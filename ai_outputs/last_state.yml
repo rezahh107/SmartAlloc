@@ -1,6 +1,6 @@
-feature: rule-engine-reliability-gates
-selected_option: A
-timestamp: "2025-08-29T18:44:06Z"
+feature: rag-template-automation
+selected_option: C
+timestamp: "2025-08-29T19:25:00Z"
 scores:
   security: 22
   logic: 18
@@ -9,4 +9,4 @@ scores:
   goal: 14
 weighted_percent: 90.0
 status: implemented
-notes: "Adds boundary and metrics tests; Rule Engine API placeholders remain"
+notes: "Automates RAG dashboard from features list with propagation tests"

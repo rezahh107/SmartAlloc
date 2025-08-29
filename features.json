@@ -1,4 +1,70 @@
 {
-    "schema": 1,
-    "features": []
+  "schema": 1,
+  "features": [
+    {
+      "name": "DB Safety",
+      "status": "green",
+      "notes": "All queries DbSafe::mustPrepare"
+    },
+    {
+      "name": "Logging",
+      "status": "green",
+      "notes": "Structured Monolog"
+    },
+    {
+      "name": "Exporter",
+      "status": "green",
+      "notes": "Export endpoints live"
+    },
+    {
+      "name": "Gravity Forms",
+      "status": "green",
+      "notes": "Bridge deployed"
+    },
+    {
+      "name": "Allocation Core",
+      "status": "green",
+      "notes": "Stable allocations"
+    },
+    {
+      "name": "Rule Engine",
+      "status": "amber",
+      "notes": "Edge-case handling pending"
+    },
+    {
+      "name": "Notifications",
+      "status": "amber",
+      "notes": "Delivery flow partial"
+    },
+    {
+      "name": "Circuit Breaker",
+      "status": "red",
+      "notes": "Not started"
+    },
+    {
+      "name": "Observability",
+      "status": "green",
+      "notes": "Metrics & tracing enabled"
+    },
+    {
+      "name": "Performance Budgets",
+      "status": "red",
+      "notes": "Not started"
+    },
+    {
+      "name": "CI/CD",
+      "status": "green",
+      "notes": "5D gate with AUTO-FIX loop"
+    },
+    {
+      "name": "rule-engine-reliability-gates",
+      "status": "amber",
+      "notes": ""
+    },
+    {
+      "name": "rag-template-automation",
+      "status": "amber",
+      "notes": ""
+    }
+  ]
 }
