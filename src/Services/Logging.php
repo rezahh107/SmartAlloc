@@ -66,6 +66,11 @@ final class Logging implements LoggerInterface
      */
     private function maskSensitiveData(array $context): array
     {
+        foreach ( [ 'national_id', 'phone', 'mobile', 'email' ] as $k ) {
+            if ( isset( $context[ $k ] ) ) {
+                $context[ $k ] = '***';
+            }
+        }
         $redactor = new Redactor();
         return $redactor->redact($context);
     }

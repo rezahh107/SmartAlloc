@@ -38,7 +38,7 @@ final class NotificationService
     public function send(array $payload): void
     {
         $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
-        $this->enqueue($payload, 0);
+        $this->enqueue('smartalloc_notify', $payload, 0);
     }
 
     /**
@@ -93,7 +93,7 @@ final class NotificationService
                 $this->metrics->inc('notify_retry_total');
                 $payload['_attempt'] = $attempt + 1;
                 $delay = $this->retry->backoff($attempt);
-                $this->enqueue($payload, $delay);
+                $this->enqueue('smartalloc_notify', $payload, $delay);
                 return;
             }
             $this->dlq->push([
@@ -110,13 +110,54 @@ final class NotificationService
     }
 
     /**
+     * Send mail with retry and idempotency.
+     *
+     * @param array<string,mixed> $payload { to,subject,message,headers?,_attempt? }
+     */
+    public function sendMail(array $payload): void
+    {
+        $attempt    = (int) ( $payload['_attempt'] ?? 1 );
+        $id_payload = $payload;
+        unset( $id_payload['_attempt'] );
+        $key = 'sa_mail_' . sha1( wp_json_encode( $id_payload ) );
+        if ( get_transient( $key ) ) {
+            return;
+        }
+        $ok = wp_mail(
+            (string) ( $payload['to'] ?? '' ),
+            (string) ( $payload['subject'] ?? '' ),
+            (string) ( $payload['message'] ?? '' ),
+            $payload['headers'] ?? array()
+        );
+        if ( $ok ) {
+            set_transient( $key, 1, DAY_IN_SECONDS );
+            return;
+        }
+        $this->logger->warning( 'notify.mail.fail', array( 'email' => $payload['to'] ?? '', 'attempt' => $attempt ) );
+        if ( $attempt >= SMARTALLOC_NOTIFY_MAX_TRIES ) {
+            return;
+        }
+        $payload['_attempt'] = $attempt + 1;
+        $this->enqueue( 'smartalloc_notify_mail', $payload, $this->mailDelay( $attempt ) );
+    }
+
+    /**
+     * Calculate exponential backoff with jitter.
+     */
+    private function mailDelay( int $attempt ): int {
+        $base = SMARTALLOC_NOTIFY_BASE_DELAY;
+        $cap  = SMARTALLOC_NOTIFY_BACKOFF_CAP;
+        $j    = random_int( 0, $base );
+        return (int) min( $cap, $base * ( 2 ** ( $attempt - 1 ) ) + $j );
+    }
+
+    /**
      * Enqueue action via Action Scheduler or wp-cron.
      *
      * @param array<string,mixed> $payload
      */
-    private function enqueue(array $payload, int $delay): void
+    private function enqueue( string $hook, array $payload, int $delay ): void
     {
-        $hook = 'smartalloc_notify';
         if (function_exists('as_enqueue_async_action') && function_exists('as_enqueue_single_action')) {
             $group = 'smartalloc';
             if ($delay > 0) {
@@ -126,6 +167,6 @@ final class NotificationService
             }
             return;
         }
-        wp_schedule_single_event(time() + $delay, $hook, [$payload]);
+        wp_schedule_single_event(time() + max(1, $delay), $hook, [$payload]);
     }
 }
