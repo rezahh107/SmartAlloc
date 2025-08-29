@@ -1,6 +1,8 @@
 
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — 2025-08-29
+## Implemented Features
+- implemented-features-filter
 
 ## Milestones
 - ✅ Core Allocation shipped
