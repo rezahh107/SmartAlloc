@@ -22,9 +22,9 @@ final class ExportController
         $cb = function () {
             register_rest_route('smartalloc/v1', '/export', [
                 'methods'             => 'POST',
-                'permission_callback' => static fn() => current_user_can('smartalloc_manage'),
+                'permission_callback' => static fn() => \SmartAlloc\Security\CapManager::canManage(),
                 'callback'            => function (\WP_REST_Request $request) {
-                    if (!current_user_can('smartalloc_manage')) {
+                    if (!\SmartAlloc\Security\CapManager::canManage()) {
                         return new \WP_REST_Response(['error' => 'forbidden'], 403);
                     }
 

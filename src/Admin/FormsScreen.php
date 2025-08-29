@@ -24,7 +24,7 @@ final class FormsScreen
 
     public static function render(): void
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!\SmartAlloc\Security\CapManager::canManage()) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
         $forms = class_exists('GFAPI') ? \GFAPI::get_forms() : [];
@@ -71,7 +71,7 @@ final class FormsScreen
     public static function handleEnable(): void
     {
         check_admin_referer('smartalloc_enable_form');
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!\SmartAlloc\Security\CapManager::canManage()) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
         $raw = filter_input(INPUT_POST, 'form_id', FILTER_SANITIZE_NUMBER_INT);
@@ -92,7 +92,7 @@ final class FormsScreen
     public static function handleDisable(): void
     {
         check_admin_referer('smartalloc_disable_form');
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!\SmartAlloc\Security\CapManager::canManage()) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
         $raw = filter_input(INPUT_POST, 'form_id', FILTER_SANITIZE_NUMBER_INT);
@@ -108,7 +108,7 @@ final class FormsScreen
     public static function handleGenerateJson(): void
     {
         check_admin_referer('smartalloc_generate_gf_json');
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!\SmartAlloc\Security\CapManager::canManage()) {
             wp_die(esc_html__('Access denied', 'smartalloc'));
         }
         $json = GFFormGenerator::buildJson();

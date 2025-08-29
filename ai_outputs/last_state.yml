@@ -1,12 +1,12 @@
-timestamp: 2025-08-29T16:37:09Z
-feature: Phase-1 test coverage & circuit breaker contract
+feature: capability-standardization
 selected_option: A
+timestamp: "2025-08-29T17:45:07Z"
 scores:
-  security: 20
-  logic: 17
+  security: 22
+  logic: 18
   performance: 20
   readability: 19
-  goal: 13
-weighted_percent: 88.15
-status: completed
-notes: added test scaffolding and CircuitBreaker interface
+  goal: 14
+weighted_percent: 90.4
+status: implemented
+notes: "CapManager centralizes checks with alias support; tests include placeholder for filter override"
