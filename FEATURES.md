@@ -16,7 +16,7 @@
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| implemented-features-filter | ⚪ Unknown | Features filter shows all in FEATURES.md but only implemented in context and state |
+| memory-sync-branch | ⚪ Unknown | Workflow covers all branches and ensures pushes use active branch |
 
 _Last Updated (UTC): 2025-08-29_
 <!-- AUTO-GEN:RAG END -->

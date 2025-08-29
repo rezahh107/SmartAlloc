@@ -2,9 +2,9 @@ name: Memory Sync
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 
 permissions:
@@ -25,9 +25,15 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add FEATURES.md PROJECT_STATE.md ai_context.json
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          current_branch="$(git rev-parse --abbrev-ref HEAD)"
+          if [ "$current_branch" != "$branch" ]; then
+            echo "Aborting: checked out $current_branch but expected $branch"
+            exit 1
+          fi
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
             git commit -m "chore: auto-update memory sync files"
-            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+            git push origin "HEAD:$branch"
           fi
