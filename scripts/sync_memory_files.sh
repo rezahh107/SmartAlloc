@@ -85,8 +85,10 @@ else
   FEATURES_JSON=$(echo "$FEATURES_JSON" | jq --arg name "$LAST_STATE_FEATURE" --arg status "$LAST_STATE_STATUS" --arg notes "$LAST_STATE_NOTES" '.features += [{name:$name, status:$status, notes:$notes}]')
 fi
 printf '%s\n' "$FEATURES_JSON" > features.json
+# FEATURES.md lists all features; other artifacts only keep `status: implemented`.
+FEATURES_IMPLEMENTED=$(echo "$FEATURES_JSON" | jq '[.features[] | select(.status=="implemented")]')
 FEATURES_ROWS=$(echo "$FEATURES_JSON" | jq -r '.features[] | "| \(.name) | " + (if .status=="green" then "🟢 Green" elif .status=="amber" then "🟡 Amber" elif .status=="red" then "🔴 Red" else "⚪ Unknown" end) + " | \(.notes) |"')
-FEATURES_ARRAY=$(echo "$FEATURES_JSON" | jq '.features')
+FEATURES_LIST=$(echo "$FEATURES_IMPLEMENTED" | jq -r '.[].name | "- " + .')
 
 mkdir -p reports docs/architecture/decisions
 
@@ -128,7 +130,7 @@ AI_CONTEXT=$(cat <<EOF2
     "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": $FEATURES_ARRAY
+  "features": $FEATURES_IMPLEMENTED
 }
 EOF2
 )
@@ -152,6 +154,8 @@ replace_block FEATURES.md "<!-- AUTO-GEN:RAG START -->" "<!-- AUTO-GEN:RAG END -
 STATE_BLOCK=$(cat <<EOF2
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — $TODAY
+## Implemented Features
+$FEATURES_LIST
 
 ## Milestones
 - ✅ Core Allocation shipped

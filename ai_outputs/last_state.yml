@@ -1,12 +1,12 @@
-feature: sync-memory-yaml
+feature: implemented-features-filter
 selected_option: A
-timestamp: "2025-08-29T20:11:00Z"
+timestamp: "2025-08-29T20:48:18Z"
 scores:
-  security: 23
-  logic: 19
+  security: 24
+  logic: 18
   performance: 19
   readability: 18
-  goal: 14
-weighted_percent: 93.0
+  goal: 15
+weighted_percent: 94.0
 status: implemented
-notes: "Shell script parses last_state.yml for feature status and notes"
+notes: "Features filter shows all in FEATURES.md but only implemented in context and state"
