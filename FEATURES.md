@@ -16,7 +16,7 @@
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| memory-sync-branch | ⚪ Unknown | Workflow covers all branches and ensures pushes use active branch |
+| ci-contents-write | ⚪ Unknown | Updated CI workflow to grant write access to contents |
 
 _Last Updated (UTC): 2025-08-29_
 <!-- AUTO-GEN:RAG END -->
