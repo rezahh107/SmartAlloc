@@ -68,6 +68,35 @@ FEATURES_ARRAY=$(echo "$FEATURES_JSON" | jq '.features')
 
 mkdir -p reports docs/architecture/decisions
 
+LAST_STATE_FILE="ai_outputs/last_state.yml"
+if [ ! -f "$LAST_STATE_FILE" ]; then
+  echo "Error: missing $LAST_STATE_FILE" >&2
+  exit 1
+fi
+
+LAST_STATE_DATA=$(python3 - <<'PY'
+import sys, json
+try:
+    import yaml
+except ImportError as e:
+    print(f"Error: yaml module missing: {e}", file=sys.stderr)
+    sys.exit(1)
+
+file = sys.argv[1]
+try:
+    with open(file, 'r', encoding='utf-8') as f:
+        data = yaml.safe_load(f) or {}
+    missing = [k for k in ('feature', 'status', 'notes') if k not in data]
+    if missing:
+        raise KeyError(', '.join(missing))
+    json.dump({k: data[k] for k in ('feature', 'status', 'notes')}, sys.stdout)
+except Exception as e:
+    print(f"Error parsing {file}: {e}", file=sys.stderr)
+    sys.exit(1)
+PY
+"$LAST_STATE_FILE")
+write_file ai_outputs/last_state.json "$LAST_STATE_DATA"
+
 AI_CONTEXT=$(cat <<EOF2
 {
   "last_update_utc": "$NOW",
