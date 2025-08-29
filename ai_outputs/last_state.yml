@@ -1,12 +1,12 @@
-timestamp: 2025-08-28T20:59:44Z
-feature: allocation engine migration
+timestamp: 2025-08-29T10:54:33Z
+feature: CI stabilization and policy contract
 selected_option: A
 scores:
-  security: 22
-  logic: 17
-  performance: 17
+  security: 25
+  logic: 20
+  performance: 20
   readability: 19
-  goal: 14
-weighted_percent: 91
+  goal: 15
+weighted_percent: 93.5
 status: completed
-notes: initial engine scaffold; fuzzy matching to be optimized later
+notes: added CI gate script and policy tests
