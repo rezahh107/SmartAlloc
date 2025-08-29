@@ -66,7 +66,7 @@ final class DebugScreen
             echo '<button class="copy-issue" data-clip="' . esc_attr($issue) . '">' . esc_html__('Copy as GitHub Issue', 'smartalloc') . '</button> ';
             $bundleNonce = wp_create_nonce('smartalloc_debug_bundle');
             $url = '?page=smartalloc-debug&bundle=' . rawurlencode($hash) . '&_wpnonce=' . $bundleNonce;
-            echo '<a class="button" href="' . esc_attr($url) . '">' . esc_html__('Download Debug Bundle (.zip)', 'smartalloc') . '</a>';
+            echo '<a class="button" href="' . esc_url($url) . '">' . esc_html__('Download Debug Bundle (.zip)', 'smartalloc') . '</a>';
             echo '</td>';
             echo '</tr>';
         }
@@ -74,6 +74,22 @@ final class DebugScreen
             echo '<tr><td colspan="3">' . esc_html__('No errors', 'smartalloc') . '</td></tr>';
         }
         echo '</tbody></table>';
+        echo '<div class="smartalloc-debug-evaluate">';
+        echo '<h3>' . esc_html__('ارزیابی قوانین (Dry-Run)', 'smartalloc') . '</h3>';
+        echo '<form id="sa-rule-evaluate">';
+        echo '<input type="hidden" name="_wpnonce" value="' . esc_attr(wp_create_nonce('smartalloc_rest')) . '">';
+        echo '<input type="number" name="entry_id" placeholder="' . esc_attr__('Entry ID', 'smartalloc') . '" min="1" />';
+        echo '<button type="submit" class="button button-primary">' . esc_html__('اجرا', 'smartalloc') . '</button>';
+        echo '</form>';
+        echo '<pre id="sa-evaluate-result" style="display:none;"></pre>';
+        echo '</div>';
+        echo '<script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo "jQuery('#sa-rule-evaluate').on('submit',function(e){"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo 'e.preventDefault();const entryId=jQuery("[name=\"entry_id\"]").val();'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo 'const nonce=jQuery("[name=\"_wpnonce\"]").val();'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo "jQuery.ajax({url:'" . esc_url_raw(rest_url('smartalloc/v1/rule-engine/evaluate')) . "',method:'POST',headers:{'X-WP-Nonce':nonce,'Content-Type':'application/json'},data:JSON.stringify({entry_id:parseInt(entryId)}),success:function(data){jQuery('#sa-evaluate-result').text(JSON.stringify(data,null,2)).show();},error:function(xhr){jQuery('#sa-evaluate-result').text('Error: '+xhr.responseText).show();}});"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo '});'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo '<script>document.querySelectorAll(".copy-prompt,.copy-issue").forEach(b=>b.addEventListener("click",()=>navigator.clipboard.writeText(b.dataset.clip)));document.querySelectorAll(".show-more").forEach(b=>b.addEventListener("click",()=>{const p=b.previousElementSibling;p.textContent=p.dataset.full;b.remove();}));</script>';
         echo '</div>';
     }
