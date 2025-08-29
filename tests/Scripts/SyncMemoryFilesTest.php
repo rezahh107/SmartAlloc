@@ -26,7 +26,7 @@ final class SyncMemoryFilesTest extends BaseTestCase
         exec('git add README.md ai_outputs/last_state.yml');
         exec('git commit -m init >/dev/null 2>&1');
 
-        $script = escapeshellarg(__DIR__ . '/../../scripts/sync_memory_files.sh');
+        $script = escapeshellarg(realpath(__DIR__ . '/../../scripts/sync_memory_files.sh'));
         exec("bash $script >/dev/null 2>&1", $out, $exit);
         chdir($cwd);
 

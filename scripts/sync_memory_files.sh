@@ -63,6 +63,11 @@ if [ ! -f "$LAST_STATE_FILE" ]; then
   exit 1
 fi
 
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Error: python3 is required to parse $LAST_STATE_FILE" >&2
+  exit 4
+fi
+
 LAST_STATE_DATA=$(python3 - "$LAST_STATE_FILE" <<'PY'
 import sys, json
 try:
