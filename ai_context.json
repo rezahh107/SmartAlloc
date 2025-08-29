@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-08-29T20:17:14Z",
+  "last_update_utc": "2025-08-29T20:52:22Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "b6d70f1058705076ecd93a44aff2a1ee35608dc4",
-    "commits_total": 467,
+    "default_branch": "codex/update-parsing-logic-and-documentation-ik4p2t",
+    "last_commit": "9a7c40438cd6724c8a688ed720c2ee6f4998852e",
+    "commits_total": 469,
     "files_tracked": 617
   },
   "quality_gate": {
@@ -37,74 +37,9 @@
   },
   "features": [
   {
-    "name": "DB Safety",
-    "status": "green",
-    "notes": "All queries DbSafe::mustPrepare"
-  },
-  {
-    "name": "Logging",
-    "status": "green",
-    "notes": "Structured Monolog"
-  },
-  {
-    "name": "Exporter",
-    "status": "green",
-    "notes": "Export endpoints live"
-  },
-  {
-    "name": "Gravity Forms",
-    "status": "green",
-    "notes": "Bridge deployed"
-  },
-  {
-    "name": "Allocation Core",
-    "status": "green",
-    "notes": "Stable allocations"
-  },
-  {
-    "name": "Rule Engine",
-    "status": "amber",
-    "notes": "Edge-case handling pending"
-  },
-  {
-    "name": "Notifications",
-    "status": "amber",
-    "notes": "Delivery flow partial"
-  },
-  {
-    "name": "Circuit Breaker",
-    "status": "red",
-    "notes": "Not started"
-  },
-  {
-    "name": "Observability",
-    "status": "green",
-    "notes": "Metrics & tracing enabled"
-  },
-  {
-    "name": "Performance Budgets",
-    "status": "red",
-    "notes": "Not started"
-  },
-  {
-    "name": "CI/CD",
-    "status": "green",
-    "notes": "5D gate with AUTO-FIX loop"
-  },
-  {
-    "name": "rule-engine-reliability-gates",
-    "status": "amber",
-    "notes": ""
-  },
-  {
-    "name": "rag-template-automation",
-    "status": "amber",
-    "notes": ""
-  },
-  {
-    "name": "sync-memory-yaml",
+    "name": "implemented-features-filter",
     "status": "implemented",
-    "notes": "Shell script parses last_state.yml for feature status and notes"
+    "notes": "Features filter shows all in FEATURES.md but only implemented in context and state"
   }
 ]
 }

@@ -430,9 +430,9 @@ Artifacts:
 
 FEATURES.md: feature readiness scores
 
-ai_context.json: ADR-derived AI context
+ai_context.json: ADR-derived AI context for implemented features
 
-PROJECT_STATE.md: snapshot summary (CI also uploads as artifact)
+PROJECT_STATE.md: snapshot summary (implemented features only; CI also uploads as artifact)
 
 ## Codex Prompt Handoff
 
