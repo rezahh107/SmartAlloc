@@ -7,15 +7,17 @@ namespace SmartAlloc\Notifications;
 interface MailerInterface
 {
     /**
-     * Sends an email payload or schedules a retry.
+     * Send mail with retry capability.
      *
-     * @param array<string,mixed> $payload Email arguments.
-     * @param int                 $attempt Current attempt number.
+     * @param array{to:string,subject:string,message:string,headers?:array,attachments?:array} $payload
+     * @param int $attempt Current attempt number
      *
-     * @return bool True if delivered or scheduled, false on final failure.
+     * @return bool True if sent or retry scheduled, false on final failure
      */
     public function send(array $payload, int $attempt = 1): bool;
 
-    /** Registers WP-Cron hook for retries. */
+    /**
+     * Register WordPress hooks.
+     */
     public function register(): void;
 }

@@ -14,6 +14,9 @@ final class RetryingMailer implements MailerInterface
     /** @var callable(int,string,array):bool */
     private $scheduleFn;
 
+    /** @var callable():int */
+    private $timeFn;
+
     private Logger $logger;
 
     private int $maxAttempts;
@@ -22,13 +25,20 @@ final class RetryingMailer implements MailerInterface
 
     private static ?self $singleton = null;
 
-    public function __construct(callable $mailFn, callable $scheduleFn, ?Logger $logger = null, int $maxAttempts = 3, int $baseDelay = 60)
-    {
+    public function __construct(
+        callable $mailFn,
+        callable $scheduleFn,
+        ?Logger $logger = null,
+        int $maxAttempts = 3,
+        int $baseDelay = 60,
+        ?callable $timeFn = null
+    ) {
         $this->mailFn     = $mailFn;
         $this->scheduleFn = $scheduleFn;
         $this->logger     = $logger ?? new Logger();
         $this->maxAttempts = max(1, $maxAttempts);
         $this->baseDelay   = max(15, $baseDelay);
+        $this->timeFn      = $timeFn ?? static fn(): int => time();
         self::$singleton   = $this;
     }
 
@@ -73,7 +83,7 @@ final class RetryingMailer implements MailerInterface
         }
 
         $delay = (int) min(900, $this->baseDelay * (1 << ($attempt - 1)));
-        $ts    = time() + $delay; // UTC
+        $ts    = (int) call_user_func($this->timeFn) + $delay; // UTC
         $args  = [['payload' => $payload, 'attempt' => $attempt + 1]];
         $scheduled = (bool) call_user_func($this->scheduleFn, $ts, 'smartalloc_mail_retry', $args);
         $context['delay'] = $delay;
