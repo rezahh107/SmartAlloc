@@ -27,6 +27,15 @@ define('SMARTALLOC_VERSION', '1.0.0-rc.1');
 define('SMARTALLOC_DB_VERSION', '1.0.0');
 define('SMARTALLOC_CAP', 'manage_smartalloc');
 define('SMARTALLOC_UPLOAD_DIR', 'smart-alloc');
+if ( ! defined( 'SMARTALLOC_NOTIFY_MAX_TRIES' ) ) {
+    define( 'SMARTALLOC_NOTIFY_MAX_TRIES', 5 );
+}
+if ( ! defined( 'SMARTALLOC_NOTIFY_BASE_DELAY' ) ) {
+    define( 'SMARTALLOC_NOTIFY_BASE_DELAY', 5 );
+}
+if ( ! defined( 'SMARTALLOC_NOTIFY_BACKOFF_CAP' ) ) {
+    define( 'SMARTALLOC_NOTIFY_BACKOFF_CAP', 600 );
+}
 
 // PHP version check
 if (version_compare(PHP_VERSION, '8.1.0', '<')) {

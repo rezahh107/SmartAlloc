@@ -29,6 +29,9 @@ final class ActionSchedulerAdapter
     {
         // Register the unified handler
         add_action(self::HOOK_NAME, [$this, 'processAsyncEvent'], 10, 3);
+        add_action( 'smartalloc_notify_mail', function ( $p ) {
+            \SmartAlloc\Bootstrap::container()->get( \SmartAlloc\Services\NotificationService::class )->sendMail( (array) $p );
+        }, 10, 1 );
         
         // Register with Action Scheduler if available
         if (class_exists('\ActionScheduler')) {
@@ -41,6 +44,16 @@ final class ActionSchedulerAdapter
             'hook' => self::HOOK_NAME,
             'provider' => class_exists('\ActionScheduler') ? 'action_scheduler' : 'wp_cron'
         ]);
+    }
+
+    public function enqueue( string $hook, array $args = [], int $delaySec = 0 ): void {
+        if ( class_exists( 'ActionScheduler' ) ) {
+            $delaySec > 0
+                ? as_schedule_single_action( time() + $delaySec, $hook, $args, 'smartalloc' )
+                : as_enqueue_async_action( $hook, $args, 'smartalloc' );
+        } else {
+            wp_schedule_single_event( time() + max( 1, $delaySec ), $hook, $args );
+        }
     }
 
     /**
