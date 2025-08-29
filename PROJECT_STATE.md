@@ -2,6 +2,9 @@
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — 2025-08-29
 
+## Implemented Features
+- None
+
 ## Milestones
 - ✅ Core Allocation shipped
 - 🟡 Rule Engine & Notifications in progress

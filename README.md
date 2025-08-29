@@ -428,11 +428,11 @@ bash scripts/new_adr.sh "Choose database library"
 
 Artifacts:
 
-FEATURES.md: feature readiness scores
+FEATURES.md: feature readiness scores for all features
 
-ai_context.json: ADR-derived AI context
+ai_context.json: ADR-derived AI context (implemented features only)
 
-PROJECT_STATE.md: snapshot summary (CI also uploads as artifact)
+PROJECT_STATE.md: snapshot summary highlighting implemented features (CI also uploads as artifact)
 
 ## Codex Prompt Handoff
 

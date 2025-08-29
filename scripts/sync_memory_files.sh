@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# FEATURES.md lists all features; PROJECT_STATE.md and ai_context.json only include
+# entries with status="implemented".
 
 write_file() {
   local file="$1"
@@ -57,6 +59,23 @@ LAST_COMMIT=$(git rev-parse HEAD)
 
 mkdir -p reports docs/architecture/decisions
 
+# Extract feature rows and implemented subset from features.json (if present).
+# All features populate FEATURES.md; only implemented ones appear in PROJECT_STATE.md
+# and ai_context.json.
+ALL_FEATURE_ROWS=""
+IMPLEMENTED_LIST=""
+if command -v jq >/dev/null 2>&1 && [ -f features.json ]; then
+  ALL_FEATURE_ROWS=$(jq -r '.features[]? | "| \(.name) | \(.status // "unknown") | \(.notes // "-") |"' features.json)
+  IMPLEMENTED_LIST=$(jq -r '.features[]? | select(.status=="implemented") | .name' features.json)
+fi
+if [ -n "$IMPLEMENTED_LIST" ]; then
+  IMPLEMENTED_MD=$(printf '%s\n' "$IMPLEMENTED_LIST" | sed 's/^/- /')
+  IMPLEMENTED_JSON=$(printf '%s\n' "$IMPLEMENTED_LIST" | jq -R . | jq -s .)
+else
+  IMPLEMENTED_MD="- None"
+  IMPLEMENTED_JSON="[]"
+fi
+
 AI_CONTEXT=$(cat <<EOF2
 {
   "last_update_utc": "$NOW",
@@ -66,6 +85,7 @@ AI_CONTEXT=$(cat <<EOF2
     "commits_total": $COMMITS,
     "files_tracked": $FILES
   },
+  "implemented_features": $IMPLEMENTED_JSON,
   "quality_gate": {
     "weighted_threshold": 0.85,
     "security_min": 20,
@@ -100,13 +120,8 @@ EOF2
 )
 write_file ai_context.json "$AI_CONTEXT"
 
-RAG_BLOCK=$(cat <<EOF2
-<!-- AUTO-GEN:RAG START -->
-# Feature Status Dashboard
-
-| Feature | Status | Notes |
-| --- | --- | --- |
-| DB Safety | 🟢 Green | All queries DbSafe::mustPrepare |
+if [ -z "$ALL_FEATURE_ROWS" ]; then
+  ALL_FEATURE_ROWS='| DB Safety | 🟢 Green | All queries DbSafe::mustPrepare |
 | Logging | 🟢 Green | Structured Monolog |
 | Exporter | 🟢 Green | Export endpoints live |
 | Gravity Forms | 🟢 Green | Bridge deployed |
@@ -116,7 +131,15 @@ RAG_BLOCK=$(cat <<EOF2
 | Circuit Breaker | 🔴 Red | Not started |
 | Observability | 🟢 Green | Metrics & tracing enabled |
 | Performance Budgets | 🔴 Red | Not started |
-| CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
+| CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |'
+fi
+RAG_BLOCK=$(cat <<EOF2
+<!-- AUTO-GEN:RAG START -->
+# Feature Status Dashboard
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+$ALL_FEATURE_ROWS
 
 _Last Updated (UTC): ${TODAY}_
 <!-- AUTO-GEN:RAG END -->
@@ -130,6 +153,9 @@ replace_block FEATURES.md "<!-- AUTO-GEN:RAG START -->" "<!-- AUTO-GEN:RAG END -
 STATE_BLOCK=$(cat <<EOF2
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — $TODAY
+
+## Implemented Features
+$IMPLEMENTED_MD
 
 ## Milestones
 - ✅ Core Allocation shipped
