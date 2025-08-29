@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-08-29T19:14:23Z",
+  "last_update_utc": "2025-08-29T19:16:57Z",
   "repo": {
-    "default_branch": "work",
-    "last_commit": "3ad9e6abe1c99fd0396559fae13e18d5094462b0",
-    "commits_total": 460,
-    "files_tracked": 616
+    "default_branch": "codex/replace-rag_block-with-feature-template",
+    "last_commit": "f2db5eaf800abe17713af47fcb554b8e7dfa6e7e",
+    "commits_total": 461,
+    "files_tracked": 617
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
