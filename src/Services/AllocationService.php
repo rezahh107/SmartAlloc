@@ -15,6 +15,8 @@ use SmartAlloc\Services\Exceptions\InvalidFormContextException;
 
 final class AllocationService implements AllocationServiceInterface
 {
+    private const ERR_INVALID_INPUT = 'invalid_input';
+
     public function __construct(private TableResolver $tables) {}
 
     /**
@@ -81,6 +83,14 @@ final class AllocationService implements AllocationServiceInterface
             throw new InvalidFormContextException('invalid form id');
         }
 
+        if (!$this->validatePayload($payload)) {
+            $this->log(self::ERR_INVALID_INPUT, $ctx, '', '', '');
+            return [
+                'summary'     => ['form_id' => $ctx->formId, 'count' => 0],
+                'allocations' => [],
+            ];
+        }
+
         global $wpdb;
         $table = $this->tables->allocations($ctx);
 
@@ -122,6 +132,11 @@ final class AllocationService implements AllocationServiceInterface
             'summary'     => ['form_id' => $ctx->formId, 'count' => 1],
             'allocations' => [['student_id' => $studentId]],
         ];
+    }
+
+    private function validatePayload(array $payload): bool
+    {
+        return isset($payload['student_id']) && (int) $payload['student_id'] > 0;
     }
 
     private function mask(string $v): string
