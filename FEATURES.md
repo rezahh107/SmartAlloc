@@ -16,7 +16,7 @@
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| ci-contents-write | ⚪ Unknown | Updated CI workflow to grant write access to contents |
+| ci-contents-write | ⚪ Unknown | Updated session workflow to write repository contents |
 
 _Last Updated (UTC): 2025-08-29_
 <!-- AUTO-GEN:RAG END -->
