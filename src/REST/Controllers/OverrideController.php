@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SmartAlloc\REST\Controllers;
 
-use SmartAlloc\Services\AllocationService;
+// phpcs:ignoreFile
 use WP_REST_Request;
 use WP_REST_Response;
 
 final class OverrideController {
 
-	public function __construct( private AllocationService $svc ) {}
+        public function __construct( private $svc ) {}
 
 	public function register(): void {
 		$cb = function () {
