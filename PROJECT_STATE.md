@@ -1,6 +1,6 @@
 
 <!-- AUTO-GEN:STATE START -->
-# PROJECT_STATE — 2025-08-27
+# PROJECT_STATE — 2025-08-29
 
 ## Milestones
 - ✅ Core Allocation shipped
