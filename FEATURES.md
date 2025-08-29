@@ -16,6 +16,7 @@
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
+| sync-memory-yaml | ⚪ Unknown | Shell script parses last_state.yml for feature status and notes |
 
 _Last Updated (UTC): 2025-08-29_
 <!-- AUTO-GEN:RAG END -->
