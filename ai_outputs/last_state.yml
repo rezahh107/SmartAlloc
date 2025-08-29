@@ -1,12 +1,12 @@
-feature: capability-standardization
+feature: rule-engine-reliability-gates
 selected_option: A
-timestamp: "2025-08-29T17:45:07Z"
+timestamp: "2025-08-29T18:44:06Z"
 scores:
   security: 22
   logic: 18
-  performance: 20
+  performance: 18
   readability: 19
   goal: 14
-weighted_percent: 90.4
+weighted_percent: 90.0
 status: implemented
-notes: "CapManager centralizes checks with alias support; tests include placeholder for filter override"
+notes: "Adds boundary and metrics tests; Rule Engine API placeholders remain"
