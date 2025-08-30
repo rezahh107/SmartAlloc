@@ -22,7 +22,16 @@ final class RuleEngineService implements RuleEngineContract
         $r = new EvaluationResult($decision);
         $r->scores['school_fuzzy'] = $score;
         $r->reasons = $reasons;
-        // TODO: Add capacity check when available
+        // NEW: capacity check with filter override
+        $flag = apply_filters('smartalloc_rule_cap_check', SMARTALLOC_RULE_CAP_CHECK);
+        if ($flag) {
+            $capacityOk = true; // placeholder until provider injected
+            if (!$capacityOk && class_exists('\\SmartAlloc\\Services\\Exceptions\\InsufficientCapacityException')) {
+                throw new \SmartAlloc\Services\Exceptions\InsufficientCapacityException(
+                    'Capacity check failed (flag ON).'
+                );
+            }
+        }
         // TODO: Add mentor validation when available
         return $r;
     }
