@@ -1,16 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync ai_context.json timestamps to documentation
+# Sync timestamps and warn on score drifts
 if ! command -v jq &> /dev/null; then
     echo "Error: jq is required but not installed" >&2
     exit 1
 fi
 
-weighted=$(jq -r '.current_scores.weighted_percent' ai_context.json)
-ts=$(jq -r '.last_update_utc' ai_context.json)
+# Extract values from ai_context.json
+WGT=$(jq -r '.current_scores.weighted_percent' ai_context.json)
+RD=$(jq -r '.current_scores.readability' ai_context.json)
+TS=$(jq -r '.last_update_utc' ai_context.json)
 
-sed -i "s/^Last Updated (UTC).*/Last Updated (UTC): ${ts}/" FEATURES.md
-sed -i "s/^# PROJECT_STATE — .*/# PROJECT_STATE — ${ts%%T*}/" PROJECT_STATE.md
+# Update timestamp in FEATURES.md
+sed -i "s/^Last Updated (UTC).*/Last Updated (UTC): ${TS}/" FEATURES.md || true
 
-echo "Synced scorecard timestamps to ${ts} (weighted: ${weighted}%)"
+# Check for score drift
+DRIFT=0
+if ! grep -q "Weighted Average: ${WGT}%" FEATURES.md; then
+    DRIFT=1
+fi
+if ! grep -q "\"Readability Score\": ${RD}.00/25" FEATURES.md; then
+    DRIFT=1
+fi
+
+if [[ "$DRIFT" -eq 1 ]]; then
+    echo "::warning::Score drift detected (ai_context vs FEATURES). Please refresh dashboard."
+fi
+
+echo "Scorecards sync completed at ${TS}"
