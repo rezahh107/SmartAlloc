@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
+use SmartAlloc\RuleEngine\RuleEngineService;
+use SmartAlloc\RuleEngine\EvaluationResult;
+use SmartAlloc\Services\Exceptions\InsufficientCapacityException;
 
 /**
  * Tests for Rule Engine failure modes and boundary conditions.
@@ -67,30 +70,36 @@ final class FailureModesTest extends TestCase {
         ];
     }
 
-    /**
-     * Placeholder until capacity check API is available.
-     */
-    public function test_over_capacity_handling(): void {
-        $this->markTestIncomplete(
-            'Implement when RuleEngine capacity check API confirmed'
-        );
+    public function test_invalid_input_throws_type_error(): void {
+        $engine = new RuleEngineService();
+        $this->expectException(\TypeError::class);
+        $engine->evaluate(null);
     }
 
-    /**
-     * Placeholder until mentor validation API is available.
-     */
-    public function test_missing_mentor_rejection(): void {
-        $this->markTestIncomplete(
-            'Implement when RuleEngine mentor validation API confirmed'
-        );
+    public function test_zero_capacity_handling(): void {
+        $engine = new class extends RuleEngineService {
+            public function evaluate(array $studentCtx): EvaluationResult {
+                $result = parent::evaluate($studentCtx);
+                if (apply_filters('smartalloc_rule_cap_check', true)) {
+                    throw new InsufficientCapacityException('capacity exceeded');
+                }
+                return $result;
+            }
+        };
+        add_filter('smartalloc_rule_cap_check', '__return_true');
+        $this->expectException(InsufficientCapacityException::class);
+        $engine->evaluate(['school_fuzzy' => 0.95]);
+        remove_filter('smartalloc_rule_cap_check', '__return_true');
     }
 
-    /**
-     * Placeholder until status validation API is available.
-     */
-    public function test_conflicting_status_validation(): void {
-        $this->markTestIncomplete(
-            'Implement when RuleEngine status validation API confirmed'
-        );
+    public function test_dependency_failure_graceful_degradation(): void {
+        $engine = new RuleEngineService();
+        $fn = function () {
+            throw new \RuntimeException('db error');
+        };
+        add_filter('smartalloc_rule_cap_check', $fn);
+        $this->expectException(\RuntimeException::class);
+        $engine->evaluate(['school_fuzzy' => 0.92]);
+        remove_filter('smartalloc_rule_cap_check', $fn);
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SmartAlloc\Notifications;
 
 use SmartAlloc\Logging\Logger;
+use SmartAlloc\Notifications\Exceptions\TransientException;
+use SmartAlloc\Services\DlqService;
 
 final class RetryingMailer implements MailerInterface
 {
@@ -24,6 +26,7 @@ final class RetryingMailer implements MailerInterface
     private int $baseDelay;
 
     private static ?self $singleton = null;
+    private DlqService $dlqService;
 
     public function __construct(
         callable $mailFn,
@@ -31,7 +34,8 @@ final class RetryingMailer implements MailerInterface
         ?Logger $logger = null,
         int $maxAttempts = 3,
         int $baseDelay = 60,
-        ?callable $timeFn = null
+        ?callable $timeFn = null,
+        ?DlqService $dlqService = null
     ) {
         $this->mailFn     = $mailFn;
         $this->scheduleFn = $scheduleFn;
@@ -39,6 +43,7 @@ final class RetryingMailer implements MailerInterface
         $this->maxAttempts = max(1, $maxAttempts);
         $this->baseDelay   = max(15, $baseDelay);
         $this->timeFn      = $timeFn ?? static fn(): int => time();
+        $this->dlqService  = $dlqService ?? new DlqService();
         self::$singleton   = $this;
     }
 
@@ -90,5 +95,37 @@ final class RetryingMailer implements MailerInterface
         $this->logger->info($scheduled ? 'mail scheduled' : 'schedule failed', $context);
 
         return $scheduled;
+    }
+
+    /**
+     * Send using exponential backoff and DLQ on final failure.
+     *
+     * @param array<string,mixed> $message
+     */
+    public function sendWithRetry(array $message): bool
+    {
+        $attempts = 0;
+        while ($attempts < $this->maxAttempts) {
+            try {
+                if (call_user_func($this->mailFn, $message)) {
+                    return true;
+                }
+            } catch (TransientException $e) {
+                $attempts++;
+                if ($attempts >= $this->maxAttempts) {
+                    $this->dlqService->push([
+                        'event_name' => 'mail',
+                        'payload'    => $message,
+                        'attempts'   => $attempts,
+                        'error_text' => $e->getMessage(),
+                    ]);
+                    return false;
+                }
+                sleep((int) pow(2, $attempts));
+                continue;
+            }
+            $attempts++;
+        }
+        return false;
     }
 }
