@@ -18,10 +18,10 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref || github.ref_name }}
-      - name: Run sync
-        run: bash scripts/sync_memory_files.sh
       - name: Update state
         run: make state
+      - name: Run sync
+        run: bash scripts/sync_memory_files.sh
       - name: Commit & Push (if changed)
         run: |
           git config user.name "github-actions"
