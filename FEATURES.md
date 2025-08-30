@@ -15,7 +15,7 @@
 ### ✅ No Red Flags Detected
 
 ---
-Last Updated (UTC): 2025-08-30T09:07:21Z
+Last Updated (UTC): 2025-08-30T10:33:25Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
@@ -33,7 +33,7 @@ Last Updated (UTC): 2025-08-30T09:07:21Z
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| memory-sync-pre-state | ⚪ Unknown | Run make state before sync in memory-sync workflow |
+| beta-risk-mitigation | ⚪ Unknown | Added 5D gate workflow, docs, and flag with filter override |
 
 _Last Updated (UTC): 2025-08-30_
 <!-- AUTO-GEN:RAG END -->

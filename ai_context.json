@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-08-30T09:07:22Z",
+  "last_update_utc": "2025-08-30T10:33:25Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "0f3d85ce45af749893d69644ce8dd93e87a1b7dd",
-    "commits_total": 522,
-    "files_tracked": 623
+    "default_branch": "codex/add-ci-enforcement-for-5d-gates",
+    "last_commit": "2d5ba2319987c8f70c27e33e856a10b658922109",
+    "commits_total": 524,
+    "files_tracked": 627
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
@@ -37,9 +37,9 @@
   },
   "features": [
   {
-    "name": "memory-sync-pre-state",
+    "name": "beta-risk-mitigation",
     "status": "implemented",
-    "notes": "Run make state before sync in memory-sync workflow"
+    "notes": "Added 5D gate workflow, docs, and flag with filter override"
   }
 ]
 }
