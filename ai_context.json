@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-08-30T08:09:06Z",
+  "last_update_utc": "2025-08-30T08:09:11Z",
   "repo": {
     "default_branch": "codex/add-state-update-step-before-commit",
-    "last_commit": "bed01df1fb86396ff683ed109964382b5aaaef46",
-    "commits_total": 500,
+    "last_commit": "d3383222dfc6360009f4a6264ede567029d06f15",
+    "commits_total": 501,
     "files_tracked": 623
   },
   "quality_gate": {
@@ -15,7 +15,10 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": ["ci.yml", "nightly.yml"]
+    "workflows": [
+      "ci.yml",
+      "nightly.yml"
+    ]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -27,19 +30,21 @@
     "Backfill allocation edge case tests"
   ],
   "current_scores": {
-    "security": 25,
+    "security": 25.00,
     "logic": 25,
     "performance": 25,
-    "readability": 15,
-    "goal": 20,
-    "weighted_percent": 95.0,
+    "readability": 20,
+    "goal": 25,
+    "total": 110,
+    "weighted_percent": 97.00,
     "red_flags": []
   },
   "features": [
-  {
-    "name": "ci-update-state-step",
-    "status": "implemented",
-    "notes": "Run make state after tests in CI workflow"
-  }
-]
+    {
+      "name": "ci-update-state-step",
+      "status": "implemented",
+      "notes": "Run make state after tests in CI workflow"
+    }
+  ],
+  "last_updated_utc": "2025-08-30T08:09:11Z"
 }
