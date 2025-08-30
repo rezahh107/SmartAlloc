@@ -1,12 +1,12 @@
-timestamp: "2025-08-30T09:00:37Z"
-feature: memory-sync-pre-state
-selected_option: A
+timestamp: "2025-08-30T10:22:51Z"
+feature: beta-risk-mitigation
+selected_option: B
 scores:
-  security: 22
+  security: 21
   logic: 18
-  performance: 20
-  readability: 19
+  performance: 19
+  readability: 18
   goal: 15
-weighted_percent: 94
+weighted_percent: 92
 status: implemented
-notes: "Run make state before sync in memory-sync workflow"
+notes: "Added 5D gate workflow, docs, and flag with filter override"

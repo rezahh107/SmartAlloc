@@ -1,36 +1,18 @@
-name: GA Enforce
+name: ga-enforce
 on:
+  pull_request:
   workflow_dispatch:
 jobs:
   enforce:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: dom, mbstring, xml, json
-          coverage: none
-      - run: composer install --no-interaction --prefer-dist || true
-      - name: Enforce GA thresholds
-        run: php scripts/ga-enforcer.php --profile=ga --enforce --junit
-      - name: Build dist
-        if: success()
+      - name: Evaluate 5D Gate
+        run: bash scripts/evaluate_scores.sh || exit 1
+      - name: Fail on .ci_failure
         run: |
-          php scripts/dist-build.php
-          php scripts/dist-manifest.php
-          bash scripts/sign-manifest.sh
-          mkdir -p artifacts/dist
-          (cd dist && zip -qr ../artifacts/dist/dist.zip .)
-      - name: Upload artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ga-enforce
-          path: |
-            artifacts/dist/dist.zip
-            artifacts/dist/manifest.json
-            artifacts/dist/manifest.sha256
-            artifacts/dist/manifest.sig
-            artifacts/ga/**
-          if-no-files-found: ignore
+          if [ -f .ci_failure ]; then
+            echo "::error file=ai_outputs/last_state.yml::5D gate failed"
+            cat .ci_failure
+            exit 1
+          fi
