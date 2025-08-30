@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use SmartAlloc\Notifications\RetryingMailer;
+use SmartAlloc\Notifications\Exceptions\TransientException;
+if (!function_exists('wp_json_encode')) {
+    function wp_json_encode($data) { return json_encode($data); }
+}
 
 final class RetryingMailerTest extends TestCase
 {
@@ -83,5 +87,36 @@ final class RetryingMailerTest extends TestCase
         $this->assertSame([60, 120], $delays);
         $mailer::retryAction(['payload' => ['to' => 't', 'subject' => 's', 'message' => 'm'], 'attempt' => 3]);
         $this->assertSame([60, 120, 240], $delays);
+    }
+
+    public function testFallsBackToDlqAfterRetries(): void
+    {
+        global $wpdb;
+        $wpdb = new class {
+            public string $prefix = 'wp_';
+            public array $inserted = [];
+            public function query(string $sql): void {}
+            public function insert(string $table, array $data): void
+            {
+                $this->inserted[] = $data;
+            }
+        };
+        $dlq = new \SmartAlloc\Services\DlqService();
+        $mailer = new RetryingMailer(
+            static function (array $m): bool {
+                throw new TransientException('fail');
+            },
+            static fn(int $ts, string $hook, array $args): bool => true,
+            null,
+            1,
+            1,
+            static fn(): int => 1000,
+            $dlq
+        );
+
+        $ok = $mailer->sendWithRetry(['to' => 't@example.com', 'subject' => 'x', 'message' => 'y']);
+
+        $this->assertFalse($ok);
+        $this->assertNotEmpty($wpdb->inserted);
     }
 }
