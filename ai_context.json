@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-08-29T21:46:19Z",
+  "last_update_utc": "2025-08-30T07:59:13Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "51bc74a92b71d49de7c5bd9fffdce6fb0db77622",
-    "commits_total": 492,
+    "default_branch": "codex/add-step-to-run-update_state.sh-or-make-state",
+    "last_commit": "00e7008548166f0defee88e202b52904972a1092",
+    "commits_total": 494,
     "files_tracked": 623
   },
   "quality_gate": {
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -30,21 +27,19 @@
     "Backfill allocation edge case tests"
   ],
   "current_scores": {
-    "security": 25.00,
+    "security": 25,
     "logic": 25,
     "performance": 25,
-    "readability": 20,
-    "goal": 25,
-    "total": 110,
-    "weighted_percent": 97.00,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
     "red_flags": []
   },
   "features": [
-    {
-      "name": "ci-contents-write",
-      "status": "implemented",
-      "notes": "Updated session workflow to write repository contents"
-    }
-  ],
-  "last_updated_utc": "2025-08-30T07:34:45Z"
+  {
+    "name": "ci-update-state-step",
+    "status": "implemented",
+    "notes": "Run make state after tests in CI workflow"
+  }
+]
 }
