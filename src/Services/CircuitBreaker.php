@@ -116,6 +116,26 @@ final class CircuitBreaker
     }
 
     /**
+     * Execute operation with circuit breaker protection.
+     *
+     * @param callable $operation
+     * @param array<int,mixed> $args
+     * @throws \Throwable
+     */
+    public function protect(callable $operation, string $serviceName, array $args = []): mixed
+    {
+        $this->guard($serviceName);
+        try {
+            $result = $operation(...$args);
+            $this->success($serviceName);
+            return $result;
+        } catch (\Throwable $e) {
+            $this->failure($serviceName, $this->threshold);
+            throw $e;
+        }
+    }
+
+    /**
      * Get all circuit breakers status
      */
     public function getStatus(): array
