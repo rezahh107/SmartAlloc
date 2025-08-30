@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-08-30T10:33:53Z",
+  "last_update_utc": "2025-08-30T11:08:45Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "6ff74e83175b105073b13baaaa237e67eddf614b",
-    "commits_total": 527,
-    "files_tracked": 627
+    "default_branch": "codex/implement-smartalloc-beta-hardening-features",
+    "last_commit": "dba036cfec9bf1f3add40eb74fce91c36818cc19",
+    "commits_total": 529,
+    "files_tracked": 630
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
@@ -35,11 +35,5 @@
     "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": [
-  {
-    "name": "beta-risk-mitigation",
-    "status": "implemented",
-    "notes": "Added 5D gate workflow, docs, and flag with filter override"
-  }
-]
+  "features": []
 }

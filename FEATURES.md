@@ -15,7 +15,7 @@
 ### ✅ No Red Flags Detected
 
 ---
-Last Updated (UTC): 2025-08-30T10:33:53Z
+Last Updated (UTC): 2025-08-30T11:08:45Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
@@ -33,7 +33,7 @@ Last Updated (UTC): 2025-08-30T10:33:53Z
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| beta-risk-mitigation | ⚪ Unknown | Added 5D gate workflow, docs, and flag with filter override |
+| DLQ replay action and perf budget tests | ⚪ Unknown | Added retry-based mailer, admin DLQ replay action, circuit breaker protection, and performance budget test. |
 
 _Last Updated (UTC): 2025-08-30_
 <!-- AUTO-GEN:RAG END -->

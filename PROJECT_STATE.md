@@ -2,7 +2,7 @@
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — 2025-08-30
 ## Implemented Features
-- beta-risk-mitigation
+
 
 ## Milestones
 - ✅ Core Allocation shipped
