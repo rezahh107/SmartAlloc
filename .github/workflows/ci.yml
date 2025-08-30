@@ -81,6 +81,8 @@ jobs:
           scripts/evaluate_scores.sh
       - name: CI 5D Gates
         run: bash scripts/ci/ensure_ci_thresholds.sh
+      - name: 🔄 Update project state
+        run: make state
       - name: 📝 Append 5D Summary & AUTO-FIX
         if: always()
         run: |
@@ -138,6 +140,8 @@ jobs:
           scripts/evaluate_scores.sh
       - name: CI 5D Gates
         run: bash scripts/ci/ensure_ci_thresholds.sh
+      - name: 🔄 Update project state
+        run: make state
       - name: 📝 Append 5D Summary & AUTO-FIX
         if: always()
         run: |

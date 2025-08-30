@@ -141,8 +141,10 @@ final class ReportsMetricsController
                     LIMIT 60";
         }
 
-        $prepared = $values ? $wpdb->prepare($sql, $values) : $sql;
-        $rows     = $wpdb->get_results($prepared, ARRAY_A) ?: array();
+        $rows = $wpdb->get_results(
+            $wpdb->prepare($sql, $values ?: array()), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            ARRAY_A
+        ) ?: array(); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
         $result_rows = array();
         $totals = array(

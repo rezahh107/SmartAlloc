@@ -68,7 +68,7 @@ final class WebhookController
         set_transient($key, 1, 10 * MINUTE_IN_SECONDS);
 
         // Rate limiting
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP) ?: '0.0.0.0';
         $rateKey = 'smartalloc_rl_' . md5($secret . '|' . $ip);
         $hits = (int) get_transient($rateKey);
         if ($hits >= 60) {

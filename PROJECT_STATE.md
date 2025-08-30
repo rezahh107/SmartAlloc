@@ -1,8 +1,8 @@
 
 <!-- AUTO-GEN:STATE START -->
-# PROJECT_STATE — 2025-08-29
+# PROJECT_STATE — 2025-08-30
 ## Implemented Features
-- ci-contents-write
+- ci-update-state-step
 
 ## Milestones
 - ✅ Core Allocation shipped
