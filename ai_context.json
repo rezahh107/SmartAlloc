@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-08-30T11:09:12Z",
+  "last_update_utc": "2025-08-30T11:43:06Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "051cd3684543d531127434f6877778d8ffa60e69",
-    "commits_total": 533,
-    "files_tracked": 630
+    "default_branch": "codex/add-failure-mode-tests-for-rule-engine",
+    "last_commit": "48fdc654728421cf3723bf82d13ab651a06bb7e3",
+    "commits_total": 537,
+    "files_tracked": 633
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
