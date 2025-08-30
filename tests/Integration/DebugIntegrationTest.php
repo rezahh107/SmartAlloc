@@ -45,7 +45,11 @@ final class DebugIntegrationTest extends BaseTestCase
         Functions\when('esc_html__')->alias(fn($v) => $v);
         Functions\when('esc_html')->alias(fn($v) => $v);
         Functions\when('esc_attr')->alias(fn($v) => $v);
+        Functions\when('esc_attr__')->alias(fn($v) => $v);
+        Functions\when('esc_url')->alias(fn($v) => $v);
+        Functions\when('esc_url_raw')->alias(fn($v) => $v);
         Functions\when('wp_die')->alias(fn($m) => throw new \RuntimeException($m));
+        Functions\when('rest_url')->alias(fn($p = '') => $p);
         $GLOBALS['_SERVER']['REQUEST_URI'] = '/wp-json/foo';
         $GLOBALS['_SERVER']['REQUEST_METHOD'] = 'GET';
         $GLOBALS['sa_options']['smartalloc_debug_enabled'] = true;

@@ -15,7 +15,10 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": ["ci.yml", "nightly.yml"]
+    "workflows": [
+      "ci.yml",
+      "nightly.yml"
+    ]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -27,19 +30,21 @@
     "Backfill allocation edge case tests"
   ],
   "current_scores": {
-    "security": 25,
+    "security": 25.00,
     "logic": 25,
     "performance": 25,
-    "readability": 15,
-    "goal": 20,
-    "weighted_percent": 95.0,
+    "readability": 20,
+    "goal": 25,
+    "total": 110,
+    "weighted_percent": 97.00,
     "red_flags": []
   },
   "features": [
-  {
-    "name": "ci-contents-write",
-    "status": "implemented",
-    "notes": "Updated session workflow to write repository contents"
-  }
-]
+    {
+      "name": "ci-contents-write",
+      "status": "implemented",
+      "notes": "Updated session workflow to write repository contents"
+    }
+  ],
+  "last_updated_utc": "2025-08-30T07:34:45Z"
 }
