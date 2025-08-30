@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-08-30T09:06:44Z",
+  "last_update_utc": "2025-08-30T09:06:47Z",
   "repo": {
     "default_branch": "codex/review-github-actions-workflow-issues",
-    "last_commit": "5c9093da73128d31f5d0b6bb8bb8c0408ef06fc4",
-    "commits_total": 518,
+    "last_commit": "7c0e1782331b80596b790ee382a21071eafb9443",
+    "commits_total": 519,
     "files_tracked": 623
   },
   "quality_gate": {
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -30,21 +27,19 @@
     "Backfill allocation edge case tests"
   ],
   "current_scores": {
-    "security": 25.00,
+    "security": 25,
     "logic": 25,
     "performance": 25,
-    "readability": 20,
-    "goal": 25,
-    "total": 110,
-    "weighted_percent": 97.00,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
     "red_flags": []
   },
   "features": [
-    {
-      "name": "memory-sync-pre-state",
-      "status": "implemented",
-      "notes": "Run make state before sync in memory-sync workflow"
-    }
-  ],
-  "last_updated_utc": "2025-08-30T09:06:44Z"
+  {
+    "name": "memory-sync-pre-state",
+    "status": "implemented",
+    "notes": "Run make state before sync in memory-sync workflow"
+  }
+]
 }
