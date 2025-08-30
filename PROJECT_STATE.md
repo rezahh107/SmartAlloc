@@ -2,7 +2,7 @@
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — 2025-08-30
 ## Implemented Features
-- ci-update-state-step
+- memory-sync-pre-state
 
 ## Milestones
 - ✅ Core Allocation shipped
