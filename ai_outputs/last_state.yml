@@ -1,12 +1,12 @@
-timestamp: 2025-08-30T11:00:39Z
-feature: DLQ replay action and perf budget tests
-selected_option: C
+timestamp: "2025-08-30T11:35:34Z"
+feature: "test hardening and perf baseline"
+selected_option: "A"
 scores:
-  security: 21
-  logic: 18
-  performance: 18
-  readability: 19
-  goal: 17
-weighted_percent: 93
-status: completed
-notes: Added retry-based mailer, admin DLQ replay action, circuit breaker protection, and performance budget test.
+  S: 21
+  L: 18
+  P: 18
+  R: 19
+  G: 18
+weighted_percent: 94
+status: "passed"
+notes: "Capacity failure mode pending runtime support"
