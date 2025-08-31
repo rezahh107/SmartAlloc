@@ -16,7 +16,7 @@
 - Direct superglobal access (-10)
 
 ---
-Last Updated (UTC): 2025-08-31T02:58:26Z
+Last Updated (UTC): 2025-08-31T02:58:29Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
