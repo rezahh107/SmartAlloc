@@ -6,6 +6,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Services\DbSafe;
 
+/* phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching */
+
 /**
  * Dead letter queue storage service.
  */
@@ -55,7 +57,7 @@ final class DlqService
             [$limit]
         );
         // @security-ok-sql
-        $rows = $wpdb->get_results($sql, ARRAY_A) ?: [];
+        $rows = $wpdb->get_results($sql, ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         foreach ($rows as &$r) {
             $r['payload'] = json_decode((string) $r['payload'], true);
         }
@@ -75,7 +77,7 @@ final class DlqService
             "SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} WHERE id=%d",
             [$id]
         );
-        $row = $wpdb->get_row($sql, ARRAY_A);
+        $row = $wpdb->get_row($sql, ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         if (!$row) {
             return null;
         }
@@ -87,6 +89,50 @@ final class DlqService
     {
         global $wpdb;
         $wpdb->delete($this->table, ['id' => $id]);
+    }
+
+    /** @return array{ok:int,fail:int,depth:int} */
+    public function replay(int $limit = 100): array
+    {
+        $stats = $this->doReplay($limit);
+
+        return [
+            'ok'    => (int) ($stats['ok'] ?? 0),
+            'fail'  => (int) ($stats['fail'] ?? 0),
+            'depth' => (int) ($stats['depth'] ?? 0),
+        ];
+    }
+
+    /** @return array{ok:int,fail:int,depth:int} */
+    private function doReplay(int $limit): array
+    {
+        $rows = $this->listRecent($limit);
+        $ok = 0;
+        $fail = 0;
+        foreach ($rows as $row) {
+            $payload = [
+                'event_name' => (string) $row['event_name'],
+                'body'       => $row['payload'],
+                '_attempt'   => 1,
+            ];
+            try {
+                \do_action('smartalloc_notify', $payload);
+                $this->delete((int) $row['id']);
+                $ok++;
+            } catch (\Throwable $e) {
+                $fail++;
+            }
+        }
+        $depth = $this->count();
+        return ['ok' => $ok, 'fail' => $fail, 'depth' => $depth];
+    }
+
+    private function count(): int
+    {
+        global $wpdb;
+        $sql = DbSafe::mustPrepare("SELECT COUNT(*) FROM {$this->table}", []);
+        // @security-ok-sql
+        return (int) $wpdb->get_var($sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
