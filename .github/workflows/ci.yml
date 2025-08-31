@@ -177,3 +177,30 @@ jobs:
           path: |
             FEATURES.md
             ai_context.json
+
+  phase-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+
+      - name: Check Phase Transition Readiness
+        run: |
+          ./scripts/check_phase_transition.sh
+        continue-on-error: true
+
+      - name: Generate Transition Report
+        if: always()
+        run: |
+          ./scripts/generate_phase_report.sh > phase_report.md
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: phase-transition-report
+          path: phase_report.md
