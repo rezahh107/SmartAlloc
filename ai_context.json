@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-08-31T10:15:06Z",
+  "last_update_utc": "2025-08-31T11:53:17Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "2d5fb2efa0de34806a9dfad5ff89f1563d7a8172",
-    "commits_total": 560,
-    "files_tracked": 643
+    "default_branch": "codex/analyze-smartalloc-project-evaluation-system-dgralq",
+    "last_commit": "fb2627d9852c2464a9c3ecbaeb2bea3411fb8fc3",
+    "commits_total": 562,
+    "files_tracked": 647
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -33,11 +30,10 @@
     "security": 25,
     "logic": 25,
     "performance": 25,
-    "readability": 20,
-    "goal": 25,
-    "weighted_percent": 97.0,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": [],
-  "project_phase": "foundation"
+  "features": []
 }
