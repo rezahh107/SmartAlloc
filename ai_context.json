@@ -1,4 +1,12 @@
 {
+  "current_phase": "foundation",
+  "phase_started": "2024-01-01",
+  "phase_target": "2024-01-15",
+  "next_phase": "expansion",
+  "phase_blockers": [
+    "rule_engine_exception_flows",
+    "circuit_breaker_retry_logic"
+  ],
   "last_update_utc": "2025-08-31T11:33:58Z",
   "repo": {
     "default_branch": "main",
