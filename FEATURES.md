@@ -12,10 +12,11 @@
 **🏆 Total Score**: 110/125
 **📈 Weighted Average**: 97.00%
 
-### ✅ No Red Flags Detected
+### ⛔ Red Flags:
+- Direct superglobal access (-10)
 
 ---
-Last Updated (UTC): 2025-08-30T20:58:38Z
+Last Updated (UTC): 2025-08-31T02:58:26Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
@@ -35,5 +36,5 @@ Last Updated (UTC): 2025-08-30T20:58:38Z
 | rag-template-automation | 🟡 Amber |  |
 | DLQ replay action and perf budget tests | ⚪ Unknown | Added retry-based mailer, admin DLQ replay action, circuit breaker protection, and performance budget test. |
 
-_Last Updated (UTC): 2025-08-30_
+_Last Updated (UTC): 2025-08-31_
 <!-- AUTO-GEN:RAG END -->
