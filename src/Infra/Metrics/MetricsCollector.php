@@ -38,6 +38,13 @@ final class MetricsCollector
         $this->write($data);
     }
 
+    public function setGauge(string $key, int $value): void
+    {
+        $data = $this->read();
+        $data['gauges'][$key] = max(0, $value);
+        $this->write($data);
+    }
+
     /**
      * Record a duration in milliseconds (stores last 10 samples).
      */
