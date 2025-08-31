@@ -1,0 +1,11 @@
+current: foundation
+phases:
+  foundation:
+    next: expansion
+    min_weighted_percent: 85
+  expansion:
+    next: polish
+    min_weighted_percent: 90
+  polish:
+    next: null
+    min_weighted_percent: 95

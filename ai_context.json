@@ -15,7 +15,10 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": ["ci.yml", "nightly.yml"]
+    "workflows": [
+      "ci.yml",
+      "nightly.yml"
+    ]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -35,5 +38,6 @@
     "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": []
+  "features": [],
+  "project_phase": "foundation"
 }
