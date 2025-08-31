@@ -65,6 +65,13 @@ if [ -x "$phpcs_cmd" ]; then
   else READABILITY_SCORE=12; fi
 fi
 
+# cyclomatic complexity check with phploc
+if [ -x "$ROOT/vendor/bin/phploc" ]; then
+  "$ROOT/vendor/bin/phploc" --no-progress --log-json "$ROOT/.phploc.json" "$SRC_DIR" >/dev/null 2>&1 || true
+  ccn=$(jq -r '.avg.cyclomaticComplexity // 0' "$ROOT/.phploc.json" 2>/dev/null || echo 0)
+  if [ "$(printf '%0.f' "$ccn")" -gt 10 ]; then READABILITY_SCORE=$((READABILITY_SCORE-2)); fi
+fi
+
 # ---------- Goal Achievement (25 = 15 + 10) ----------
 req_score=0 integ_score=0
 [ -d "$SRC_DIR" ]   && [ "$(ls -A "$SRC_DIR" 2>/dev/null | wc -l)" -gt 0 ] && req_score=15
