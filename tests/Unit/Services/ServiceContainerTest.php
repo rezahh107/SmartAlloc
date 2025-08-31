@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Unit\Services;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use SmartAlloc\Contracts\AllocationServiceInterface;
 use SmartAlloc\Core\FormContext;
 use SmartAlloc\Services\ServiceContainer;
@@ -10,8 +12,17 @@ use SmartAlloc\Tests\BaseTestCase;
 
 final class ServiceContainerTest extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Monkey\setUp();
+        if (method_exists(ServiceContainer::class, 'reset')) {
+            ServiceContainer::reset();
+        }
+    }
     protected function tearDown(): void
     {
+        Monkey\tearDown();
         if (method_exists(ServiceContainer::class, 'reset')) {
             ServiceContainer::reset();
         }
@@ -33,10 +44,5 @@ final class ServiceContainerTest extends BaseTestCase
         $this->assertIsArray($resolved->allocate(['x' => 1]));
     }
 
-    /** @test */
-    public function resolves_from_filter_when_available(): void
-    {
-        $this->markTestSkipped('apply_filters cannot be mocked in this environment');
-    }
 }
 

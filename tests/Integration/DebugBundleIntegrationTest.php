@@ -37,6 +37,8 @@ final class DebugBundleIntegrationTest extends BaseTestCase
             };
         });
         Functions\when('wp_die')->alias(fn($m, $t = '', $a = []) => throw new \RuntimeException((string) ($a['response'] ?? 0)));
+        Functions\when('get_transient')->alias(fn($k) => false);
+        Functions\when('set_transient')->alias(fn($k,$v,$e) => true);
         $entry = ['message' => 'oops', 'file' => 'file.php', 'line' => 1];
         $GLOBALS['sa_options'] = ['smartalloc_debug_errors' => [$entry], 'smartalloc_debug_enabled' => true];
     }
@@ -52,11 +54,28 @@ final class DebugBundleIntegrationTest extends BaseTestCase
 
     public function test_downloads_bundle(): void
     {
-        $this->markTestSkipped('Debug bundle not exercised');
+        $fingerprint = md5('oopsfile.php1');
+        $_GET['bundle'] = $fingerprint;
+        $_GET['_wpnonce'] = 'good';
+        Functions\when('header')->alias(function($h) {});
+        ob_start();
+        DebugScreen::render();
+        $output = ob_get_clean();
+        $this->assertNotSame('', $output);
     }
 
-    public function test_nonce_and_capability_required(): void
+    public function test_requires_valid_nonce(): void
     {
-        $this->markTestSkipped('Debug bundle not exercised');
+        $_REQUEST['_wpnonce'] = 'bad';
+        $this->expectException(\RuntimeException::class);
+        DebugScreen::render();
+    }
+
+    public function test_requires_capability(): void
+    {
+        Functions\when('current_user_can')->alias(fn($c) => false);
+        $_REQUEST['_wpnonce'] = 'good';
+        $this->expectException(\RuntimeException::class);
+        DebugScreen::render();
     }
 }

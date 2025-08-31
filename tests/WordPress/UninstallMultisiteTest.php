@@ -3,33 +3,34 @@ declare(strict_types=1);
 
 use SmartAlloc\Tests\BaseTestCase;
 
+if (!class_exists('WP_UnitTestCase')) {
+    abstract class WP_UnitTestCase extends BaseTestCase {}
+}
+if (!class_exists('org\\bovigo\\vfs\\vfsStream')) {
+    class_alias(\stdClass::class, 'org\\bovigo\\vfs\\vfsStream');
+}
+
 /**
  * @group wp
  */
 final class UninstallMultisiteTest extends BaseTestCase
 {
-    protected function setUp(): void
-    {
-        if (!class_exists('WP_UnitTestCase')) {
-            $this->markTestSkipped('WP test suite not available');
-        }
-        if (!class_exists('\\Brain\\Monkey\\Functions')) {
-            $this->markTestSkipped('Brain Monkey not installed');
-        }
-        if (!class_exists('\\org\\bovigo\\vfs\\vfsStream')) {
-            $this->markTestSkipped('vfsStream not installed');
-        }
-    }
-
     public function test_uninstall_cleans_options_with_mocks(): void
     {
         \Brain\Monkey\setUp();
+        $GLOBALS['wpdb'] = new class {
+            public string $prefix = 'wp_';
+            public string $options = 'wp_options';
+            public function esc_like($text){ return $text; }
+            public function prepare($query, ...$args){ return $query; }
+            public function query($query){ return true; }
+        };
 
         // Mock cleanup calls (adjust keys to your plugin option/transient names).
-        \Brain\Monkey\Functions\expect('delete_option')->zeroOrMoreTimes();
-        \Brain\Monkey\Functions\expect('delete_site_option')->zeroOrMoreTimes();
-        \Brain\Monkey\Functions\expect('delete_transient')->zeroOrMoreTimes();
-        \Brain\Monkey\Functions\expect('delete_site_transient')->zeroOrMoreTimes();
+        \Brain\Monkey\Functions\when('delete_option')->justReturn(true);
+        \Brain\Monkey\Functions\when('delete_site_option')->justReturn(true);
+        \Brain\Monkey\Functions\when('delete_transient')->justReturn(true);
+        \Brain\Monkey\Functions\when('delete_site_transient')->justReturn(true);
 
         // Locate real uninstall.php; if missing, SKIP (no FAIL).
         $pluginRoot = dirname(__DIR__, 2); // adjust if your structure differs
@@ -39,6 +40,9 @@ final class UninstallMultisiteTest extends BaseTestCase
             $this->markTestSkipped('uninstall.php not found');
         }
 
+        if (!defined('WP_UNINSTALL_PLUGIN')) {
+            define('WP_UNINSTALL_PLUGIN', true);
+        }
         // Include the real uninstall in isolated scope (mocks intercept WP calls).
         include $real;
 
@@ -48,11 +52,6 @@ final class UninstallMultisiteTest extends BaseTestCase
 
     public function test_multisite_activation_deactivation_smoke(): void
     {
-        // Guard again for clarity (cheap).
-        if (!function_exists('is_multisite') || !is_callable('is_multisite')) {
-            $this->markTestSkipped('multisite helpers unavailable');
-        }
-
         \Brain\Monkey\setUp();
         // Stub minimal hooks so includes/activators don’t fatals if referenced.
         \Brain\Monkey\Functions\when('is_multisite')->justReturn(true);
