@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SmartAlloc\Services;
 
 use SmartAlloc\Services\DbSafe;
+use SmartAlloc\Notifications\DlqRepository;
+use SmartAlloc\Infra\WpdbAdapter;
 
 /* phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching */
 
@@ -14,11 +16,9 @@ use SmartAlloc\Services\DbSafe;
 final class DlqService
 {
     private string $table;
-
-    public function __construct()
-    {
-        global $wpdb;
-        $this->table = $wpdb->prefix . 'salloc_dlq';
+    public function __construct(private ?DlqRepository $repo = null) {
+        global $wpdb; $this->table = $wpdb->prefix . 'salloc_dlq';
+        $this->repo ??= new DlqRepository(new WpdbAdapter($wpdb), $this->table);
     }
 
     /**
@@ -28,20 +28,13 @@ final class DlqService
      */
     public function push(array $entry): void
     {
-        global $wpdb;
-
         $payload = (array) ($entry['payload'] ?? []);
         $payloadJson = $this->encode($payload);
-
-        $wpdb->query('START TRANSACTION');
-        $wpdb->insert($this->table, [
-            'event_name' => (string) ($entry['event_name'] ?? ''),
-            'payload'    => $payloadJson,
-            'attempts'   => (int) ($entry['attempts'] ?? 0),
-            'error_text' => (string) ($entry['error_text'] ?? ''),
-            'created_at' => gmdate('Y-m-d H:i:s'),
+        $this->repo->enqueue([
+            'channel' => (string) ($entry['event_name'] ?? ''),
+            'payload' => json_decode($payloadJson, true),
+            'reason' => (string) ($entry['error_text'] ?? ''),
         ]);
-        $wpdb->query('COMMIT');
     }
 
     /**

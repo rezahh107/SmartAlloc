@@ -39,7 +39,7 @@
     "psr-4": {
       "SmartAlloc\\": "src/"
     },
-    "files": ["src/Support/SafetyKit.php"]
+    "files": ["src/Support/SafetyKit.php", "src/Infra/DbAbstraction.php"]
   },
   "scripts": {
     "score:5d": ["@phpcbf", "bash scripts/update_state.sh"],
