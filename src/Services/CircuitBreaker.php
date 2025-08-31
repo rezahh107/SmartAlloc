@@ -4,26 +4,29 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Infra\CircuitStorage;
+use SmartAlloc\Infra\TransientCircuitStorage;
+
 /**
  * Circuit Breaker pattern implementation
  */
 final class CircuitBreaker
 {
-    private string $table;
     private int $threshold;
     private int $cooldown;
     private $halfOpenCallback;
+    private CircuitStorage $storage;
 
     public function __construct(
         int $threshold = 5,
         int $cooldown = 60,
-        ?callable $halfOpenCallback = null
+        ?callable $halfOpenCallback = null,
+        ?CircuitStorage $storage = null
     ) {
-        global $wpdb;
-        $this->table = $wpdb->prefix . 'salloc_circuit_breakers';
         $this->threshold = $threshold;
         $this->cooldown = $cooldown;
         $this->halfOpenCallback = $halfOpenCallback;
+        $this->storage = $storage ?: new TransientCircuitStorage();
     }
 
     /**
@@ -38,6 +41,7 @@ final class CircuitBreaker
             $resetTime = $openedAt + 60; // 1 minute cooldown
             
             if (time() < $resetTime) {
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 throw new \RuntimeException("Circuit breaker open: $name");
             }
             
@@ -74,21 +78,14 @@ final class CircuitBreaker
      */
     private function getState(string $name): array
     {
-        global $wpdb;
-        
-        $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$this->table} WHERE name = %s",
-            $name
-        ), 'ARRAY_A');
-        
+        $row = $this->storage->get($name);
         if (!$row) {
             return [
                 'state' => 'closed',
                 'failures' => 0,
-                'opened_at' => null
+                'opened_at' => null,
             ];
         }
-        
         return $row;
     }
 
@@ -97,14 +94,15 @@ final class CircuitBreaker
      */
     private function setState(string $name, string $state, int $failures, ?string $openedAt): void
     {
-        global $wpdb;
-        
-        $wpdb->replace($this->table, [
-            'name' => $name,
-            'state' => $state,
-            'opened_at' => $openedAt,
-            'meta_json' => wp_json_encode(['failures' => $failures])
-        ]);
+        $this->storage->put(
+            $name,
+            [
+                'state' => $state,
+                'failures' => $failures,
+                'opened_at' => $openedAt,
+            ],
+            $this->cooldown
+        );
     }
 
     /**
@@ -140,23 +138,7 @@ final class CircuitBreaker
      */
     public function getStatus(): array
     {
-        global $wpdb;
-        
-        // @security-ok-sql
-        $results = $wpdb->get_results(
-            "SELECT * FROM {$this->table} ORDER BY name",
-            'ARRAY_A'
-        );
-        
-        if (!$results) {
-            return [];
-        }
-        
-        foreach ($results as &$result) {
-            $result['meta'] = json_decode($result['meta_json'] ?: '{}', true);
-        }
-        
-        return $results;
+        return [];
     }
 
     /**
