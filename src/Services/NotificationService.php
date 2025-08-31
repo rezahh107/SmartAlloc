@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Services;
 
 use SmartAlloc\Services\CircuitBreaker;
+use SmartAlloc\Support\CircuitBreaker as SafetyCircuitBreaker;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
 use SmartAlloc\Testing\FaultFlags;
@@ -66,7 +67,7 @@ final class NotificationService
             }
             $ff = FaultFlags::get();
             if (!empty($ff['notify_partial_fail'])) {
-                $h = crc32(json_encode($payload));
+                $h = crc32(wp_json_encode($payload));
                 if (($h % 10) < 3) {
                     throw new \RuntimeException('Notify failed (test)');
                 }
@@ -123,12 +124,21 @@ final class NotificationService
         if ( get_transient( $key ) ) {
             return;
         }
-        $ok = wp_mail(
-            (string) ( $payload['to'] ?? '' ),
-            (string) ( $payload['subject'] ?? '' ),
-            (string) ( $payload['message'] ?? '' ),
-            $payload['headers'] ?? array()
-        );
+        try {
+            $ok = SafetyCircuitBreaker::call(
+                'mail',
+                fn() => wp_mail( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
+                    (string) ( $payload['to'] ?? '' ),
+                    (string) ( $payload['subject'] ?? '' ),
+                    (string) ( $payload['message'] ?? '' ),
+                    $payload['headers'] ?? array()
+                ),
+                5,
+                120
+            );
+        } catch (\Throwable $e) {
+            $ok = false;
+        }
         if ( $ok ) {
             set_transient( $key, 1, DAY_IN_SECONDS );
             return;

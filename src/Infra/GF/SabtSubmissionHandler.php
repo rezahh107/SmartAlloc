@@ -11,6 +11,7 @@ use SmartAlloc\Infra\Repository\AllocationsRepository;
 use SmartAlloc\Infra\Settings\Settings;
 use SmartAlloc\Contracts\AllocationServiceInterface;
 use SmartAlloc\Services\ServiceContainer;
+use SmartAlloc\Support\{Stopwatch, PerfSamples, PerfBudget, RuleEngineResult, FailureMapper};
 
 /**
  * Handle Sabt form submissions from Gravity Forms.
@@ -54,6 +55,7 @@ final class SabtSubmissionHandler
      */
     public function process(array $entry, array $form): void
     {
+        unset($form); // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
         $entryId = absint($entry['id'] ?? 0);
         if ($entryId <= 0) {
             return;
@@ -95,27 +97,36 @@ final class SabtSubmissionHandler
                     rest_url('smartalloc/v1/allocate'),
                     [
                         'headers' => ['Content-Type' => 'application/json'],
-                        'body' => wp_json_encode(['student' => $student]),
-                        'timeout' => 5,
+                        'body'    => wp_json_encode(['student' => $student]),
+                        'timeout' => 5, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
                     ]
                 );
                 if (is_wp_error($response)) {
                     throw new \RuntimeException($response->get_error_message());
                 }
-                $result = json_decode((string) ($response['body'] ?? ''), true)['result'] ?? [];
+                $alloc = json_decode((string) ($response['body'] ?? ''), true)['result'] ?? [];
             } else {
-                $result = $this->allocator->allocate($student);
+                [$alloc, $ms] = Stopwatch::time(fn () => $this->allocator->allocate($student));
+                PerfSamples::add('allocate_ms_p95', $ms);
+                PerfBudget::enforce('allocate_ms_p95');
             }
+            $result = new RuleEngineResult(RuleEngineResult::OK, 'Allocation successful', ['allocation' => $alloc]);
         } catch (\Throwable $e) {
+            $result = FailureMapper::from($e);
+        }
+
+        if ($result instanceof RuleEngineResult && $result->status !== RuleEngineResult::OK) {
             $this->logger->error('sabt.allocate_error', [
                 'entry_id' => $entryId,
-                'error' => $e->getMessage(),
+                'error'    => $result->message,
             ]);
             return;
         }
 
-        $score = (float) ($result['school_match_score'] ?? 0);
-        $mentorId = isset($result['mentor_id']) ? (int) $result['mentor_id'] : null;
+        $alloc = $result instanceof RuleEngineResult ? $result->meta['allocation'] : $result;
+
+        $score = (float) ($alloc['school_match_score'] ?? 0);
+        $mentorId = isset($alloc['mentor_id']) ? (int) $alloc['mentor_id'] : null;
         $status = AllocationStatus::REJECT;
         $candidates = null;
         $reason = null;
@@ -124,18 +135,18 @@ final class SabtSubmissionHandler
         $min  = Settings::getFuzzyManualMin();
         $max  = Settings::getFuzzyManualMax();
 
-        if (($result['committed'] ?? false) && $score >= $auto) {
+        if (($alloc['committed'] ?? false) && $score >= $auto) {
             $status = AllocationStatus::AUTO;
         } elseif ($score >= $min && $score <= $max) {
             $status = AllocationStatus::MANUAL;
-            if (!empty($result['candidates']) && is_array($result['candidates'])) {
-                $candidates = array_slice($result['candidates'], 0, 5);
+            if (!empty($alloc['candidates']) && is_array($alloc['candidates'])) {
+                $candidates = array_slice($alloc['candidates'], 0, 5);
             }
             $mentorId = null;
         } else {
             $status = AllocationStatus::REJECT;
-            if (!empty($result['reason'])) {
-                $reason = (string) $result['reason'];
+            if (!empty($alloc['reason'])) {
+                $reason = (string) $alloc['reason'];
             }
             $mentorId = null;
         }

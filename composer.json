@@ -38,7 +38,8 @@
   "autoload": {
     "psr-4": {
       "SmartAlloc\\": "src/"
-    }
+    },
+    "files": ["src/Support/SafetyKit.php"]
   },
   "scripts": {
     "score:5d": ["@phpcbf", "bash scripts/update_state.sh"],
