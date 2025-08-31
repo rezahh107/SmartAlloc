@@ -8,6 +8,7 @@ use SmartAlloc\Security\CapManager;
 use SmartAlloc\Security\RateLimiter;
 use SmartAlloc\Services\DlqService;
 use SmartAlloc\Infra\Metrics\MetricsCollector;
+use SmartAlloc\Support\Input;
 
 final class DlqReplayAction
 {
@@ -36,7 +37,8 @@ final class DlqReplayAction
             \wp_die(esc_html($error->get_error_message()), (int) $error->get_error_data()['status']);
         }
 
-        $limit  = isset($_POST['limit']) ? max(1, min(500, (int) $_POST['limit'])) : 100;
+        $limitRaw = Input::get(INPUT_POST, 'limit', FILTER_SANITIZE_NUMBER_INT);
+        $limit    = $limitRaw !== null ? max(1, min(500, (int) $limitRaw)) : 100;
         $result = $this->service->replay($limit);
 
         $metrics = new MetricsCollector();

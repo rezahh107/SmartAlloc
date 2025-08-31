@@ -1,0 +1,9 @@
+rules:
+  - id: no-superglobals
+    pattern-either:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+    message: "Direct superglobal access forbidden. Use SmartAlloc\\Support\\Input::get()"
+    languages: [php]
+    severity: ERROR

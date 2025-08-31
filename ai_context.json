@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-08-31T02:58:51Z",
+  "last_update_utc": "2025-08-31T09:19:08Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "b7a01ec840b1caf874f3c6a506a1e0611a4eb867",
-    "commits_total": 549,
-    "files_tracked": 634
+    "default_branch": "codex/implement-smartalloc-exception-handling",
+    "last_commit": "b167e9091538b851f9b9b23022a2108c16d50bd2",
+    "commits_total": 553,
+    "files_tracked": 641
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -30,18 +27,13 @@
     "Backfill allocation edge case tests"
   ],
   "current_scores": {
-    "security": 25.00,
+    "security": 25,
     "logic": 25,
     "performance": 25,
-    "readability": 12,
-    "goal": 25,
-    "total": 102,
-    "weighted_percent": 93.00,
-    "red_flags": [
-      "Direct superglobal access (-10)"
-    ]
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
+    "red_flags": []
   },
-  "features": [],
-  "last_updated_utc": "2025-08-31T06:25:49Z",
-  "phpcs_errors": 6817
+  "features": []
 }
