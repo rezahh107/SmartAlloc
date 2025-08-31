@@ -11,6 +11,8 @@ PHASE_CONFIG="ai_config/project_phases.yml"
 # Parse current phase and scores
 CURRENT_PHASE=$(jq -r '.current_phase // "foundation"' "$CONTEXT_FILE")
 SCORES=$(jq -r '.scores // {}' "$CONTEXT_FILE")
+# Collect implemented features from context as object of statuses
+FEATURES_JSON=$(jq '.features // {} | if type=="array" then map({(.):"present"}) | add else . end' "$CONTEXT_FILE")
 
 # Get next phase requirements using yq
 NEXT_PHASE=$(yq eval ".phases.$CURRENT_PHASE.next_phase" "$PHASE_CONFIG")
@@ -18,6 +20,8 @@ NEXT_PHASE=$(yq eval ".phases.$CURRENT_PHASE.next_phase" "$PHASE_CONFIG")
 
 # Check score requirements
 REQUIRED_SCORES=$(yq eval ".phases.$NEXT_PHASE.requirements.min_scores" "$PHASE_CONFIG" -o json)
+# Required features for next phase as JSON array of objects
+REQUIRED_FEATURES_JSON=$(yq eval -o=json ".phases.$NEXT_PHASE.requirements.features_required" "$PHASE_CONFIG")
 
 READY=true
 while IFS= read -r dimension; do
@@ -31,6 +35,20 @@ while IFS= read -r dimension; do
         echo "✅ $dimension: $CURRENT >= $REQUIRED"
     fi
 done < <(echo "$REQUIRED_SCORES" | jq -r 'keys[]')
+
+# Check feature requirements
+while read -r req; do
+    feature=$(echo "$req" | jq -r 'keys[0]')
+    required_status=$(echo "$req" | jq -r '.[]')
+    current_status=$(echo "$FEATURES_JSON" | jq -r --arg f "$feature" '.[$f] // ""')
+
+    if [[ "$current_status" == "$required_status" ]]; then
+        echo "✅ feature: $feature $current_status"
+    else
+        echo "❌ feature: $feature requires $required_status (current: ${current_status:-missing})"
+        READY=false
+    fi
+done < <(echo "$REQUIRED_FEATURES_JSON" | jq -c '.[]')
 
 if $READY; then
     echo "✅ Ready to transition from $CURRENT_PHASE to $NEXT_PHASE"
