@@ -20,9 +20,9 @@ final class DebugScreen
         if (!current_user_can('smartalloc_manage')) {
             wp_die(esc_html__('Access denied', 'smartalloc'), '', ['response' => 403]);
         }
-        $bundleRaw = filter_input(INPUT_GET, 'bundle', FILTER_SANITIZE_STRING);
+        $bundleRaw = filter_input(INPUT_GET, 'bundle', FILTER_UNSAFE_RAW);
         $bundle    = $bundleRaw ? sanitize_text_field(wp_unslash($bundleRaw)) : '';
-        $nonceRaw  = filter_input(INPUT_GET, '_wpnonce', FILTER_SANITIZE_STRING);
+        $nonceRaw  = filter_input(INPUT_GET, '_wpnonce', FILTER_UNSAFE_RAW);
         $nonce     = $nonceRaw ? wp_unslash($nonceRaw) : '';
         $action = $bundle ? 'smartalloc_debug_bundle' : 'smartalloc_debug';
         if (!wp_verify_nonce((string) $nonce, $action)) {

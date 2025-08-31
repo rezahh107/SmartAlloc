@@ -7,7 +7,7 @@ final class WpdbAdapter implements DbPort {
     public function __construct(private \wpdb $wpdb) {}
 
     public function exec(string $sql, array $args = []): int {
-        $prepared = \DbSafe::mustPrepare($this->wpdb, $sql, $args);
+        $prepared = \SmartAlloc\Services\DbSafe::mustPrepare($sql, $args);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $this->wpdb->query($prepared);
         return (int) $this->wpdb->rows_affected;
