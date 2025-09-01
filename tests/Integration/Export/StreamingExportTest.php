@@ -8,11 +8,18 @@ use SmartAlloc\Infra\DB\TableResolver;
 use SmartAlloc\Services\ExportService;
 use SmartAlloc\Tests\BaseTestCase;
 
-if (!class_exists('wpdb')) {
-    class wpdb {
-        public string $prefix = 'wp_';
-        public string $last_query = '';
-        public function query($sql): void { $this->last_query = $sql; }
+class TestWpdb extends wpdb {
+    public string $prefix = 'wp_';
+    public string $last_query = '';
+    private int $calls = 0;
+    public function __construct() {}
+    public function query($sql): void { $this->last_query = $sql; }
+    public function get_results($sql): array {
+        $this->last_query = $sql;
+        if ($this->calls++ > 0) {
+            return [];
+        }
+        return [(object) ['id' => 1, 'national_id' => '1', 'mobile' => '2', 'postal' => '3']];
     }
 }
 
@@ -32,7 +39,7 @@ final class StreamingExportTest extends BaseTestCase
 
     public function test_ajax_endpoint_streams_correctly(): void
     {
-        $GLOBALS['wpdb'] = new wpdb();
+        $GLOBALS['wpdb'] = new TestWpdb();
         Functions\when('add_action');
         Functions\expect('wp_verify_nonce')->with('n', 'smartalloc_export_stream')->andReturn(true);
         Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(true);
@@ -50,7 +57,7 @@ final class StreamingExportTest extends BaseTestCase
 
     public function test_error_handling_persists_to_database(): void
     {
-        $GLOBALS['wpdb'] = new wpdb();
+        $GLOBALS['wpdb'] = new TestWpdb();
         $svc = new ExportService(new TableResolver($GLOBALS['wpdb']));
         $ref = new \ReflectionClass($svc);
         $m   = $ref->getMethod('bulkInsertErrors');
