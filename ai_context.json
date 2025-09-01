@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-01T03:45:49Z",
+  "last_update_utc": "2025-09-01T03:57:53Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "8b8ad7d464240e803deeb8a4f66e722d676a17de",
-    "commits_total": 637,
+    "default_branch": "codex/run-stopwatch-in-update_state.sh",
+    "last_commit": "e549465cf6e8d559837849f14cf37a709802e7bf",
+    "commits_total": 639,
     "files_tracked": 657
   },
   "quality_gate": {
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -32,18 +29,11 @@
   "current_scores": {
     "security": 25,
     "logic": 25,
-    "performance": 20,
-    "readability": 20,
-    "goal": 25,
-    "total": 105,
-    "weighted_percent": 95.00,
+    "performance": 25,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": [],
-  "perf_timing": {
-    "duration_ms": 3000.215571,
-    "budget_ms": 2500,
-    "penalized": true
-  },
-  "last_updated_utc": "2025-09-01T03:54:21Z"
+  "features": []
 }
