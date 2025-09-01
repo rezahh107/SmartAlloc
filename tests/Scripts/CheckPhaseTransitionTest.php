@@ -38,6 +38,8 @@ final class CheckPhaseTransitionTest extends BaseTestCase
         ];
         file_put_contents($featuresPath, json_encode($features, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
+        // Sync features into AI context before checking transition
+        exec('cd ' . escapeshellarg($tmp) . ' && php scripts/sync-features-to-ai-context.php >/dev/null 2>&1');
         exec('cd ' . escapeshellarg($tmp) . ' && bash scripts/check_phase_transition.sh >/dev/null 2>&1', $out2, $code2);
         $this->assertSame(0, $code2);
         $synced = json_decode(file_get_contents($contextPath), true);
