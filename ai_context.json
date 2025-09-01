@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-09-01T18:01:41Z",
+  "last_update_utc": "2025-09-01T19:56:33Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "0b56ab3b1604cd7902c6d3c143c5b22c884d4292",
-    "commits_total": 752,
-    "files_tracked": 680
+    "default_branch": "codex/implement-streaming-export-for-smartalloc",
+    "last_commit": "bc8e6d7ae23e12ea1f62fc08d9bb88620b1db152",
+    "commits_total": 754,
+    "files_tracked": 683
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
