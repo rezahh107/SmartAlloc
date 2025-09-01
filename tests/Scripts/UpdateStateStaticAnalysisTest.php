@@ -50,5 +50,6 @@ public function test_scores_reflect_error_counts(): void {
     $this->assertSame(15, $twoErrors['logic']);
     $this->assertGreaterThan($twoErrors['security'], $oneError['security']);
     $this->assertGreaterThan($twoErrors['logic'], $oneError['logic']);
+    $this->assertGreaterThan($twoErrors['total'], $oneError['total']);
 }
 }
