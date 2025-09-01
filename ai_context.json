@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-01T04:25:22Z",
+  "last_update_utc": "2025-09-01T04:34:15Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "3d40bdb73b41d38a1144a24c59d121e6807e13e4",
-    "commits_total": 659,
+    "default_branch": "codex/update-phpstan-level-in-update_state.sh",
+    "last_commit": "40d2e5329b56dc16f253c15c451a9ad9c8d6dda1",
+    "commits_total": 661,
     "files_tracked": 657
   },
   "quality_gate": {
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -30,24 +27,13 @@
     "Backfill allocation edge case tests"
   ],
   "current_scores": {
-    "security": 15,
-    "logic": 15,
+    "security": 25,
+    "logic": 25,
     "performance": 25,
-    "readability": 12,
-    "goal": 25,
-    "total": 82,
-    "weighted_percent": 73.00,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": [],
-  "analysis": {
-    "security_errors": 2,
-    "logic_errors": 2
-  },
-  "perf_timing": {
-    "duration_ms": 0,
-    "budget_ms": 2500,
-    "penalized": false
-  },
-  "last_updated_utc": "2025-09-01T04:27:29Z"
+  "features": []
 }
