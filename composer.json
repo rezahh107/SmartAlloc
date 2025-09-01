@@ -31,6 +31,7 @@
     "phpcsstandards/phpcsextra": "^1.2",
     "phpcsstandards/phpcsutils": "^1.0",
     "sirbrillig/phpcs-variable-analysis": "^2.11",
+    "phpstan/phpstan": "^1.11",
     "vimeo/psalm": "^5.18",
     "php-stubs/wordpress-stubs": "^6.6",
     "giorgiosironi/eris": "^1.0"
