@@ -68,6 +68,8 @@ jobs:
           jq empty ai_context.json
       - name: 🔄 Sync AI context features
         run: php scripts/sync-features-to-ai-context.php
+      - name: 🔍 Check phase transition
+        run: bash scripts/check_phase_transition.sh
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Install Playwright deps
@@ -136,6 +138,8 @@ jobs:
           jq empty ai_context.json
       - name: 🔄 Sync AI context features
         run: php scripts/sync-features-to-ai-context.php
+      - name: 🔍 Check phase transition
+        run: bash scripts/check_phase_transition.sh
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Install Playwright deps
