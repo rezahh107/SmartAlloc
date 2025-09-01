@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-01T04:34:35Z",
+  "last_update_utc": "2025-09-01T09:50:13Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "aef38c7f924e8aae02d335a383ba0597b460084f",
-    "commits_total": 664,
+    "default_branch": "dependabot/composer/phpoffice/phpspreadsheet-approx-5.0.0",
+    "last_commit": "3d5255684a621159d32180cc40d98ab36ab922ef",
+    "commits_total": 666,
     "files_tracked": 657
   },
   "quality_gate": {
