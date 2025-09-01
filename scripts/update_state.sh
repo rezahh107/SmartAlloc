@@ -7,7 +7,7 @@ SRC_DIR="${SRC_DIR:-$ROOT/src}"
 TESTS_DIR="${TESTS_DIR:-$ROOT/tests}"
 FEATURES_MD="${FEATURES_MD:-$ROOT/FEATURES.md}"
 AI_CTX="${AI_CTX:-$ROOT/ai_context.json}"
-analysis_script="$ROOT/scripts/static_analyze.php"
+phpstan_cmd="${PHPSTAN_CMD:-$ROOT/vendor/bin/phpstan}"
 phpcs_cmd="${PHPCS_CMD:-$ROOT/vendor/bin/phpcs}"
 UTC_NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -24,8 +24,16 @@ score_part() { # clamp to 0..max
 }
 
 # ---------- Static Analysis (Security & Logic) ----------
-analysis_output=$(php "$analysis_script" "$SRC_DIR" 2>/dev/null || echo '{"errors":0}')
-analysis_errors=$(echo "$analysis_output" | jq '.errors // 0')
+analysis_json='{"totals":{"errors":0}}'
+if [ -x "$phpstan_cmd" ]; then
+  tmp_cfg=$(mktemp --suffix=.neon)
+  echo '' > "$tmp_cfg"
+  set +e
+  analysis_json=$("$phpstan_cmd" analyse --no-progress --error-format=json --level=1 --configuration="$tmp_cfg" "$SRC_DIR" 2>/dev/null)
+  set -e
+  rm -f "$tmp_cfg"
+fi
+analysis_errors=$(echo "$analysis_json" | jq '.totals.file_errors // 0' 2>/dev/null || echo 0)
 base_score=$((25 - analysis_errors*5))
 SECURITY_SCORE=$(score_part "$base_score" 25)
 LOGIC_SCORE=$(score_part "$base_score" 25)

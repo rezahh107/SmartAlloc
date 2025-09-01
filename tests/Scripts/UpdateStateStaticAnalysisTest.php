@@ -36,14 +36,19 @@ return $data['current_scores'];
 }
 
 public function test_scores_with_clean_code(): void {
-$scores = $this->runScript('<?php function ok(): int { return 1; }');
-$this->assertSame(25, $scores['security']);
-$this->assertSame(25, $scores['logic']);
+    $scores = $this->runScript('<?php function ok(): int { return 1; }');
+    $this->assertSame(25, $scores['security']);
+    $this->assertSame(25, $scores['logic']);
 }
 
-public function test_scores_with_errors(): void {
-$scores = $this->runScript('<?php function bad(: int { }');
-$this->assertLessThan(25, $scores['security']);
-$this->assertLessThan(25, $scores['logic']);
+public function test_scores_reflect_error_counts(): void {
+    $oneError = $this->runScript('<?php foo();');
+    $twoErrors = $this->runScript('<?php foo(); bar();');
+    $this->assertSame(20, $oneError['security']);
+    $this->assertSame(20, $oneError['logic']);
+    $this->assertSame(15, $twoErrors['security']);
+    $this->assertSame(15, $twoErrors['logic']);
+    $this->assertGreaterThan($twoErrors['security'], $oneError['security']);
+    $this->assertGreaterThan($twoErrors['logic'], $oneError['logic']);
 }
 }
