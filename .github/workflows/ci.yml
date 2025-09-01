@@ -43,7 +43,7 @@ jobs:
       matrix:
         php: ['8.1','8.2']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: 📦 Install jq & bc (early)
         run: |
           sudo apt-get update
@@ -111,7 +111,7 @@ jobs:
   full:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: 📦 Install jq & bc (early)
         run: |
           sudo apt-get update
@@ -185,7 +185,7 @@ jobs:
   phase-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install yq
         run: |
