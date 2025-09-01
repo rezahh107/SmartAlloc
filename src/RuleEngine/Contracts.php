@@ -25,6 +25,10 @@ interface RuleEngineContract
     public function evaluate(array $studentCtx): EvaluationResult;
 }
 
-final class RuleEngineException extends \RuntimeException
+class RuleEngineException extends \RuntimeException
+{
+}
+
+final class InvalidRuleException extends RuleEngineException
 {
 }

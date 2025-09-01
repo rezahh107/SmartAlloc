@@ -16,6 +16,8 @@ use SmartAlloc\Observability\Tracer;
  */
 final class NotificationService
 {
+    private const RATE_LIMIT_KEY = 'smartalloc_notify_rate';
+    private const MAX_NOTIFICATIONS_PER_MINUTE = 10;
     private RetryService $retry;
     private DlqService $dlq;
 
@@ -38,7 +40,12 @@ final class NotificationService
      */
     public function send(array $payload): void
     {
+        if (!$this->checkRateLimit()) {
+            $this->logger->warning('notify.throttle');
+            return;
+        }
         $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
+        $this->incrementRateCounter();
         $this->enqueue('smartalloc_notify', $payload, 0);
     }
 
@@ -188,5 +195,17 @@ final class NotificationService
             return;
         }
         wp_schedule_single_event(time() + max(1, $delay), $hook, [$payload]);
+    }
+
+    private function checkRateLimit(): bool
+    {
+        $current = (int) (get_transient(self::RATE_LIMIT_KEY) ?: 0);
+        return $current < self::MAX_NOTIFICATIONS_PER_MINUTE;
+    }
+
+    private function incrementRateCounter(): void
+    {
+        $current = (int) (get_transient(self::RATE_LIMIT_KEY) ?: 0);
+        set_transient(self::RATE_LIMIT_KEY, $current + 1, 60);
     }
 }

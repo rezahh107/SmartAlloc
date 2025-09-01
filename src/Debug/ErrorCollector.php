@@ -6,6 +6,7 @@ namespace SmartAlloc\Debug;
 
 use SmartAlloc\Infra\Logging\Logger;
 use SmartAlloc\Infra\Metrics\MetricsCollector;
+use SmartAlloc\Security\InputRedactor;
 use Throwable;
 
 /**
@@ -32,7 +33,7 @@ final class ErrorCollector
         if (!(bool) get_option('smartalloc_debug_enabled') || !defined('WP_DEBUG') || !WP_DEBUG) {
             return;
         }
-        set_error_handler([$this, 'handleError']);
+        set_error_handler([$this, 'handleError']); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
         set_exception_handler([$this, 'handleException']);
         register_shutdown_function([$this, 'handleShutdown']);
     }
@@ -40,7 +41,7 @@ final class ErrorCollector
     /** @return bool */
     public function handleError(int $type, string $message, string $file, int $line): bool
     {
-        $this->capture($type, $message, $file, $line, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+        $this->capture($type, $message, $file, $line, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
         return false;
     }
 
@@ -76,12 +77,14 @@ final class ErrorCollector
         foreach (array_slice($trace, 0, 10) as $t) {
             $stack[] = ($t['file'] ?? 'unknown') . ':' . ($t['line'] ?? 0);
         }
+        $server = InputRedactor::sanitizeServerArray($_SERVER);
         $ctx = [
-            'route' => $_SERVER['REQUEST_URI'] ?? '',
-            'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+            'route' => $server['REQUEST_URI'] ?? '',
+            'method' => $server['REQUEST_METHOD'] ?? '',
             'user_hash' => md5((string) (function_exists('get_current_user_id') ? get_current_user_id() : '0')),
             'correlation_id' => Logger::requestId(),
             'timestamp' => gmdate('c'),
+            'server' => $server,
         ];
         $env = [
             'php' => PHP_VERSION,
