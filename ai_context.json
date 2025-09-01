@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-09-01T16:54:01Z",
+  "last_update_utc": "2025-09-01T17:12:11Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "3d748b0df65b8bcc2b7a21a13d1d139fe616db7a",
-    "commits_total": 735,
-    "files_tracked": 672
+    "default_branch": "codex/create-baseline-document-for-project-status-kobztv",
+    "last_commit": "285c04a0799c6fa6e309097eeacfe4f0fbf11719",
+    "commits_total": 737,
+    "files_tracked": 680
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
@@ -15,10 +15,7 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": [
-      "ci.yml",
-      "nightly.yml"
-    ]
+    "workflows": ["ci.yml", "nightly.yml"]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -31,26 +28,12 @@
   ],
   "current_scores": {
     "security": 25,
-    "logic": 20,
+    "logic": 25,
     "performance": 25,
-    "readability": 20,
-    "goal": 25,
-    "weighted_percent": 92,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
     "red_flags": []
   },
-  "features": {
-    "Allocation Core": "green",
-    "CI/CD": "green",
-    "Circuit Breaker": "red",
-    "DB Safety": "green",
-    "Exporter": "green",
-    "Gravity Forms": "green",
-    "Logging": "green",
-    "Notifications": "amber",
-    "Observability": "green",
-    "Performance Budgets": "red",
-    "Rule Engine": "amber",
-    "rag-template-automation": "amber",
-    "rule-engine-reliability-gates": "amber"
-  }
+  "features": []
 }
