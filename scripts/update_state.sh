@@ -121,10 +121,26 @@ GOAL_SCORE=$(echo "$req_score + $integ_score" | bc)
 
 # ---------- Red Flags ----------
 flags=()
-grep -R "\$_POST\|\$_GET" "$SRC_DIR" 2>/dev/null | grep -v "sanitize_\|filter_input" >/dev/null 2>&1 && flags+=("Direct superglobal access (-10)")
-grep -R -E "[^p]query\s*\(" "$SRC_DIR" 2>/dev/null | grep -v "prepare\(" >/dev/null 2>&1 && flags+=("Raw SQL without prepare (-10)")
 rf_deduction=0
-for f in "${flags[@]:-}"; do rf_deduction=$((rf_deduction+10)); done
+
+unsanitized_json=$(php "$ROOT/scripts/detect_superglobals.php" "$SRC_DIR")
+if [ "$(echo "$unsanitized_json" | jq 'length')" -gt 0 ]; then
+  while IFS= read -r entry; do
+    file=$(echo "$entry" | jq -r '.file')
+    line=$(echo "$entry" | jq -r '.line')
+    msg="Unsanitized superglobal access ${file}:${line}"
+    json=$(jq -n --arg m "$msg" --argjson s 15 '{message:$m,severity:$s}')
+    flags+=("$json")
+    rf_deduction=$((rf_deduction+15))
+  done < <(echo "$unsanitized_json" | jq -c '.[]')
+fi
+
+if grep -R -E "[^p]query\s*\(" "$SRC_DIR" 2>/dev/null | grep -v "prepare\(" >/dev/null 2>&1; then
+  json=$(jq -n --arg m "Raw SQL without prepare" --argjson s 10 '{message:$m,severity:$s}')
+  flags+=("$json")
+  rf_deduction=$((rf_deduction+10))
+fi
+
 TOTAL_SCORE_INT=$(printf "%0.f" "$(echo "$SECURITY_SCORE + $LOGIC_SCORE + $PERF_SCORE + $READABILITY_SCORE + $GOAL_SCORE - $rf_deduction" | bc)")
 TOTAL_SCORE_INT=$(score_part "$TOTAL_SCORE_INT" 125)
 
@@ -137,7 +153,7 @@ jq empty "$AI_CTX"
 tmp="$AI_CTX.tmp"
  flag_json="[]"
  if [ ${#flags[@]} -gt 0 ]; then
-   flag_json=$(printf '%s\n' "${flags[@]}" | jq -R . | jq -s .)
+   flag_json=$(printf '%s\n' "${flags[@]}" | jq -s '.')
  fi
  jq --argjson sec "$SECURITY_SCORE" \
    --argjson log "$LOGIC_SCORE" \
