@@ -14,10 +14,10 @@ PHPCS_FAILS="$(jq -r '.totals.errors + .totals.warnings' <<<"$PHPCS_JSON" 2>/dev
 tmp="$AI_CTX.tmp"
 jq --argjson phpcs "$PHPCS_FAILS" '.phpcs_errors=$phpcs' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
 TEST_FAILS="${TEST_FAILS:-0}"
-LOGIC_MIN="${LOGIC_MIN:-0}"
-PERFORMANCE_MIN="${PERFORMANCE_MIN:-0}"
-READABILITY_MIN="${READABILITY_MIN:-0}"
-GOAL_MIN="${GOAL_MIN:-0}"
+LOGIC_MIN="${LOGIC_MIN:-18}"
+PERFORMANCE_MIN="${PERFORMANCE_MIN:-19}"
+READABILITY_MIN="${READABILITY_MIN:-19}"
+GOAL_MIN="${GOAL_MIN:-18}"
 if (( $(printf '%.0f' "$SEC") < 20 )) || \
    (( $(printf '%.0f' "$WGT") < 85 )) || \
    (( $(printf '%.0f' "$LOGIC") < LOGIC_MIN )) || \
