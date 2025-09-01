@@ -27,14 +27,15 @@ if (( $(printf '%.0f' "$SEC") < 20 )) || \
   jq -n --argjson sec "${SEC:-0}" \
         --argjson phpcs "${PHPCS_FAILS:-0}" \
         --argjson tests "${TEST_FAILS:-0}" \
-        --argjson logic "${LOGIC:-0}" \
-        --argjson perf "${PERF:-0}" \
-        --argjson read "${READ:-0}" \
-        --argjson goal "${GOAL:-0}" \
-        '{ci_failure:{security_score:$sec, phpcs_errors:$phpcs, test_failures:$tests, logic_score:$logic, performance_score:$perf, readability_score:$read, goal_score:$goal}}' \
+        --argjson logic "${LOGIC:-0}" --argjson logic_min "$LOGIC_MIN" \
+        --argjson perf "${PERF:-0}" --argjson perf_min "$PERFORMANCE_MIN" \
+        --argjson read "${READ:-0}" --argjson read_min "$READABILITY_MIN" \
+        --argjson goal "${GOAL:-0}" --argjson goal_min "$GOAL_MIN" \
+        '{ci_failure:{security_score:$sec, phpcs_errors:$phpcs, test_failures:$tests, logic:{score:$logic,min:$logic_min}, performance:{score:$perf,min:$perf_min}, readability:{score:$read,min:$read_min}, goal:{score:$goal,min:$goal_min}}}' \
   > .ci_failure.tmp
   # merge into ai_context.json (non-destructive)
   jq -s '.[0] * .[1]' "$AI_CTX" .ci_failure.tmp > ai_context.tmp && mv ai_context.tmp "$AI_CTX"
   rm -f .ci_failure.tmp
+  exit 1
 fi
 
