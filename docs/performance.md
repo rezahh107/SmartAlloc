@@ -9,6 +9,7 @@
 - SMARTALLOC_PERF_ENABLE_BATCH=0|1
 
 `scripts/update_state.sh` runs a Stopwatch scenario and deducts points when `SMARTALLOC_BUDGET_ALLOC_1K_MS` is exceeded.
+The measured duration and any penalty are written to `ai_context.json` and the performance line in `FEATURES.md`.
 
 ## Run
 composer dump-autoload -o

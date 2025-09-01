@@ -56,9 +56,15 @@ if [ -n "$scenario" ] && [ -f "$scenario" ]; then
 else
   duration_ms=0
 fi
+perf_penalty=0
 if [ "${duration_ms%.*}" -gt "$budget_ms" ]; then
   PERF_SCORE=$(echo "$PERF_SCORE - 5" | bc)
   if [ "$PERF_SCORE" -lt 0 ]; then PERF_SCORE=0; fi
+  perf_penalty=1
+fi
+perf_note="budget ${budget_ms}ms, actual ${duration_ms%.*}ms"
+if [ "$perf_penalty" -eq 1 ]; then
+  perf_note="$perf_note, penalty -5"
 fi
 
 # ---------- Readability (25) ----------
@@ -109,10 +115,18 @@ tmp="$AI_CTX.tmp"
    --arg weighted "$weighted" \
    --argjson flags "$flag_json" \
    --arg now "$UTC_NOW" \
+   --arg duration "$duration_ms" \
+   --arg budget "$budget_ms" \
+   --argjson penalized "$perf_penalty" \
    '
     .current_scores = {
       security:$sec, logic:$log, performance:$perf, readability:$read, goal:$goal,
       total: ($total|tonumber), weighted_percent: ($weighted|tonumber), red_flags: $flags
+    }
+   | .perf_timing = {
+      duration_ms: ($duration|tonumber),
+      budget_ms: ($budget|tonumber),
+      penalized: ($penalized==1)
     }
    | .last_updated_utc = $now
    ' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
@@ -127,7 +141,7 @@ tmp="$AI_CTX.tmp"
   echo "### **📊 Detailed Validation Score**"
   printf "🔒 **Security Score**: %.2f/25\n" "$SECURITY_SCORE"
   printf "🧠 **Logic Score**: %.2f/25\n"    "$LOGIC_SCORE"
-  printf "⚡ **Performance Score**: %.2f/25\n" "$PERF_SCORE"
+  printf "⚡ **Performance Score**: %.2f/25 (%s)\n" "$PERF_SCORE" "$perf_note"
   printf "📖 **Readability Score**: %.2f/25\n" "$READABILITY_SCORE"
   printf "🎯 **Goal Achievement**: %.2f/25\n"  "$GOAL_SCORE"
   echo

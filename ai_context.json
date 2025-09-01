@@ -15,7 +15,10 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": ["ci.yml", "nightly.yml"]
+    "workflows": [
+      "ci.yml",
+      "nightly.yml"
+    ]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -29,11 +32,18 @@
   "current_scores": {
     "security": 25,
     "logic": 25,
-    "performance": 25,
-    "readability": 15,
-    "goal": 20,
-    "weighted_percent": 95.0,
+    "performance": 20,
+    "readability": 20,
+    "goal": 25,
+    "total": 105,
+    "weighted_percent": 95.00,
     "red_flags": []
   },
-  "features": []
+  "features": [],
+  "perf_timing": {
+    "duration_ms": 3000.215571,
+    "budget_ms": 2500,
+    "penalized": true
+  },
+  "last_updated_utc": "2025-09-01T03:54:21Z"
 }
