@@ -1,16 +1,16 @@
 # Feature Status Dashboard
 
-## 📊 Current Project Score: 110/125 (88%)
+## 📊 Current Project Score: 85/125 (68%)
 
 ### **📊 Detailed Validation Score**
 🔒 **Security Score**: 25.00/25
-🧠 **Logic Score**: 25.00/25
+🧠 **Logic Score**: 20.00/25
 ⚡ **Performance Score**: 25.00/25 (budget 2500ms, max 0ms)
-📖 **Readability Score**: 15.00/25
-🎯 **Goal Achievement**: 20.00/25
+📖 **Readability Score**: 20.00/25
+🎯 **Goal Achievement**: 25.00/25
 
-**🏆 Total Score**: 110/125
-**📈 Weighted Average**: 95.00%
+**🏆 Total Score**: 85/125
+**📈 Weighted Average**: 92.00%
 
 ### ⛔ Red Flags:
 - {
@@ -23,7 +23,7 @@
 }
 
 ---
-Last Updated (UTC): 2025-09-01T16:53:34Z
+Last Updated (UTC): 2025-09-01T17:10:33Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
@@ -38,4 +38,10 @@ Last Updated (UTC): 2025-09-01T16:53:34Z
 | Circuit Breaker | 🔴 Red | Not started |
 | Observability | 🟢 Green | Metrics & tracing enabled |
 | Performance Budgets | 🔴 Red | Not started |
+| CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
+| rule-engine-reliability-gates | 🟡 Amber |  |
+| rag-template-automation | 🟡 Amber |  |
+| DLQ replay action and perf budget tests | ⚪ Unknown | Added retry-based mailer, admin DLQ replay action, circuit breaker protection, and performance budget test. |
+
+_Last Updated (UTC): 2025-09-01_
 <!-- AUTO-GEN:RAG END -->
