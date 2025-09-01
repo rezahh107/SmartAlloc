@@ -34,6 +34,10 @@ permissions:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   TZ: UTC
+  LOGIC_MIN: ${{ vars.LOGIC_MIN || '18' }}
+  PERFORMANCE_MIN: ${{ vars.PERFORMANCE_MIN || '19' }}
+  READABILITY_MIN: ${{ vars.READABILITY_MIN || '19' }}
+  GOAL_MIN: ${{ vars.GOAL_MIN || '18' }}
 
 jobs:
   qa:
