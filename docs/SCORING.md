@@ -10,3 +10,5 @@
 `features.json` tracks the status of all features. At the start of CI, `scripts/sync-features-to-ai-context.php` copies these statuses into `ai_context.json` so scoring uses the latest data. The script tolerates an empty `features` array, and tests simulate this scenario to ensure synchronization remains accurate.
 
 CI workflows explicitly run the sync script before executing `scripts/check_phase_transition.sh` to guarantee `ai_context.json` mirrors `features.json`. If `features.json` lacks entries, the phase transition check fails until synchronization populates the needed statuses. Additional gates such as `scripts/ci/ensure_ci_thresholds.sh` also run the sync step to guarantee `ai_context.json` reflects current features before score evaluation.
+
+A dedicated regression test covers the case where `features.json` is missing entirely. The phase transition check fails first, then passes after `scripts/sync-features-to-ai-context.php` rebuilds `ai_context.json` with the required feature data.
