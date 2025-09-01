@@ -8,6 +8,7 @@ TESTS_DIR="${TESTS_DIR:-$ROOT/tests}"
 FEATURES_MD="${FEATURES_MD:-$ROOT/FEATURES.md}"
 AI_CTX="${AI_CTX:-$ROOT/ai_context.json}"
 phpstan_cmd="${PHPSTAN_CMD:-$ROOT/vendor/bin/phpstan}"
+psalm_cmd="${PSALM_CMD:-$ROOT/vendor/bin/psalm}"
 phpcs_cmd="${PHPCS_CMD:-$ROOT/vendor/bin/phpcs}"
 UTC_NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -32,9 +33,23 @@ if [ -x "$phpstan_cmd" ]; then
   analysis_json=$("$phpstan_cmd" analyse --no-progress --error-format=json --level=5 --configuration="$tmp_cfg" "$SRC_DIR" 2>/dev/null)
   set -e
   rm -f "$tmp_cfg"
+elif [ -x "$psalm_cmd" ]; then
+  tmp_cfg=$(mktemp --suffix=.xml)
+  cat <<XML > "$tmp_cfg"
+<?xml version="1.0"?>
+<psalm errorLevel="1">
+  <projectFiles>
+    <directory name="$SRC_DIR"/>
+  </projectFiles>
+</psalm>
+XML
+  set +e
+  analysis_json=$(php -d error_reporting=0 "$psalm_cmd" --no-progress --output-format=json --config="$tmp_cfg" 2>/dev/null)
+  set -e
+  rm -f "$tmp_cfg"
 fi
 # Count total static analysis errors instead of files with errors.
-analysis_errors=$(echo "$analysis_json" | jq '.totals.errors // 0' 2>/dev/null || echo 0)
+analysis_errors=$(echo "$analysis_json" | jq '.totals.errors // (.issues|length) // 0' 2>/dev/null || echo 0)
 base_score=$((25 - analysis_errors*5))
 SECURITY_SCORE=$(score_part "$base_score" 25)
 LOGIC_SCORE=$(score_part "$base_score" 25)
