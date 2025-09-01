@@ -12,17 +12,19 @@ final class UpdateStatePerformanceTest extends BaseTestCase {
      * Run update_state.sh with performance scenarios.
      *
      * @param array $scenarios List of PHP code strings to execute.
-     * @param int   $budgetMs  Time budget in milliseconds.
+     * @param array $budgets   Per-scenario time budgets in milliseconds.
+     * @param int   $default   Default budget when specific one is absent.
      * @return array{scores:array,timing:array,features:string}
      */
-    private function runScript(array $scenarios, int $budgetMs): array {
+    private function runScript(array $scenarios, array $budgets, int $default): array {
         $dir = sys_get_temp_dir() . '/sa_perf_' . uniqid();
         mkdir($dir);
         $files = [];
         foreach ($scenarios as $i => $code) {
             $file = $dir . "/scenario{$i}.php";
             file_put_contents($file, $code);
-            $files[] = escapeshellarg($file);
+            $budget = $budgets[$i] ?? $default;
+            $files[] = escapeshellarg($file) . '@' . $budget;
         }
 
         $ai = $dir . '/ai_context.json';
@@ -34,7 +36,7 @@ final class UpdateStatePerformanceTest extends BaseTestCase {
             escapeshellarg($ai),
             escapeshellarg($featuresFile),
             implode(':', $files),
-            $budgetMs,
+            $default,
             escapeshellarg($this->script)
         );
         exec($cmd);
@@ -50,15 +52,23 @@ final class UpdateStatePerformanceTest extends BaseTestCase {
     }
 
     public function test_perf_score_penalized_when_budget_exceeded(): void {
-        $res = $this->runScript(['<?php usleep(50000);'], 10);
+        $res = $this->runScript(['<?php usleep(50000);'], [10], 10);
         $this->assertLessThan(10, $res['scores']['performance']);
         $this->assertTrue($res['timing']['penalized']);
         $this->assertStringContainsString('penalty', $res['features']);
     }
 
     public function test_slow_scenario_reduces_score_in_multiple_runs(): void {
-        $res = $this->runScript(['<?php usleep(1000);', '<?php usleep(50000);'], 10);
+        $res = $this->runScript(['<?php usleep(1000);', '<?php usleep(50000);'], [10, 10], 10);
         $this->assertLessThan(10, $res['scores']['performance']);
         $this->assertTrue($res['timing']['penalized']);
+    }
+
+    public function test_individual_budget_penalty_applied(): void {
+        $res = $this->runScript(['<?php usleep(1000);', '<?php usleep(50000);'], [1000, 10], 1000);
+        $this->assertLessThan(10, $res['scores']['performance']);
+        $this->assertTrue($res['timing']['penalized']);
+        $this->assertTrue($res['timing']['scenarios'][1]['penalized']);
+        $this->assertFalse($res['timing']['scenarios'][0]['penalized']);
     }
 }
