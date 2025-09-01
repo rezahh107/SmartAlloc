@@ -213,7 +213,7 @@ jobs:
 
       - name: Upload Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: phase-transition-report
           path: phase_report.md
