@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-09-01T14:11:33Z",
+  "last_update_utc": "2025-09-01T17:11:50Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "3d748b0df65b8bcc2b7a21a13d1d139fe616db7a",
-    "commits_total": 735,
-    "files_tracked": 672
+    "default_branch": "codex/create-baseline-document-for-project-status-6ao4tw",
+    "last_commit": "e45b2853f2ce4e7518bd4c774034be25c84cbe41",
+    "commits_total": 737,
+    "files_tracked": 680
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
@@ -28,15 +28,12 @@
   ],
   "current_scores": {
     "security": 25,
-    "logic": 20,
+    "logic": 25,
     "performance": 25,
-    "readability": 20,
-    "goal": 25,
-    "weighted_percent": 92.0,
-    "red_flags": [
-      "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:80",
-      "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:81"
-    ]
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
+    "red_flags": []
   },
   "features": []
 }
