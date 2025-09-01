@@ -6,7 +6,7 @@ jobs:
   enforce:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Evaluate 5D Gate
         run: bash scripts/evaluate_scores.sh || exit 1
       - name: Fail on .ci_failure
