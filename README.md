@@ -2,6 +2,10 @@
 
 Event-driven student support allocation with Gravity Forms + Exporter.
 
+## Project Overview
+
+SmartAlloc pairs students with mentors through an event-driven workflow and integrates with Gravity Forms for data collection. The plugin emphasizes scalable exports, observability, and a three-layer caching strategy to keep allocations fast and reliable.
+
 ## Description
 
 SmartAlloc is a comprehensive WordPress plugin designed for automatic mentor allocation to students. It features an event-driven architecture, config-driven export functionality, and seamless integration with Gravity Forms.
