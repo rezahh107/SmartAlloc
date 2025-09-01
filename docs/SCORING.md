@@ -10,3 +10,4 @@
 `features.json` tracks the status of all features. At the start of CI, `scripts/sync-features-to-ai-context.php` copies these statuses into `ai_context.json` so scoring uses the latest data. The script tolerates an empty `features` array, and tests simulate this scenario to ensure synchronization remains accurate.
 
 `scripts/check_phase_transition.sh` now invokes the sync script before evaluating requirements. If `features.json` lacks entries, the phase transition check fails until synchronization populates the needed statuses.
+CI gates such as `scripts/ci/ensure_ci_thresholds.sh` also run the sync step to guarantee `ai_context.json` reflects current features before score evaluation.

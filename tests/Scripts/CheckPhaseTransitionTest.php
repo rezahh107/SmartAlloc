@@ -40,5 +40,7 @@ final class CheckPhaseTransitionTest extends BaseTestCase
 
         exec('cd ' . escapeshellarg($tmp) . ' && bash scripts/check_phase_transition.sh >/dev/null 2>&1', $out2, $code2);
         $this->assertSame(0, $code2);
+        $synced = json_decode(file_get_contents($contextPath), true);
+        $this->assertSame('implemented', $synced['features']['rule_engine']);
     }
 }

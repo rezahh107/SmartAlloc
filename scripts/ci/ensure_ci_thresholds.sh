@@ -2,6 +2,7 @@
 set -euo pipefail
 AI_CTX="ai_context.json"
 if [ ! -s "$AI_CTX" ]; then echo '{"current_scores":{}}' > "$AI_CTX"; fi
+php scripts/sync-features-to-ai-context.php "features.json" "$AI_CTX" >/dev/null
 
 read_k() { jq -r "$1 // 0" "$AI_CTX" 2>/dev/null || echo 0; }
 SEC="$(read_k '.current_scores.security')"
