@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-01T09:46:23Z",
+  "last_update_utc": "2025-09-01T09:46:25Z",
   "repo": {
     "default_branch": "dependabot/github_actions/softprops/action-gh-release-2",
-    "last_commit": "932051732ece8893a244964b428a2eac35729464",
-    "commits_total": 666,
+    "last_commit": "1f2a2b974f60f2cc500ef3a75d65098babc7ebb4",
+    "commits_total": 667,
     "files_tracked": 657
   },
   "quality_gate": {
