@@ -1,17 +1,17 @@
 {
-  "last_update_utc": "2025-09-01T14:11:33Z",
+  "last_update_utc": "2025-09-01T16:52:39Z",
   "repo": {
     "default_branch": "main",
-    "last_commit": "3d748b0df65b8bcc2b7a21a13d1d139fe616db7a",
-    "commits_total": 735,
-    "files_tracked": 672
+    "last_commit": "939616e9e18de91e7c8b494390ab7c4d76797538",
+    "commits_total": 737,
+    "files_tracked": 680
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
     "security_min": 20,
     "ci_status": "passing",
     "coverage": "78%",
-    "5d_score": 93
+    "5d_score": 92
   },
   "ci": {
     "remote_connected": true,
@@ -28,12 +28,21 @@
   ],
   "current_scores": {
     "security": 25,
-    "logic": 25,
+    "logic": 20,
     "performance": 25,
-    "readability": 15,
-    "goal": 20,
-    "weighted_percent": 95.0,
-    "red_flags": []
+    "readability": 20,
+    "goal": 25,
+    "weighted_percent": 92.0,
+    "red_flags": [
+      {
+        "message": "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:80",
+        "severity": 15
+      },
+      {
+        "message": "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:81",
+        "severity": 15
+      }
+    ]
   },
   "features": []
 }
