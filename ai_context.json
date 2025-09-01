@@ -28,12 +28,15 @@
   ],
   "current_scores": {
     "security": 25,
-    "logic": 25,
+    "logic": 20,
     "performance": 25,
-    "readability": 15,
-    "goal": 20,
-    "weighted_percent": 95.0,
-    "red_flags": []
+    "readability": 20,
+    "goal": 25,
+    "weighted_percent": 92.0,
+    "red_flags": [
+      "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:80",
+      "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:81"
+    ]
   },
   "features": []
 }
