@@ -15,4 +15,5 @@ final class TableResolver {
     public function runs(FormContext $ctx): string        { return "{$this->prefix}smartalloc_runs{$ctx->suffix()}"; }
     public function logs(FormContext $ctx): string        { return "{$this->prefix}smartalloc_logs{$ctx->suffix()}"; }
     public function dlq(FormContext $ctx): string         { return "{$this->prefix}smartalloc_dlq{$ctx->suffix()}"; }
+    public function exportErrors(): string                { return "{$this->prefix}smartalloc_export_errors"; }
 }

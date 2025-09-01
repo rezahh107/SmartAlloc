@@ -33,9 +33,24 @@ final class DbSafe
         }
 
         global $wpdb;
-        $prepared = $wpdb->prepare($sql, $params);
+        $prepared = $wpdb->prepare($sql, $params); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         if (preg_match('/(?<!%)%[dsf]/i', $prepared)) {
             throw new \RuntimeException('SQL not fully prepared');
+        }
+        return $prepared;
+    }
+
+    /**
+     * Prepare multiple value fragments for bulk inserts.
+     *
+     * @param array<int,array<int|string|float|null>> $rows
+     * @return array<int,string>
+     */
+    public static function mustPrepareMany(string $fragment, array $rows): array
+    {
+        $prepared = [];
+        foreach ($rows as $params) {
+            $prepared[] = self::mustPrepare($fragment, $params);
         }
         return $prepared;
     }

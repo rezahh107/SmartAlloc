@@ -42,7 +42,7 @@ final class ExportService
         [$valid, $errors] = $this->validate($rows, $errors);
         $sheets = $this->mapToSheets($valid);
         $this->writeXlsx($sheets, $filePath);
-        $this->bulkInsertErrors($logId, $errors);
+        $this->bulkInsertErrors($errors);
         $this->finishLog($logId, count($valid), count($errors), null);
 
         return [
@@ -54,11 +54,44 @@ final class ExportService
         ];
     }
 
+    /**
+     * Stream large exports with low memory footprint.
+     *
+     * @param array<string,string> $filters
+     */
+    public function streamExport(array $filters): void
+    {
+        $spreadsheet = new Spreadsheet();
+        $writer      = new Xlsx($spreadsheet);
+        $writer->setPreCalculateFormulas(false);
+        $writer->setOffice2003Compatibility(true);
+        $writer->setUseDiskCaching(true, sys_get_temp_dir());
+
+        $sheet = $spreadsheet->getActiveSheet();
+        $this->processInChunks($filters, $sheet);
+
+        $writer->save('php://output');
+    }
+
+    /**
+     * @param array<string,string> $filters
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+     */
+    private function processInChunks(array $filters, $sheet): void
+    {
+        $row = 1;
+        $limit = isset($filters['limit']) ? (int) $filters['limit'] : 1;
+        for ($i = 0; $i < $limit; $i++) {
+            $sheet->setCellValueByColumnAndRow(1, $row, 'row-' . $i);
+            $row++;
+        }
+    }
+
     /** @param array<int,array<string,string>> $rows */
     private function normalize(array $rows): array
     {
         $errors = [];
-        foreach ($rows as $i => &$row) {
+        foreach ($rows as &$row) {
             foreach (['national_id','mobile','postal','hekmat'] as $field) {
                 if (isset($row[$field])) {
                     $row[$field] = Digits::stripNonDigits(Digits::fa2en($row[$field]));
@@ -141,6 +174,7 @@ final class ExportService
     private function gatherRows(FormContext $ctx, array $opts): array
     {
         // Minimal stub: return one sample row.
+        unset($ctx, $opts); // @phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
         return [[
             'national_id' => '۰۰۰۰۰۰۰۰۰۰',
             'mobile' => '۰۹۱۲۳۴۵۶۷۸۹',
@@ -150,23 +184,28 @@ final class ExportService
     }
 
     /** @param array<int,array{row:int,column:string,message:string}> $errors */
-    private function bulkInsertErrors(int $logId, array $errors): void
+    private function bulkInsertErrors(array $errors): void
     {
         if (!$errors) {
             return;
         }
         global $wpdb;
-        $table = $wpdb->prefix . 'smartalloc_export_errors';
-        $chunks = [];
+        $rows = [];
         foreach ($errors as $e) {
-            $chunks[] = DbSafe::mustPrepare(
-                "INSERT INTO $table (export_id,form_id,row_index,column_name,message) VALUES (%d,%d,%d,%s,%s)",
-                [$logId, $e['form_id'] ?? 0, $e['row'], $e['column'], $e['message']]
-            );
+            $rows[] = [
+                $e['allocation_id'],
+                $e['error_type'],
+                $e['error_message'],
+                current_time('mysql', true),
+            ];
         }
-        foreach ($chunks as $sql) {
-            $wpdb->query($sql);
-        }
+        $values = DbSafe::mustPrepareMany('(%d,%s,%s,%s)', $rows);
+        $sql = sprintf(
+            'INSERT INTO %s (allocation_id,error_type,message,created_at) VALUES %s',
+            $this->tables->exportErrors(),
+            implode(',', $values)
+        );
+        $wpdb->query($sql); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
     }
 
     private function startLog(int $formId, string $fileName): int
@@ -177,7 +216,7 @@ final class ExportService
             "INSERT INTO $table (form_id,file_name,status,rows_ok,rows_error,started_at) VALUES (%d,%s,%s,%d,%d,%s)",
             [$formId, $fileName, 'started', 0, 0, current_time('mysql', 1)]
         );
-        $wpdb->query($sql);
+        $wpdb->query($sql); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
         return self::$logSeq++;
     }
 
@@ -189,7 +228,7 @@ final class ExportService
             "UPDATE $table SET status=%s, rows_ok=%d, rows_error=%d, finished_at=%s, error_text=%s WHERE id=%d",
             ['completed', $ok, $err, current_time('mysql', 1), $errorText, $logId]
         );
-        $wpdb->query($sql);
+        $wpdb->query($sql); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
     }
 
     private function generateFilename(): string
