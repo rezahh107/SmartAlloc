@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-01T04:34:35Z",
+  "last_update_utc": "2025-09-01T09:54:05Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "aef38c7f924e8aae02d335a383ba0597b460084f",
-    "commits_total": 664,
+    "default_branch": "dependabot/composer/yoast/phpunit-polyfills-tw-4.0",
+    "last_commit": "b04bacfed713978eb8c18b7abedbbb448a32f0e3",
+    "commits_total": 666,
     "files_tracked": 657
   },
   "quality_gate": {
