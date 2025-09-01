@@ -66,6 +66,8 @@ jobs:
           set -euo pipefail
           test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
           jq empty ai_context.json
+      - name: 🔄 Sync AI context features
+        run: php scripts/sync-features-to-ai-context.php
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Install Playwright deps
@@ -132,6 +134,8 @@ jobs:
           set -euo pipefail
           test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
           jq empty ai_context.json
+      - name: 🔄 Sync AI context features
+        run: php scripts/sync-features-to-ai-context.php
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Install Playwright deps
