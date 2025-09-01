@@ -87,7 +87,7 @@ final class NotificationService
             $this->metrics->inc('notify_success_total');
             $this->logger->info('notify.success', ['payload' => $payload]);
         } catch (\Throwable $e) {
-            $this->circuitBreaker->failure('notify');
+            $this->circuitBreaker->failure('notify',$e);
             $this->metrics->inc('notify_failed_total');
             $this->logger->warning('notify.fail', ['error' => $e->getMessage(), 'attempt' => $attempt]);
             if ($attempt <= 5) {
@@ -115,19 +115,19 @@ final class NotificationService
      *
      * @param array<string,mixed> $payload { to,subject,message,headers?,_attempt? }
      */
-    public function sendMail(array $payload): void
+    public function sendMail(array $payload): bool
     {
         $attempt    = (int) ( $payload['_attempt'] ?? 1 );
         $id_payload = $payload;
         unset( $id_payload['_attempt'] );
         $key = 'sa_mail_' . sha1( wp_json_encode( $id_payload ) );
         if ( get_transient( $key ) ) {
-            return;
+            return true;
         }
         try {
             $ok = SafetyCircuitBreaker::call(
                 'mail',
-                fn() => wp_mail( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
+                fn() => wp_mail(
                     (string) ( $payload['to'] ?? '' ),
                     (string) ( $payload['subject'] ?? '' ),
                     (string) ( $payload['message'] ?? '' ),
@@ -136,19 +136,28 @@ final class NotificationService
                 5,
                 120
             );
+            $err = '';
         } catch (\Throwable $e) {
-            $ok = false;
+            $ok  = false;
+            $err = $e->getMessage();
         }
         if ( $ok ) {
             set_transient( $key, 1, DAY_IN_SECONDS );
-            return;
+            return true;
         }
-        $this->logger->warning( 'notify.mail.fail', array( 'email' => $payload['to'] ?? '', 'attempt' => $attempt ) );
+        $this->logger->error( 'notify.mail.fail', array( 'email' => $payload['to'] ?? '', 'attempt' => $attempt, 'error' => $err ) );
         if ( $attempt >= SMARTALLOC_NOTIFY_MAX_TRIES ) {
-            return;
+            $this->dlq->push(array(
+                'event_name' => 'mail',
+                'payload'    => $payload,
+                'attempts'   => $attempt,
+                'error_text' => $err,
+            ));
+            return false;
         }
         $payload['_attempt'] = $attempt + 1;
         $this->enqueue( 'smartalloc_notify_mail', $payload, $this->mailDelay( $attempt ) );
+        return false;
     }
 
     /**

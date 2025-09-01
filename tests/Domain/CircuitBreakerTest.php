@@ -11,7 +11,7 @@ final class CircuitBreakerTest extends BaseTestCase
     {
         $s = new ArrayCircuitStorage();
         $b = new CircuitBreaker(threshold:1,cooldown:10,halfOpenCallback:null,storage:$s);
-        $b->failure('svc',1);
+        $b->failure('svc',new \Exception());
         $st = $s->get('svc');
         $st['opened_at'] = gmdate('Y-m-d H:i:s',time()-9);
         $s->put('svc',$st,0);
@@ -27,7 +27,7 @@ final class CircuitBreakerTest extends BaseTestCase
     {
         $s = new ArrayCircuitStorage();
         $b = new CircuitBreaker(threshold:1,cooldown:5,halfOpenCallback:null,storage:$s);
-        $b->failure('api',1);
+        $b->failure('api',new \Exception());
         $st = $b->getStatus();
         $this->assertArrayHasKey('api',$st);
         $snap = $st['api'];
@@ -56,5 +56,17 @@ final class CircuitBreakerTest extends BaseTestCase
         } finally {
             date_default_timezone_set($tz);
         }
+    }
+
+    public function test_failure_respects_configured_threshold_and_utc(): void
+    {
+        $s = new ArrayCircuitStorage();
+        $b = new CircuitBreaker(threshold:2,cooldown:5,halfOpenCallback:null,storage:$s);
+        $b->failure('svc',new \Exception());
+        $b->failure('svc',new \Exception());
+        $snap = $s->get('svc');
+        $this->assertSame('open',$snap['state']);
+        $dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$snap['opened_at'],new DateTimeZone('UTC'));
+        $this->assertInstanceOf(DateTimeImmutable::class,$dt);
     }
 }

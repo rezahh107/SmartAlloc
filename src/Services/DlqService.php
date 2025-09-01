@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SmartAlloc\Services;
 
 use SmartAlloc\Services\DbSafe;
-use SmartAlloc\Notifications\DlqRepository;
-use SmartAlloc\Infra\WpdbAdapter;
+use SmartAlloc\Infrastructure\Contracts\DlqRepository;
+use SmartAlloc\Infrastructure\WpDb\{WpDlqRepository,WpdbAdapter};
+use DateTimeImmutable;
+use DateTimeZone;
 
 /* phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching */
 
@@ -17,8 +19,8 @@ final class DlqService
 {
     private string $table;
     public function __construct(private ?DlqRepository $repo = null) {
-        global $wpdb; $this->table = $wpdb->prefix . 'salloc_dlq';
-        $this->repo ??= new DlqRepository(new WpdbAdapter($wpdb), $this->table);
+        global $wpdb; $this->table = $wpdb->prefix . 'smartalloc_dlq';
+        $this->repo ??= new WpDlqRepository(new WpdbAdapter($wpdb), $this->table);
     }
 
     /**
@@ -28,13 +30,13 @@ final class DlqService
      */
     public function push(array $entry): void
     {
-        $payload = (array) ($entry['payload'] ?? []);
-        $payloadJson = $this->encode($payload);
-        $this->repo->enqueue([
-            'channel' => (string) ($entry['event_name'] ?? ''),
-            'payload' => json_decode($payloadJson, true),
-            'reason' => (string) ($entry['error_text'] ?? ''),
-        ]);
+        $payload = $this->sortRecursive((array) ($entry['payload'] ?? []));
+        $payload['attempts'] = (int) ($entry['attempts'] ?? 0);
+        $this->repo->insert(
+            (string) ($entry['event_name'] ?? ''),
+            $payload,
+            new DateTimeImmutable('now', new DateTimeZone('UTC'))
+        );
     }
 
     /**
@@ -126,23 +128,6 @@ final class DlqService
         $sql = DbSafe::mustPrepare("SELECT COUNT(*) FROM {$this->table}", []);
         // @security-ok-sql
         return (int) $wpdb->get_var($sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-    }
-
-    /**
-     * Encode payload deterministically.
-     *
-     * @param array<string,mixed> $data
-     */
-    private function encode(array $data): string
-    {
-        ksort($data);
-        foreach ($data as &$v) {
-            if (is_array($v)) {
-                $v = $this->sortRecursive($v);
-            }
-        }
-        unset($v);
-        return wp_json_encode($data);
     }
 
     /**
