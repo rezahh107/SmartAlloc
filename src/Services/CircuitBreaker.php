@@ -19,7 +19,19 @@ final class CircuitBreaker{
     private function setState(string $n,string $state,int $f,?string $o):void{$this->storage->put($n,['state'=>$state,'failures'=>$f,'opened_at'=>$o],$this->cooldown);}
     public function reset(string $n):void{$this->setState($n,'closed',0,null);}
     public function protect(callable $op,string $svc,array $args=[]):mixed{$this->guard($svc);try{$res=$op(...$args);$this->success($svc);return $res;}catch(\Throwable $e){$this->failure($svc,$e);throw $e;}}
+    /**
+     * Snapshot of all circuits.
+     * @return array<string,array{state:'open'|'half'|'closed',openedAt:?string,failures:int,cooldownUntil:?int}>
+     */
     public function getStatus():array{$st=[];foreach($this->storage->keys() as $n){$r=$this->getState($n);$o=$r['opened_at'];$ot=$o?strtotime($o):null;$until=($r['state']==='open'&&$ot)?$ot+$this->cooldown:null;$st[$n]=['state'=>$r['state'],'openedAt'=>$o,'failures'=>$r['failures'],'cooldownUntil'=>$until];}return $st;}
+    /**
+     * Aggregated report of circuits.
+     * @return array{
+     *   circuits:array<string,array{state:'open'|'half'|'closed',openedAt:?string,failures:int,cooldownUntil:?int}>,
+     *   summary:array{total:int,closed:int,open:int,half:int},
+     *   config:array{threshold:int,cooldown:int,has_half_open_callback:bool}
+     * }
+     */
     public function getStatusReport():array{$s=$this->getStatus();return ['circuits'=>$s,'summary'=>['total'=>count($s),'closed'=>count(array_filter($s,fn($x)=>$x['state']==='closed')),'open'=>count(array_filter($s,fn($x)=>$x['state']==='open')),'half'=>count(array_filter($s,fn($x)=>$x['state']==='half'))],'config'=>['threshold'=>$this->threshold,'cooldown'=>$this->cooldown,'has_half_open_callback'=>$this->halfOpenCallback!==null]];}
     public function executeHalfOpenCallback(string $n):mixed{if($this->halfOpenCallback===null){return null;}try{return call_user_func($this->halfOpenCallback,$n);}catch(\Throwable $e){return null;}}
     public function getConfig():array{return ['threshold'=>$this->threshold,'cooldown'=>$this->cooldown,'has_half_open_callback'=>$this->halfOpenCallback!==null];}
