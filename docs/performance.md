@@ -8,6 +8,8 @@
 - SMARTALLOC_PERF_ENABLE_CACHE=0|1
 - SMARTALLOC_PERF_ENABLE_BATCH=0|1
 
+`scripts/update_state.sh` runs a Stopwatch scenario and deducts points when `SMARTALLOC_BUDGET_ALLOC_1K_MS` is exceeded.
+
 ## Run
 composer dump-autoload -o
 SMARTALLOC_TESTS=1 vendor/bin/phpunit --testsuite Performance

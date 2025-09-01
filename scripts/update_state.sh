@@ -48,6 +48,19 @@ cache_cnt=$( (grep -R -E "wp_cache_(get|set)|get_transient|set_transient" "$SRC_
 cache_score=$(( cache_cnt > 0 ? 15 : 0 ))
 PERF_SCORE=$(echo "$db_score + $cache_score" | bc)
 
+# Quantitative timing using Stopwatch
+scenario="${PERF_SCENARIO:-}"
+budget_ms="${SMARTALLOC_BUDGET_ALLOC_1K_MS:-2500}"
+if [ -n "$scenario" ] && [ -f "$scenario" ]; then
+  duration_ms=$(php "$ROOT/scripts/stopwatch_eval.php" "$scenario" 2>/dev/null || echo 0)
+else
+  duration_ms=0
+fi
+if [ "${duration_ms%.*}" -gt "$budget_ms" ]; then
+  PERF_SCORE=$(echo "$PERF_SCORE - 5" | bc)
+  if [ "$PERF_SCORE" -lt 0 ]; then PERF_SCORE=0; fi
+fi
+
 # ---------- Readability (25) ----------
 READABILITY_SCORE=20
 if [ -x "$phpcs_cmd" ]; then
