@@ -81,23 +81,31 @@ run_scenario() {
 scenarios="${PERF_SCENARIOS:-${PERF_SCENARIO:-}}"
 budget_ms="${SMARTALLOC_BUDGET_ALLOC_1K_MS:-2500}"
 duration_ms=0
+perf_penalty=0
+timings=()
 if [ -n "$scenarios" ]; then
   IFS=':' read -r -a sc_arr <<< "$scenarios"
   for sc in "${sc_arr[@]}"; do
-    [ -f "$sc" ] || continue
-    d=$(run_scenario "$sc")
+    IFS='@' read -r file sc_budget <<< "$sc"
+    [ -f "$file" ] || continue
+    [ -n "$sc_budget" ] || sc_budget="$budget_ms"
+    d=$(run_scenario "$file")
+    timings+=( "$(jq -n --arg f "$file" --argjson b "$sc_budget" --argjson d "$d" --argjson p $([ "$d" -gt "$sc_budget" ] && echo 1 || echo 0) '{file:$f,budget_ms:$b,duration_ms:$d,penalized:($p==1)}')" )
     if [ "$d" -gt "$duration_ms" ]; then duration_ms="$d"; fi
+    if [ "$d" -gt "$sc_budget" ]; then perf_penalty=$((perf_penalty+5)); fi
   done
 fi
-perf_penalty=0
-if [ "$duration_ms" -gt "$budget_ms" ]; then
-  PERF_SCORE=$(echo "$PERF_SCORE - 5" | bc)
-  if [ "$PERF_SCORE" -lt 0 ]; then PERF_SCORE=0; fi
-  perf_penalty=1
+timing_json='[]'
+if [ ${#timings[@]} -gt 0 ]; then
+  timing_json=$(printf '%s\n' "${timings[@]}" | jq -s '.')
 fi
-perf_note="budget ${budget_ms}ms, actual ${duration_ms}ms"
-if [ "$perf_penalty" -eq 1 ]; then
-  perf_note="$perf_note, penalty -5"
+if [ "$perf_penalty" -gt 0 ]; then
+  PERF_SCORE=$(echo "$PERF_SCORE - $perf_penalty" | bc)
+  if [ "$PERF_SCORE" -lt 0 ]; then PERF_SCORE=0; fi
+fi
+perf_note="budget ${budget_ms}ms, max ${duration_ms}ms"
+if [ "$perf_penalty" -gt 0 ]; then
+  perf_note="$perf_note, penalty -$perf_penalty"
 fi
 
 # ---------- Readability (25) ----------
@@ -166,6 +174,7 @@ tmp="$AI_CTX.tmp"
    --arg now "$UTC_NOW" \
    --arg duration "$duration_ms" \
    --arg budget "$budget_ms" \
+   --argjson timing "$timing_json" \
    --argjson penalized "$perf_penalty" \
    --argjson sec_err "$SECURITY_ERRORS" \
    --argjson log_err "$LOGIC_ERRORS" \
@@ -179,9 +188,10 @@ tmp="$AI_CTX.tmp"
        logic_errors: ($log_err|tonumber)
      }
    | .perf_timing = {
-      duration_ms: ($duration|tonumber),
-      budget_ms: ($budget|tonumber),
-      penalized: ($penalized==1)
+      max_duration_ms: ($duration|tonumber),
+      default_budget_ms: ($budget|tonumber),
+      scenarios: $timing,
+      penalized: ($penalized>0)
     }
    | .last_updated_utc = $now
    ' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
