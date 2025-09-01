@@ -33,7 +33,8 @@ if [ -x "$phpstan_cmd" ]; then
   set -e
   rm -f "$tmp_cfg"
 fi
-analysis_errors=$(echo "$analysis_json" | jq '.totals.file_errors // 0' 2>/dev/null || echo 0)
+# Count total static analysis errors instead of files with errors.
+analysis_errors=$(echo "$analysis_json" | jq '.totals.errors // 0' 2>/dev/null || echo 0)
 base_score=$((25 - analysis_errors*5))
 SECURITY_SCORE=$(score_part "$base_score" 25)
 LOGIC_SCORE=$(score_part "$base_score" 25)
