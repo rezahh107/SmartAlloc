@@ -66,21 +66,36 @@ cache_cnt=$( (grep -R -E "wp_cache_(get|set)|get_transient|set_transient" "$SRC_
 cache_score=$(( cache_cnt > 0 ? 15 : 0 ))
 PERF_SCORE=$(echo "$db_score + $cache_score" | bc)
 
-# Quantitative timing using Stopwatch
-scenario="${PERF_SCENARIO:-}"
+# Quantitative timing using Stopwatch or wp profile
+run_scenario() {
+  local file="$1" d=0
+  if command -v wp >/dev/null 2>&1; then
+    d=$(wp profile eval-file "$file" --allow-root --format=json 2>/dev/null | jq -r '.time_ms // .time // 0' 2>/dev/null || echo 0)
+  fi
+  if [ "${d%.*}" -eq 0 ]; then
+    d=$(php "$ROOT/scripts/stopwatch_eval.php" "$file" 2>/dev/null || echo 0)
+  fi
+  echo "${d%.*}"
+}
+
+scenarios="${PERF_SCENARIOS:-${PERF_SCENARIO:-}}"
 budget_ms="${SMARTALLOC_BUDGET_ALLOC_1K_MS:-2500}"
-if [ -n "$scenario" ] && [ -f "$scenario" ]; then
-  duration_ms=$(php "$ROOT/scripts/stopwatch_eval.php" "$scenario" 2>/dev/null || echo 0)
-else
-  duration_ms=0
+duration_ms=0
+if [ -n "$scenarios" ]; then
+  IFS=':' read -r -a sc_arr <<< "$scenarios"
+  for sc in "${sc_arr[@]}"; do
+    [ -f "$sc" ] || continue
+    d=$(run_scenario "$sc")
+    if [ "$d" -gt "$duration_ms" ]; then duration_ms="$d"; fi
+  done
 fi
 perf_penalty=0
-if [ "${duration_ms%.*}" -gt "$budget_ms" ]; then
+if [ "$duration_ms" -gt "$budget_ms" ]; then
   PERF_SCORE=$(echo "$PERF_SCORE - 5" | bc)
   if [ "$PERF_SCORE" -lt 0 ]; then PERF_SCORE=0; fi
   perf_penalty=1
 fi
-perf_note="budget ${budget_ms}ms, actual ${duration_ms%.*}ms"
+perf_note="budget ${budget_ms}ms, actual ${duration_ms}ms"
 if [ "$perf_penalty" -eq 1 ]; then
   perf_note="$perf_note, penalty -5"
 fi
