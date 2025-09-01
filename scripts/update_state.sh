@@ -29,7 +29,7 @@ if [ -x "$phpstan_cmd" ]; then
   tmp_cfg=$(mktemp --suffix=.neon)
   echo '' > "$tmp_cfg"
   set +e
-  analysis_json=$("$phpstan_cmd" analyse --no-progress --error-format=json --level=1 --configuration="$tmp_cfg" "$SRC_DIR" 2>/dev/null)
+  analysis_json=$("$phpstan_cmd" analyse --no-progress --error-format=json --level=5 --configuration="$tmp_cfg" "$SRC_DIR" 2>/dev/null)
   set -e
   rm -f "$tmp_cfg"
 fi
@@ -38,6 +38,8 @@ analysis_errors=$(echo "$analysis_json" | jq '.totals.errors // 0' 2>/dev/null |
 base_score=$((25 - analysis_errors*5))
 SECURITY_SCORE=$(score_part "$base_score" 25)
 LOGIC_SCORE=$(score_part "$base_score" 25)
+SECURITY_ERRORS="$analysis_errors"
+LOGIC_ERRORS="$analysis_errors"
 
 # ---------- Performance (25 = 10 + 15) ----------
 db_q=$( (grep -R -E "\$wpdb->(get_var|get_row|get_results|query)\(" "$SRC_DIR" 2>/dev/null || true) | wc -l | tr -d ' ' )
@@ -119,11 +121,17 @@ tmp="$AI_CTX.tmp"
    --arg duration "$duration_ms" \
    --arg budget "$budget_ms" \
    --argjson penalized "$perf_penalty" \
+   --argjson sec_err "$SECURITY_ERRORS" \
+   --argjson log_err "$LOGIC_ERRORS" \
    '
     .current_scores = {
       security:$sec, logic:$log, performance:$perf, readability:$read, goal:$goal,
       total: ($total|tonumber), weighted_percent: ($weighted|tonumber), red_flags: $flags
     }
+   | .analysis = {
+       security_errors: ($sec_err|tonumber),
+       logic_errors: ($log_err|tonumber)
+     }
    | .perf_timing = {
       duration_ms: ($duration|tonumber),
       budget_ms: ($budget|tonumber),

@@ -12,7 +12,7 @@ private string $script = __DIR__ . '/../../scripts/update_state.sh';
  * Run update_state.sh against given PHP code.
  *
  * @param string $code PHP code snippet.
- * @return array Parsed current_scores from ai_context.json.
+ * @return array Parsed ai_context.json data.
  */
 private function runScript(string $code): array {
 $dir = sys_get_temp_dir() . '/sa_state_' . uniqid();
@@ -29,27 +29,37 @@ escapeshellarg($dir . '/FEATURES.md'),
 escapeshellarg($this->script)
 );
 exec($cmd);
-$data = json_decode(file_get_contents($ai), true);
-array_map('unlink', glob($dir . '/*'));
-rmdir($dir);
-return $data['current_scores'];
+    $data = json_decode(file_get_contents($ai), true);
+    array_map('unlink', glob($dir . '/*'));
+    rmdir($dir);
+    return $data;
 }
 
 public function test_scores_with_clean_code(): void {
-    $scores = $this->runScript('<?php function ok(): int { return 1; }');
+    $data = $this->runScript('<?php function ok(): int { return 1; }');
+    $scores = $data['current_scores'];
+    $analysis = $data['analysis'];
     $this->assertSame(25, $scores['security']);
     $this->assertSame(25, $scores['logic']);
+    $this->assertSame(0, $analysis['security_errors']);
+    $this->assertSame(0, $analysis['logic_errors']);
 }
 
 public function test_scores_reflect_error_counts(): void {
-    $oneError = $this->runScript('<?php foo();');
-    $twoErrors = $this->runScript('<?php foo(); bar();');
-    $this->assertSame(20, $oneError['security']);
-    $this->assertSame(20, $oneError['logic']);
-    $this->assertSame(15, $twoErrors['security']);
-    $this->assertSame(15, $twoErrors['logic']);
-    $this->assertGreaterThan($twoErrors['security'], $oneError['security']);
-    $this->assertGreaterThan($twoErrors['logic'], $oneError['logic']);
-    $this->assertGreaterThan($twoErrors['total'], $oneError['total']);
+    $oneData = $this->runScript('<?php foo();');
+    $twoData = $this->runScript('<?php foo(); bar();');
+    $oneScores = $oneData['current_scores'];
+    $twoScores = $twoData['current_scores'];
+    $this->assertSame(20, $oneScores['security']);
+    $this->assertSame(20, $oneScores['logic']);
+    $this->assertSame(15, $twoScores['security']);
+    $this->assertSame(15, $twoScores['logic']);
+    $this->assertSame(1, $oneData['analysis']['security_errors']);
+    $this->assertSame(1, $oneData['analysis']['logic_errors']);
+    $this->assertSame(2, $twoData['analysis']['security_errors']);
+    $this->assertSame(2, $twoData['analysis']['logic_errors']);
+    $this->assertGreaterThan($twoScores['security'], $oneScores['security']);
+    $this->assertGreaterThan($twoScores['logic'], $oneScores['logic']);
+    $this->assertGreaterThan($twoScores['total'], $oneScores['total']);
 }
 }
