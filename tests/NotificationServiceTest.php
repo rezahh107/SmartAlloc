@@ -8,7 +8,7 @@ if(!function_exists('wp_upload_dir')){function wp_upload_dir(){return array('bas
 if(!function_exists('as_enqueue_single_action')){function as_enqueue_single_action($ts,$h,$a,$g,$u){global $s;$s=array($ts,$h,$a);}}
 if(!function_exists('as_enqueue_async_action')){function as_enqueue_async_action($h,$a,$g,$u){global $s;$s=array($h,$a);}}
 if(!function_exists('wp_schedule_single_event')){function wp_schedule_single_event($ts,$h,$a){global $s;$s=array($ts,$h,$a);}}
-if(!function_exists('get_transient')){function get_transient($k){global $t;return $t[$k]??false;}}if(!function_exists('set_transient')){function set_transient($k,$v,$e){global $t;$t[$k]=$v;}}
+if(!function_exists('get_transient')){function get_transient($k){global $t;return $t[$k]??false;}}if(!function_exists('set_transient')){function set_transient($k,$v,$e){global $t;$t[$k]=$v;}}if(!function_exists('current_time')){function current_time($t='mysql'){return gmdate('Y-m-d H:i:s');}}
 final class NotificationServiceTest extends BaseTestCase{
 public function test_sendMail_success_sets_idempotency():void{global $mail_ok,$t;$mail_ok=true;$t=array();(new NotificationService(new CircuitBreaker(),new Logging(),new Metrics()))->sendMail(array('to'=>'a','subject'=>'s','message'=>'m'));$this->assertNotEmpty($t);}
 public function test_sendMail_retry_on_failure():void{global $mail_ok,$s,$t;$mail_ok=false;$s=null;$t=array();(new NotificationService(new CircuitBreaker(),new Logging(),new Metrics()))->sendMail(array('to'=>'a','subject'=>'s','message'=>'m'));$this->assertSame('smartalloc_notify_mail',$s[1]);}
