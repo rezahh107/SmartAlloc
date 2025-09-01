@@ -74,17 +74,46 @@ final class ExportService
     }
 
     /**
+     * Stream rows from database in chunks to limit memory usage.
+     *
      * @param array<string,string> $filters
      * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
      */
     private function processInChunks(array $filters, $sheet): void
     {
-        $row = 1;
-        $limit = isset($filters['limit']) ? (int) $filters['limit'] : 1;
-        for ($i = 0; $i < $limit; $i++) {
-            $sheet->setCellValueByColumnAndRow(1, $row, 'row-' . $i);
-            $row++;
-        }
+        global $wpdb;
+
+        $row       = 1;
+        $offset    = 0;
+        $chunkSize = 500;
+        $max       = isset($filters['limit']) ? (int) $filters['limit'] : PHP_INT_MAX;
+        $ctx       = new FormContext(0);
+        $table     = $this->tables->allocations($ctx);
+
+        do {
+            $remaining = $max - ($row - 1);
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $current = (int) min($chunkSize, $remaining);
+            $sql     = DbSafe::mustPrepare(
+                "SELECT id,national_id,mobile,postal FROM {$table} LIMIT %d OFFSET %d",
+                [$current, $offset]
+            );
+
+            /** @var list<object> $results */
+            $results = $wpdb->get_results($sql) ?: []; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+            foreach ($results as $allocation) {
+                $sheet->setCellValueByColumnAndRow(1, $row, (string) $allocation->id);
+                $sheet->setCellValueByColumnAndRow(2, $row, (string) ($allocation->national_id ?? ''));
+                $sheet->setCellValueByColumnAndRow(3, $row, (string) ($allocation->mobile ?? ''));
+                $sheet->setCellValueByColumnAndRow(4, $row, (string) ($allocation->postal ?? ''));
+                $row++;
+            }
+
+            $offset += $current;
+        } while ($results !== [] && ($row - 1) < $max);
     }
 
     /** @param array<int,array<string,string>> $rows */
