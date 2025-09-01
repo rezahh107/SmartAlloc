@@ -8,6 +8,9 @@ PHASE_CONFIG="ai_config/project_phases.yml"
 [[ -f "$CONTEXT_FILE" ]] || { echo "Error: $CONTEXT_FILE not found"; exit 1; }
 [[ -f "$PHASE_CONFIG" ]] || { echo "Error: $PHASE_CONFIG not found"; exit 1; }
 
+# Ensure ai_context.json has latest feature statuses
+php scripts/sync-features-to-ai-context.php "features.json" "$CONTEXT_FILE" >/dev/null
+
 # Parse current phase and scores
 CURRENT_PHASE=$(jq -r '.current_phase // "foundation"' "$CONTEXT_FILE")
 SCORES=$(jq -r '.scores // {}' "$CONTEXT_FILE")
