@@ -1,56 +1,39 @@
 {
-    "last_update_utc": "2025-09-01T00:26:53Z",
-    "repo": {
-        "default_branch": "main",
-        "last_commit": "a66100ff1f8a9e2d6118f38bc27d198cb6ecab6c",
-        "commits_total": 601,
-        "files_tracked": 651
-    },
-    "quality_gate": {
-        "weighted_threshold": 0.85,
-        "security_min": 20,
-        "ci_status": "passing",
-        "coverage": "78%",
-        "5d_score": 93
-    },
-    "ci": {
-        "remote_connected": true,
-        "workflows": [
-            "ci.yml",
-            "nightly.yml"
-        ]
-    },
-    "gaps": [
-        "Rule Engine lacks failure mode tests",
-        "Notifications need retry with wp_mail"
-    ],
-    "next_actions": [
-        "Finalize Rule Engine exception flows",
-        "Implement notification delivery",
-        "Backfill allocation edge case tests"
-    ],
-    "current_scores": {
-        "security": 25,
-        "logic": 25,
-        "performance": 25,
-        "readability": 15,
-        "goal": 20,
-        "weighted_percent": 95,
-        "red_flags": []
-    },
-    "features": {
-        "Allocation Core": "green",
-        "CI/CD": "green",
-        "Circuit Breaker": "red",
-        "DB Safety": "green",
-        "Exporter": "green",
-        "Gravity Forms": "green",
-        "Logging": "green",
-        "Notifications": "amber",
-        "Observability": "green",
-        "Performance Budgets": "red",
-        "Rule Engine": "amber",
-        "rag-template-automation": "amber",
-        "rule-engine-reliability-gates": "amber"
-    }
+  "last_update_utc": "2025-09-01T00:28:56Z",
+  "repo": {
+    "default_branch": "codex/add-script-to-read-features.json",
+    "last_commit": "fc1385376f70eafe057bb30de52173e17516e606",
+    "commits_total": 603,
+    "files_tracked": 653
+  },
+  "quality_gate": {
+    "weighted_threshold": 0.85,
+    "security_min": 20,
+    "ci_status": "passing",
+    "coverage": "78%",
+    "5d_score": 93
+  },
+  "ci": {
+    "remote_connected": true,
+    "workflows": ["ci.yml", "nightly.yml"]
+  },
+  "gaps": [
+    "Rule Engine lacks failure mode tests",
+    "Notifications need retry with wp_mail"
+  ],
+  "next_actions": [
+    "Finalize Rule Engine exception flows",
+    "Implement notification delivery",
+    "Backfill allocation edge case tests"
+  ],
+  "current_scores": {
+    "security": 25,
+    "logic": 25,
+    "performance": 25,
+    "readability": 15,
+    "goal": 20,
+    "weighted_percent": 95.0,
+    "red_flags": []
+  },
+  "features": []
 }
