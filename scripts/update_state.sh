@@ -5,8 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${SRC_DIR:-$ROOT/src}"
 TESTS_DIR="${TESTS_DIR:-$ROOT/tests}"
-FEATURES_MD="$ROOT/FEATURES.md"
-AI_CTX="$ROOT/ai_context.json"
+FEATURES_MD="${FEATURES_MD:-$ROOT/FEATURES.md}"
+AI_CTX="${AI_CTX:-$ROOT/ai_context.json}"
+analysis_script="$ROOT/scripts/static_analyze.php"
 phpcs_cmd="${PHPCS_CMD:-$ROOT/vendor/bin/phpcs}"
 UTC_NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -22,25 +23,12 @@ score_part() { # clamp to 0..max
   else echo "$v"; fi
 }
 
-# ---------- Security (25 = 4×6.25) ----------
-sec_nonce=0 sec_prepare=0 sec_utc=0 sec_typed=0
-if [ -d "$SRC_DIR" ]; then
-  grep -R -E "wp_verify_nonce|check_admin_referer" "$SRC_DIR" >/dev/null 2>&1 && sec_nonce=1
-  grep -R -E "DbSafe::mustPrepare|\$wpdb->prepare\(|->prepare\(" "$SRC_DIR" >/dev/null 2>&1 && sec_prepare=1
-  grep -R -E "current_time\s*\(\s*['\"]mysql['\"]\s*,\s*1\s*\)" "$SRC_DIR" >/dev/null 2>&1 && sec_utc=1
-  grep -R -E "throw\s+new\s+[A-Z][A-Za-z0-9_]*Exception" "$SRC_DIR" >/dev/null 2>&1 && sec_typed=1
-fi
-SECURITY_SCORE=$(echo "scale=2; ($sec_nonce+$sec_prepare+$sec_utc+$sec_typed)*6.25" | bc)
-
-# ---------- Logic (25 = 8+8+9) ----------
-# Heuristics: edge cases (if/elseif/default), error handling (try/catch), input validation (sanitize_/esc_/filter_var)
-edge_cnt=$( (grep -R -E "elseif|else if|default\s*:" "$SRC_DIR" 2>/dev/null || true) | wc -l | tr -d ' ' )
-edge_score=$(( edge_cnt >= 3 ? 8 : edge_cnt*3 )) # 0..8
-try_cnt=$( (grep -R -E "\btry\b" "$SRC_DIR" 2>/dev/null || true) | wc -l | tr -d ' ' )
-err_score=$(( try_cnt > 0 ? 8 : 0 ))            # 0/8
-val_cnt=$( (grep -R -E "sanitize_|esc_|filter_var\(" "$SRC_DIR" 2>/dev/null || true) | wc -l | tr -d ' ' )
-val_score=$(( val_cnt >= 3 ? 9 : val_cnt*3 ))   # 0..9
-LOGIC_SCORE=$(echo "$edge_score+$err_score+$val_score" | bc)
+# ---------- Static Analysis (Security & Logic) ----------
+analysis_output=$(php "$analysis_script" "$SRC_DIR" 2>/dev/null || echo '{"errors":0}')
+analysis_errors=$(echo "$analysis_output" | jq '.errors // 0')
+base_score=$((25 - analysis_errors*5))
+SECURITY_SCORE=$(score_part "$base_score" 25)
+LOGIC_SCORE=$(score_part "$base_score" 25)
 
 # ---------- Performance (25 = 10 + 15) ----------
 db_q=$( (grep -R -E "\$wpdb->(get_var|get_row|get_results|query)\(" "$SRC_DIR" 2>/dev/null || true) | wc -l | tr -d ' ' )
