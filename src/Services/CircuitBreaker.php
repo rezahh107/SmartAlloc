@@ -6,11 +6,13 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Infra\CircuitStorage;
 use SmartAlloc\Infra\TransientCircuitStorage;
+use DateTimeImmutable;
+use DateTimeZone;
 
 final class CircuitBreaker{
     private int $threshold;private int $cooldown;private $halfOpenCallback;private CircuitStorage $storage;
     public function __construct(int $threshold=5,int $cooldown=60,?callable $halfOpenCallback=null,?CircuitStorage $storage=null){$this->threshold=$threshold;$this->cooldown=$cooldown;$this->halfOpenCallback=$halfOpenCallback;$this->storage=$storage?:new TransientCircuitStorage();}
-    public function guard(string $name):void{$s=$this->getState($name);if($s['state']==='open'){$opened=strtotime($s['opened_at']);$reset=$opened+$this->cooldown;if(time()<$reset){throw new \RuntimeException("Circuit breaker open: $name");}$this->setState($name,'half',0,null);}}
+    public function guard(string $name):void{$s=$this->getState($name);if($s['state']==='open'){$opened=(new DateTimeImmutable($s['opened_at'],new DateTimeZone('UTC')))->getTimestamp();$reset=$opened+$this->cooldown;if(time()<$reset){throw new \RuntimeException("Circuit breaker open: $name");}$this->setState($name,'half',0,null);}}
     public function success(string $n):void{$this->setState($n,'closed',0,null);}
     public function failure(string $n,int $threshold=5):void{$s=$this->getState($n);$f=$s['failures']+1;if($f>=$threshold){$this->setState($n,'open',$f,gmdate('Y-m-d H:i:s'));}else{$this->setState($n,'half',$f,null);}}
     private function getState(string $n):array{$r=$this->storage->get($n);if(!$r){return ['state'=>'closed','failures'=>0,'opened_at'=>null];}return $r;}
