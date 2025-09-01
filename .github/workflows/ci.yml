@@ -193,6 +193,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
+      - name: Sync AI context features
+        run: |
+          php scripts/sync-features-to-ai-context.php
+
       - name: Check Phase Transition Readiness
         run: |
           ./scripts/check_phase_transition.sh
