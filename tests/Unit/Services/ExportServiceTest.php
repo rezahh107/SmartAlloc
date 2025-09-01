@@ -2,7 +2,17 @@
 
 declare(strict_types=1);
 
-namespace SmartAlloc\Tests\Unit\Services;
+namespace {
+    if (!class_exists('wpdb')) {
+        class wpdb {
+            public string $prefix = 'wp_';
+            public string $last_query = '';
+            public function query($sql): void { $this->last_query = $sql; }
+        }
+    }
+}
+
+namespace SmartAlloc\Tests\Unit\Services {
 
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -29,5 +39,18 @@ final class ExportServiceTest extends BaseTestCase
         $this->assertSame(DataType::TYPE_STRING, $sheet2->getCell('C1')->getDataType());
         $this->assertSame(DataType::TYPE_STRING, $sheet2->getCell('D1')->getDataType());
     }
+
+    /** @test */
+    public function stream_export_outputs_xlsx(): void
+    {
+        $GLOBALS['wpdb'] = new \wpdb();
+        $svc = new ExportService(new TableResolver($GLOBALS['wpdb']));
+        ob_start();
+        $svc->streamExport(['limit' => '2']);
+        $data = ob_get_clean();
+        $this->assertStringContainsString('PK', (string) $data); // zip header
+    }
+
+}
 }
 
