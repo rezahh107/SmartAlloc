@@ -69,4 +69,19 @@ final class CircuitBreakerTest extends BaseTestCase
         $dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$snap['opened_at'],new DateTimeZone('UTC'));
         $this->assertInstanceOf(DateTimeImmutable::class,$dt);
     }
+
+    public function test_get_status_shape_is_stable(): void
+    {
+        $s = new ArrayCircuitStorage();
+        $b = new CircuitBreaker(threshold:1,cooldown:5,halfOpenCallback:null,storage:$s);
+        try { $b->failure('svc.export', new \Exception()); } catch (\Throwable $e) {}
+        $st = $b->getStatus();
+        $this->assertArrayHasKey('svc.export', $st);
+        $one = $st['svc.export'];
+        $this->assertIsArray($one);
+        $this->assertArrayHasKey('state', $one);
+        $this->assertContains($one['state'], ['open','half','closed']);
+        $this->assertArrayHasKey('failures', $one);
+        $this->assertIsInt($one['failures']);
+    }
 }

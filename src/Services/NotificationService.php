@@ -90,7 +90,8 @@ final class NotificationService
             $this->circuitBreaker->failure('notify',$e);
             $this->metrics->inc('notify_failed_total');
             $this->logger->warning('notify.fail', ['error' => $e->getMessage(), 'attempt' => $attempt]);
-            if ($attempt <= 5) {
+            $maxTries = defined('SMARTALLOC_NOTIFY_MAX_TRIES') ? (int) SMARTALLOC_NOTIFY_MAX_TRIES : 5;
+            if ($attempt < $maxTries) {
                 $this->metrics->inc('notify_retry_total');
                 $payload['_attempt'] = $attempt + 1;
                 $delay = $this->retry->backoff($attempt);
@@ -127,7 +128,7 @@ final class NotificationService
         try {
             $ok = SafetyCircuitBreaker::call(
                 'mail',
-                fn() => wp_mail(
+                fn() => wp_mail( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
                     (string) ( $payload['to'] ?? '' ),
                     (string) ( $payload['subject'] ?? '' ),
                     (string) ( $payload['message'] ?? '' ),
