@@ -25,14 +25,19 @@ score_part() { # clamp to 0..max
 }
 
 # ---------- Static Analysis (Security & Logic) ----------
-analysis_json='{"totals":{"errors":0}}'
+security_errors=0
+logic_errors=0
 if [ -x "$phpstan_cmd" ]; then
   tmp_cfg=$(mktemp --suffix=.neon)
   echo '' > "$tmp_cfg"
   set +e
-  analysis_json=$("$phpstan_cmd" analyse --no-progress --error-format=json --level=5 --configuration="$tmp_cfg" "$SRC_DIR" 2>/dev/null)
+  "$phpstan_cmd" analyse --no-progress --error-format=json --level=8 --configuration="$tmp_cfg" "$SRC_DIR" \
+    > "$ROOT/phpstan-output.json" 2>/dev/null
   set -e
-  rm -f "$tmp_cfg"
+  php "$ROOT/scripts/process-phpstan.php" "$ROOT/phpstan-output.json" >/dev/null
+  security_errors=$(jq '.security_errors' "$ROOT/phpstan-processed.json" 2>/dev/null || echo 0)
+  logic_errors=$(jq '.logic_errors' "$ROOT/phpstan-processed.json" 2>/dev/null || echo 0)
+  rm -f "$tmp_cfg" "$ROOT/phpstan-output.json"
 elif [ -x "$psalm_cmd" ]; then
   tmp_cfg=$(mktemp --suffix=.xml)
   cat <<XML > "$tmp_cfg"
@@ -47,14 +52,17 @@ XML
   analysis_json=$(php -d error_reporting=0 "$psalm_cmd" --no-progress --output-format=json --config="$tmp_cfg" 2>/dev/null)
   set -e
   rm -f "$tmp_cfg"
+  security_errors=$(echo "$analysis_json" | jq '.totals.errors // (.issues|length) // 0' 2>/dev/null || echo 0)
+  logic_errors="$security_errors"
 fi
-# Count total static analysis errors instead of files with errors.
-analysis_errors=$(echo "$analysis_json" | jq '.totals.errors // (.issues|length) // 0' 2>/dev/null || echo 0)
-base_score=$((25 - analysis_errors*5))
-SECURITY_SCORE=$(score_part "$base_score" 25)
-LOGIC_SCORE=$(score_part "$base_score" 25)
-SECURITY_ERRORS="$analysis_errors"
-LOGIC_ERRORS="$analysis_errors"
+sec_ded=$(echo "$security_errors * 1.5" | bc)
+log_ded=$(echo "$logic_errors * 2" | bc)
+sec_score=$(echo "25 - $sec_ded" | bc)
+log_score=$(echo "20 - $log_ded" | bc)
+SECURITY_SCORE=$(score_part "${sec_score%.*}" 25)
+LOGIC_SCORE=$(score_part "${log_score%.*}" 20)
+SECURITY_ERRORS="$security_errors"
+LOGIC_ERRORS="$logic_errors"
 
 # ---------- Performance (25 = 10 + 15) ----------
 db_q=$( (grep -R -E "\$wpdb->(get_var|get_row|get_results|query)\(" "$SRC_DIR" 2>/dev/null || true) | wc -l | tr -d ' ' )
