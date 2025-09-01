@@ -199,7 +199,7 @@ jobs:
 
       - name: Sync AI context features
         run: |
-          php scripts/sync-features-to-ai-context.php
+          php scripts/sync-features-to-ai-context.php features.json ai_context.json
 
       - name: Check Phase Transition Readiness
         run: |
