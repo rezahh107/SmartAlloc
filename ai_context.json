@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-01T09:54:56Z",
+  "last_update_utc": "2025-09-01T09:55:12Z",
   "repo": {
     "default_branch": "dependabot/composer/phpstan/phpstan-tw-2.1",
-    "last_commit": "ddcb7b77baae30ffc3927bbfcaf93f20cb44254b",
-    "commits_total": 666,
+    "last_commit": "3ba7eac4d6e8508cce67b4a5621e9b9645baf979",
+    "commits_total": 667,
     "files_tracked": 657
   },
   "quality_gate": {
