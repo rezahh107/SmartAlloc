@@ -19,7 +19,7 @@
 }
 
 ---
-Last Updated (UTC): 2025-09-02T18:53:05Z
+Last Updated (UTC): 2025-09-02T19:03:12Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
@@ -37,7 +37,7 @@ Last Updated (UTC): 2025-09-02T18:53:05Z
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| project-history | ⚪ Unknown | baseline project history snapshot |
+| project-history | ⚪ Unknown |  |
 
 _Last Updated (UTC): 2025-09-02_
 <!-- AUTO-GEN:RAG END -->
