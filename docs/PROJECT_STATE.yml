@@ -1,11 +1,22 @@
-- date: '2025-08-30'
-  status: 93
-  phase: 'expansion'
-  scores:
-    security: 21
-    logic: 18
-    performance: 18
-    readability: 19
-    goal: 17
-  action: 'DLQ replay action and perf budget tests → Added retry-based mailer, admin DLQ replay action, circuit breaker protection, and performance budget test.'
-  risk: 'none → none'
+# تاریخچهٔ انسانی پروژه SmartAlloc
+# هر ورودی با تاریخ و وضعیت پروژه در زمان commit ذخیره می‌شود
+
+# این فایل به صورت خودکار توسط pre-commit hook به‌روز می‌شود
+# هرگز به صورت دستی ویرایش نشود
+
+timestamp: "2025-09-02T17:30:34Z"
+commit: "07fd352"
+branch: "work"
+phase: "foundation"
+phase_status: "foundation"
+completion_percent: 11
+timeline_deviation: "+0"
+critical_gaps: ["Rule Engine lacks failure mode tests","Notifications need retry with wp_mail"]
+risks: []
+5d_scores:
+  security: 25
+  logic: 25
+  performance: 25
+  readability: 15
+  goal: 20
+weighted_percent: 95.0
