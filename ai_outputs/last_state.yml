@@ -6,8 +6,11 @@ critical_gaps: ["Rule Engine lacks failure mode tests","Notifications need retry
 risks: []
 5d_scores:
   security: 25
-  logic: 25
+  logic: 20
   performance: 25
-  readability: 15
-  goal: 20
-weighted_percent: 95.0
+  readability: 20
+  goal: 25
+weighted_percent: 92.00
+feature: "project-history"
+status: "implemented"
+notes: "baseline project history snapshot"

@@ -65,6 +65,11 @@
       "name": "rag-template-automation",
       "status": "amber",
       "notes": ""
+    },
+    {
+      "name": "project-history",
+      "status": "implemented",
+      "notes": "baseline project history snapshot"
     }
   ]
 }

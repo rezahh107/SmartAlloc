@@ -21,6 +21,11 @@ READABILITY=$(jq -r '.current_scores.readability // 0' ai_context.json 2>/dev/nu
 GOAL=$(jq -r '.current_scores.goal // 0' ai_context.json 2>/dev/null || echo 0)
 WEIGHTED=$(jq -r '.current_scores.weighted_percent // 0' ai_context.json 2>/dev/null || echo 0)
 
+# اطلاعات ویژگی برای همگام‌سازی با حافظه پروژه
+FEATURE="${1:-project-history}"
+STATE="${2:-implemented}"
+NOTES="${3:-}" # توضیحات اختیاری
+
 # محاسبه درصد تکمیل
 COMPLETION=$(echo "scale=0; ($SECURITY + $LOGIC + $PERFORMANCE + $READABILITY + $GOAL) / 10" | bc)
 
@@ -42,6 +47,9 @@ risks: []
   readability: $READABILITY
   goal: $GOAL
 weighted_percent: $WEIGHTED
+feature: "$FEATURE"
+status: "$STATE"
+notes: "$NOTES"
 YAML
 
 echo "✅ وضعیت پروژه در $OUT ذخیره شد"
