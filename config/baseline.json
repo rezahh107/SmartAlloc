@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2024-09-10",
+  "phases": {
+    "FOUNDATION": {
+      "metrics": {
+        "Security": 20,
+        "Logic": 16,
+        "Performance": 16,
+        "Observability": 14,
+        "Maintainability": 14
+      },
+      "required_features": ["RuleEngine", "ErrorCollector", "Logger"],
+      "completion_target": 80
+    },
+    "EXPANSION": {
+      "metrics": {
+        "Security": 20,
+        "Logic": 17,
+        "Performance": 17,
+        "Observability": 15,
+        "Maintainability": 15
+      },
+      "required_features": ["RuleEngine.composite", "ExportStreaming", "CorrelationID"],
+      "completion_target": 84
+    },
+    "POLISH": {
+      "metrics": {
+        "Security": 22,
+        "Logic": 18,
+        "Performance": 18,
+        "Observability": 16,
+        "Maintainability": 16
+      },
+      "completion_target": 90
+    }
+  }
+}
