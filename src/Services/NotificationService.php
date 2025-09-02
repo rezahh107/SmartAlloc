@@ -21,6 +21,8 @@ final class NotificationService
     private RetryService $retry;
     private DlqService $dlq;
     private ThrottleConfig $throttleConfig;
+    private NotificationThrottler $throttler;
+    private DLQMetrics $dlqMetrics;
 
     public function __construct(
         private CircuitBreaker $circuitBreaker,
@@ -32,6 +34,8 @@ final class NotificationService
     ) {
         $this->retry = $retry ?? new RetryService();
         $this->dlq = $dlq ?? new DlqService();
+        $this->throttler = new NotificationThrottler();
+        $this->dlqMetrics = new DLQMetrics();
         $cfg = $this->getThrottleConfig();
         $this->throttleConfig = $config ?? new ThrottleConfig(
             (int) $cfg['limit_per_minute'],
@@ -52,8 +56,14 @@ final class NotificationService
             $this->logger->warning('notify.throttle');
             return;
         }
+        $recipient = (string) ($payload['recipient'] ?? '');
+        if (!$this->throttler->canSend($recipient)) {
+            $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $recipient]);
+            throw new Exceptions\ThrottleException('Rate limit exceeded');
+        }
         $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
         $this->incrementRateCounter();
+        $this->throttler->recordSend($recipient);
         $this->enqueue('smartalloc_notify', $payload, 0);
     }
 
