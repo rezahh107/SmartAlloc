@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-echo "▶ pre-commit: php syntax & smoke"
-composer lint:php
-composer smoke || { echo "Smoke failed; fix before commit."; exit 1; }

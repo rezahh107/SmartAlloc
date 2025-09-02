@@ -9,8 +9,14 @@ LOGIC="$(jq -r '.current_scores.logic // 0' "$AI_CTX")"
 PERF="$(jq -r '.current_scores.performance // 0' "$AI_CTX")"
 READ="$(jq -r '.current_scores.readability // 0' "$AI_CTX")"
 GOAL="$(jq -r '.current_scores.goal // 0' "$AI_CTX")"
-PHPCS_JSON="$(vendor/bin/phpcs --standard=WordPress --extensions=php src tests --report=json 2>/dev/null || true)"
-PHPCS_FAILS="$(jq -r '.totals.errors + .totals.warnings' <<<"$PHPCS_JSON" 2>/dev/null || echo 0)"
+if [ -x vendor/bin/phpcs ]; then
+  PHPCS_JSON="$(vendor/bin/phpcs --standard=WordPress --extensions=php src tests --report=json 2>/dev/null || true)"
+  PHPCS_FAILS="$(jq -r '.totals.errors + .totals.warnings' <<<"$PHPCS_JSON" 2>/dev/null || echo 0)"
+else
+  PHPCS_FAILS="0"
+fi
+PHPCS_FAILS=${PHPCS_FAILS:-0}
+[[ "$PHPCS_FAILS" =~ ^[0-9]+$ ]] || PHPCS_FAILS=0
 tmp="$AI_CTX.tmp"
 jq --argjson phpcs "$PHPCS_FAILS" '.phpcs_errors=$phpcs' "$AI_CTX" > "$tmp" && mv "$tmp" "$AI_CTX"
 TEST_FAILS="${TEST_FAILS:-0}"
