@@ -5,6 +5,17 @@ use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\{NotificationService,CircuitBreaker,Logging,DlqService};
 use SmartAlloc\Tests\TestDoubles\{SpyDlq,NullMetrics};
 
+class SpyMetrics extends SmartAlloc\Services\Metrics
+{
+    public array $counters = [];
+    public function __construct() {}
+    public function inc(string $key, float $value = 1.0, array $labels = []): void
+    {
+        $this->counters[$key] = ($this->counters[$key] ?? 0) + $value;
+    }
+    public function observe(string $key, int $milliseconds, array $labels = []): void {}
+}
+
 if (!defined('DAY_IN_SECONDS')) {
     define('DAY_IN_SECONDS', 86400);
 }
@@ -34,6 +45,11 @@ if (!function_exists('wp_json_encode')) {
 if (!function_exists('apply_filters')) {
     function apply_filters($t, $v) {
         return $v;
+    }
+}
+if (!function_exists('get_option')) {
+    function get_option($k, $d = null) {
+        return $d;
     }
 }
 if (!function_exists('wp_upload_dir')) {
@@ -124,6 +140,36 @@ final class NotificationServiceTest extends BaseTestCase
         $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
         $svc->handle(['event_name' => 'mail', 'body' => [], '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES]);
         $this->assertTrue($spy->has('mail'));
+        unset($GLOBALS['filters']['smartalloc_notify_transport']);
+    }
+
+    public function test_throttle_respects_dynamic_filters(): void
+    {
+        global $t;
+        $t = [];
+        $GLOBALS['filters']['smartalloc_notify_burst'] = fn($v) => 2;
+        $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics());
+        $svc->send(['event_name' => 'a']);
+        $svc->send(['event_name' => 'b']);
+        $svc->send(['event_name' => 'c']);
+        $this->assertSame(2, $t['smartalloc_notify_rate'] ?? 0);
+        unset($GLOBALS['filters']['smartalloc_notify_burst']);
+    }
+
+    public function test_dlq_after_retries_with_metrics(): void
+    {
+        global $s, $t;
+        $s = null;
+        $t = [];
+        $spy = new SpyDlq();
+        $dlq = new DlqService($spy);
+        $metrics = new SpyMetrics();
+        $svc = new NotificationService(new CircuitBreaker(), new Logging(), $metrics, null, $dlq);
+        $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
+        $svc->handle(['event_name' => 'x', 'body' => [], '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES]);
+        $this->assertTrue($spy->has('x'));
+        $this->assertSame(1, $metrics->counters['notify_failed_total'] ?? 0);
+        $this->assertSame(1, $metrics->counters['dlq_push_total'] ?? 0);
         unset($GLOBALS['filters']['smartalloc_notify_transport']);
     }
 }

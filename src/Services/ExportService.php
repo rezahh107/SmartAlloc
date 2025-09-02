@@ -19,11 +19,12 @@ final class ExportService
     private static int $dailyCounter = 0;
     private static int $batchCounter = 0;
     private static int $logSeq = 1;
-
-    public function __construct(private TableResolver $tables, ?ExporterConfig $config = null)
+    public function __construct(private TableResolver $tables, ?ExporterConfig $config = null, ?Logging $logger = null)
     {
         $this->config = $config ?: ExporterConfig::load();
+        $this->logger = $logger ?? new Logging();
     }
+    private Logging $logger;
 
     /**
      * @param array<string,mixed> $opts
@@ -89,6 +90,9 @@ final class ExportService
         $max       = isset($filters['limit']) ? (int) $filters['limit'] : PHP_INT_MAX;
         $ctx       = new FormContext(0);
         $table     = $this->tables->allocations($ctx);
+        $startTime = microtime(true);
+        $startMem  = memory_get_usage(true);
+        $chunk     = 0;
 
         do {
             $remaining = $max - ($row - 1);
@@ -113,6 +117,16 @@ final class ExportService
             }
 
             $offset += $current;
+            $chunk++;
+            if ($chunk % 10 === 0) {
+                $elapsed = (microtime(true) - $startTime) * 1000;
+                $memory  = (memory_get_usage(true) - $startMem) / 1024 / 1024;
+                $this->logger->info('Export telemetry', [
+                    'elapsed_ms' => $elapsed,
+                    'memory_mb' => $memory,
+                    'chunks_processed' => $chunk,
+                ]);
+            }
         } while ($results !== [] && ($row - 1) < $max);
     }
 

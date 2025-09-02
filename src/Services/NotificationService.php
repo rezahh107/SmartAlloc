@@ -32,7 +32,12 @@ final class NotificationService
     ) {
         $this->retry = $retry ?? new RetryService();
         $this->dlq = $dlq ?? new DlqService();
-        $this->throttleConfig = $config ?? ThrottleConfig::default();
+        $cfg = $this->getThrottleConfig();
+        $this->throttleConfig = $config ?? new ThrottleConfig(
+            (int) $cfg['limit_per_minute'],
+            (int) $cfg['burst_limit'],
+            (int) $cfg['window_seconds']
+        );
         add_action('smartalloc_notify', [$this, 'handle']);
     }
 
@@ -198,6 +203,30 @@ final class NotificationService
             return;
         }
         wp_schedule_single_event(time() + max(1, $delay), $hook, [$payload]);
+    }
+
+    private function getThrottleConfig(): array
+    {
+        $defaults = [
+            'limit_per_minute' => 10,
+            'burst_limit' => 3,
+            'window_seconds' => 60,
+            'dlq_enabled' => true,
+        ];
+        $config = get_option('smartalloc_notify', $defaults);
+        $config['limit_per_minute'] = function_exists('apply_filters') ? apply_filters('smartalloc_notify_limit_per_min', $config['limit_per_minute']) : $config['limit_per_minute'];
+        if (isset($GLOBALS['filters']['smartalloc_notify_limit_per_min'])) {
+            $config['limit_per_minute'] = $GLOBALS['filters']['smartalloc_notify_limit_per_min']($config['limit_per_minute']);
+        }
+        $config['burst_limit'] = function_exists('apply_filters') ? apply_filters('smartalloc_notify_burst', $config['burst_limit']) : $config['burst_limit'];
+        if (isset($GLOBALS['filters']['smartalloc_notify_burst'])) {
+            $config['burst_limit'] = $GLOBALS['filters']['smartalloc_notify_burst']($config['burst_limit']);
+        }
+        $config['window_seconds'] = function_exists('apply_filters') ? apply_filters('smartalloc_notify_window', $config['window_seconds']) : $config['window_seconds'];
+        if (isset($GLOBALS['filters']['smartalloc_notify_window'])) {
+            $config['window_seconds'] = $GLOBALS['filters']['smartalloc_notify_window']($config['window_seconds']);
+        }
+        return $config;
     }
 
     private function checkRateLimit(): bool

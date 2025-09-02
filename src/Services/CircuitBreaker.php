@@ -6,7 +6,7 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Infra\CircuitStorage;
 use SmartAlloc\Infra\TransientCircuitStorage;
-use SmartAlloc\ValueObjects\{CircuitState,CircuitStatus};
+use SmartAlloc\ValueObjects\{CircuitState,CircuitStatus,CircuitBreakerStatus};
 use DateTimeImmutable;
 use DateTimeZone;
 
@@ -22,9 +22,11 @@ final class CircuitBreaker{
     public function reset(string $n):void{$this->setState($n,'closed',0,null);}
     public function protect(callable $op,string $svc,array $args=[]):mixed{$this->guard($svc);try{$res=$op(...$args);$this->success($svc);return $res;}catch(\Throwable $e){$this->failure($svc,$e);throw $e;}}
     public function getStatus():array{$st=[];foreach($this->storage->keys() as $n){$s=$this->getState($n);$o=$s->lastFailureTime();$ot=$o?$o->getTimestamp():null;$until=($s->status()===CircuitStatus::OPEN&&$ot)?$ot+$this->cooldown:null;$st[$n]=['state'=>$s->status()->value,'openedAt'=>$o?->format('Y-m-d H:i:s'),'failures'=>$s->failureCount(),'cooldownUntil'=>$until];}return $st;}
-    public function getStatusReport():array{$s=$this->getStatus();return ['circuits'=>$s,'summary'=>['total'=>count($s),'closed'=>count(array_filter($s,fn($x)=>$x['state']==='closed')),'open'=>count(array_filter($s,fn($x)=>$x['state']==='open')),'half'=>count(array_filter($s,fn($x)=>$x['state']==='half'))],'config'=>['threshold'=>$this->threshold,'cooldown'=>$this->cooldown,'has_half_open_callback'=>$this->halfOpenCallback!==null]];}
+    public function getStatusSummary():array{$s=$this->getStatus();return ['circuits'=>$s,'summary'=>['total'=>count($s),'closed'=>count(array_filter($s,fn($x)=>$x['state']==='closed')),'open'=>count(array_filter($s,fn($x)=>$x['state']==='open')),'half'=>count(array_filter($s,fn($x)=>$x['state']==='half'))],'config'=>['threshold'=>$this->threshold,'cooldown'=>$this->cooldown,'has_half_open_callback'=>$this->halfOpenCallback!==null]];}
     public function executeHalfOpenCallback(string $n):mixed{if($this->halfOpenCallback===null){return null;}try{return call_user_func($this->halfOpenCallback,$n);}catch(\Throwable $e){return null;}}
     public function getConfig():array{return ['threshold'=>$this->threshold,'cooldown'=>$this->cooldown,'has_half_open_callback'=>$this->halfOpenCallback!==null];}
     public function updateConfig(int $t,int $c,$cb=null):void{$this->threshold=$t;$this->cooldown=$c;$this->halfOpenCallback=$cb;}
+    public function getStatusDto(string $n):CircuitBreakerStatus{$s=$this->getState($n);$o=$s->lastFailureTime();$next=null;if($s->status()===CircuitStatus::OPEN&&$o){$next=$o->modify('+'.$this->cooldown.' seconds');}return new CircuitBreakerStatus($s->status()===CircuitStatus::OPEN,$s->failureCount(),$o,$next,$n);}
+    public function getStatusReport(string $n):array{return ['service'=>$n,'status'=>$this->getStatusDto($n)];}
 }
 

@@ -33,4 +33,29 @@ final class CompositeRuleTest extends TestCase
         $this->assertTrue($svc->evaluateCompositeRule($rule, ['age' => 20, 'status' => 'inactive']));
         $this->assertFalse($svc->evaluateCompositeRule($rule, ['age' => 17, 'status' => 'inactive']));
     }
+
+    public function test_invalid_operator_throws(): void
+    {
+        $svc = new RuleEngineService();
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid operator: XOR');
+        $svc->evaluateCompositeRule(['operator' => 'XOR'], []);
+    }
+
+    public function test_depth_limit_exceeded_throws(): void
+    {
+        $svc = new RuleEngineService();
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Rule depth exceeded maximum: 3');
+        $svc->evaluateCompositeRule($this->createNestedRule(4), []);
+    }
+
+    private function createNestedRule(int $levels): array
+    {
+        $rule = ['field' => 'age', 'operator' => '>', 'value' => 18];
+        for ($i = 0; $i < $levels; $i++) {
+            $rule = ['operator' => 'AND', 'conditions' => [$rule]];
+        }
+        return $rule;
+    }
 }
