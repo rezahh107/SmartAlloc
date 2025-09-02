@@ -2,7 +2,7 @@
 <!-- AUTO-GEN:STATE START -->
 # PROJECT_STATE — 2025-09-02
 ## Implemented Features
-
+- project-history
 
 ## Milestones
 - ✅ Core Allocation shipped

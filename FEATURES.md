@@ -19,7 +19,7 @@
 }
 
 ---
-Last Updated (UTC): 2025-09-02T17:49:20Z
+Last Updated (UTC): 2025-09-02T18:32:33Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
@@ -37,14 +37,7 @@ Last Updated (UTC): 2025-09-02T17:49:20Z
 | CI/CD | 🟢 Green | 5D gate with AUTO-FIX loop |
 | rule-engine-reliability-gates | 🟡 Amber |  |
 | rag-template-automation | 🟡 Amber |  |
-| SmartAlloc | ⚪ Unknown | [
-  "RuleEngine implemented",
-  "Security score at 21/25",
-  "Logic score at 18/25",
-  "Performance score at 18/25",
-  "Readability score at 19/25",
-  "Goal score at 17/25"
-] |
+| project-history | ⚪ Unknown | baseline project history snapshot |
 
 _Last Updated (UTC): 2025-09-02_
 <!-- AUTO-GEN:RAG END -->
