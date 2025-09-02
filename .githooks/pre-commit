@@ -2,4 +2,24 @@
 set -euo pipefail
 echo "▶ pre-commit: php syntax & smoke"
 composer lint:php
-composer smoke || { echo "Smoke failed; fix before commit."; exit 1; }
+composer test:smoke || { echo "Smoke failed; fix before commit."; exit 1; }
+if [ ! -f ai_outputs/last_state.yml ]; then echo "⚠️ ai_outputs/last_state.yml not found. Run scripts/status-auditor.sh."; exit 0; fi
+[ -f docs/PROJECT_STATE.yml ] || { mkdir -p docs; cat <<'EOT' > docs/PROJECT_STATE.yml
+# تاریخچهٔ انسانی پروژه SmartAlloc
+# هر ورودی با تاریخ و وضعیت پروژه در زمان commit ذخیره می‌شود
+# این فایل به صورت خودکار توسط pre-commit hook به‌روز می‌شود
+# هرگز به صورت دستی ویرایش نشود
+EOT
+}
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "N/A")
+{
+  echo ""
+  echo "timestamp: \"$TIMESTAMP\""
+  echo "commit: \"$COMMIT_HASH\""
+  echo "branch: \"$BRANCH\""
+  cat ai_outputs/last_state.yml
+} >> docs/PROJECT_STATE.yml
+git add docs/PROJECT_STATE.yml
+echo "✅ وضعیت پروژه به docs/PROJECT_STATE.yml الحاق شد"
