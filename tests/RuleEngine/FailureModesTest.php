@@ -31,4 +31,10 @@ final class FailureModesTest extends TestCase
         $this->expectException(InsufficientCapacityException::class);
         $proxy->evaluate($ctx);
     }
+
+    public function test_empty_rule_tree_returns_reject(): void
+    {
+        $service = new RuleEngineService();
+        $this->assertFalse($service->evaluateCompositeRule([], []));
+    }
 }

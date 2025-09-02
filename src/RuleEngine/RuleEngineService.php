@@ -65,13 +65,26 @@ final class RuleEngineService implements RuleEngineContract
     public function evaluateCompositeRule(array $rule, array $context, int $depth = 0): bool
     {
         if ($depth > self::MAX_DEPTH) {
-            throw new InvalidRuleException('Max depth exceeded');
+            throw new \InvalidArgumentException('Rule depth exceeded maximum: ' . self::MAX_DEPTH); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ($rule === []) {
-            throw new InvalidRuleException('Empty rule');
+            return false;
         }
-        if (isset($rule['operator']) && isset($rule['conditions'])) {
+        $op = $rule['operator'] ?? null;
+        if (isset($rule['conditions'])) {
+            $upper = strtoupper((string) $op);
+            if (!in_array($upper, ['AND', 'OR', 'SINGLE'], true)) {
+                throw new \InvalidArgumentException('Invalid operator: ' . $upper); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            if ($upper === 'SINGLE') {
+                $child = $rule['conditions'][0] ?? [];
+                return $this->evaluateCompositeRule($child, $context, $depth + 1);
+            }
             return $this->evaluateLogicalOperator($rule, $context, $depth);
+        }
+        if (is_string($op) && !in_array($op, ['>', '>=', '<', '<=', '=', '!='], true)) {
+            $upper = strtoupper($op);
+            throw new \InvalidArgumentException('Invalid operator: ' . $upper); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $this->evaluateSimpleCondition($rule, $context);
     }
@@ -91,7 +104,7 @@ final class RuleEngineService implements RuleEngineContract
         return match ($operator) {
             'AND' => $this->allConditionsTrue($conditions, $context, $next),
             'OR' => $this->anyConditionTrue($conditions, $context, $next),
-            default => throw new InvalidRuleException("Invalid operator: {$operator}"), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            default => throw new \InvalidArgumentException('Invalid operator: ' . $operator), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         };
     }
 
