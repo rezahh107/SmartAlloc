@@ -5,6 +5,12 @@ set -euo pipefail
 OUT=ai_outputs/last_state.yml
 mkdir -p ai_outputs
 [ -f ai_outputs/status_pack.txt ] || scripts/status-pack.sh
+
+# Feature metadata for sync_memory_files.sh
+FEATURE=${1:-${FEATURE:-"unspecified"}}
+STATUS=${2:-${STATUS:-"planned"}}
+NOTES=${3:-${NOTES:-""}}
+
 PHASE=$(jq -r '.current_phase//"foundation"' ai_context.json 2>/dev/null || echo foundation)
 SECURITY=$(jq -r '.current_scores.security//0' ai_context.json 2>/dev/null || echo 0)
 LOGIC=$(jq -r '.current_scores.logic//0' ai_context.json 2>/dev/null || echo 0)
@@ -15,6 +21,9 @@ WEIGHTED=$(jq -r '.current_scores.weighted_percent//0' ai_context.json 2>/dev/nu
 COMPLETION=$(echo "scale=0; ($SECURITY+$LOGIC+$PERFORMANCE+$READABILITY+$GOAL)/10" | bc)
 GAPS=$(jq -c '.gaps//[]' ai_context.json 2>/dev/null || echo [])
 cat <<YAML >"$OUT"
+feature: "$FEATURE"
+status: "$STATUS"
+notes: "$NOTES"
 phase: "$PHASE"
 phase_status: "$PHASE"
 completion_percent: $COMPLETION
