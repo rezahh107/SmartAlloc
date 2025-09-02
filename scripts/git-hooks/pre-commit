@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# scripts/git-hooks/pre-commit - append project state snapshot
+set -euo pipefail
+
+# Ensure last_state.yml exists
+if [ ! -f "ai_outputs/last_state.yml" ]; then
+  echo "⚠️ ai_outputs/last_state.yml یافت نشد. ابتدا scripts/status-auditor.sh را اجرا کنید." >&2
+  exit 0
+fi
+
+# Seed PROJECT_STATE.yml if missing
+if [ ! -f "docs/PROJECT_STATE.yml" ]; then
+  echo "INFO: ایجاد docs/PROJECT_STATE.yml" >&2
+  mkdir -p docs
+  cat <<'YAML' > docs/PROJECT_STATE.yml
+# تاریخچهٔ انسانی پروژه SmartAlloc
+# هر ورودی با تاریخ و وضعیت پروژه در زمان commit ذخیره می‌شود
+
+# این فایل به صورت خودکار توسط pre-commit hook به‌روز می‌شود
+# هرگز به صورت دستی ویرایش نشود
+YAML
+fi
+
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "N/A")
+{
+  echo
+  echo "timestamp: \"$TIMESTAMP\""
+  echo "commit: \"$COMMIT_HASH\""
+  echo "branch: \"$BRANCH\""
+  cat ai_outputs/last_state.yml
+} >> docs/PROJECT_STATE.yml
+
+echo "✅ وضعیت پروژه به docs/PROJECT_STATE.yml الحاق شد" >&2
+exit 0
