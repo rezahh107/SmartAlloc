@@ -1,12 +1,12 @@
-timestamp: 2025-08-30T11:00:39Z
-feature: DLQ replay action and perf budget tests
-selected_option: C
-scores:
-  security: 21
-  logic: 18
-  performance: 18
-  readability: 19
-  goal: 17
-weighted_percent: 93
-status: completed
-notes: Added retry-based mailer, admin DLQ replay action, circuit breaker protection, and performance budget test.
+---
+feature: SmartAlloc
+status: in_progress
+notes:
+  - RuleEngine implemented
+  - Security score at 21/25
+  - Logic score at 18/25
+  - Performance score at 18/25
+  - Readability score at 19/25
+  - Goal score at 17/25
+phase: expansion
+progress: 93.75
