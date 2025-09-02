@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit - append current state to project history
+
+set -euo pipefail
+
+# check for last_state.yml
+if [ ! -f "ai_outputs/last_state.yml" ]; then
+    echo "⚠️ ai_outputs/last_state.yml not found. Run status-auditor.sh to generate current state."
+    exit 0
+fi
+
+# ensure docs/PROJECT_STATE.yml exists
+if [ ! -f "docs/PROJECT_STATE.yml" ]; then
+    echo "INFO: Creating docs/PROJECT_STATE.yml"
+    mkdir -p docs
+    echo "# تاریخچهٔ انسانی پروژه SmartAlloc" > docs/PROJECT_STATE.yml
+    echo "# هر ورودی با تاریخ و وضعیت پروژه در زمان commit ذخیره می‌شود" >> docs/PROJECT_STATE.yml
+    echo "" >> docs/PROJECT_STATE.yml
+fi
+
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "N/A")
+
+echo "" >> docs/PROJECT_STATE.yml
+echo "timestamp: \"$TIMESTAMP\"" >> docs/PROJECT_STATE.yml
+echo "commit: \"$COMMIT_HASH\"" >> docs/PROJECT_STATE.yml
+echo "branch: \"$BRANCH\"" >> docs/PROJECT_STATE.yml
+
+cat ai_outputs/last_state.yml >> docs/PROJECT_STATE.yml
+
+echo "✅ وضعیت پروژه به docs/PROJECT_STATE.yml الحاق شد"
+exit 0
