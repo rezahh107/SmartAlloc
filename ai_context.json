@@ -15,7 +15,10 @@
   },
   "ci": {
     "remote_connected": true,
-    "workflows": ["ci.yml", "nightly.yml"]
+    "workflows": [
+      "ci.yml",
+      "nightly.yml"
+    ]
   },
   "gaps": [
     "Rule Engine lacks failure mode tests",
@@ -28,18 +31,35 @@
   ],
   "current_scores": {
     "security": 25,
-    "logic": 25,
+    "logic": 20,
     "performance": 25,
-    "readability": 15,
-    "goal": 20,
-    "weighted_percent": 95.0,
-    "red_flags": []
+    "readability": 20,
+    "goal": 25,
+    "total": 100,
+    "weighted_percent": 92.00,
+    "red_flags": [
+      {
+        "message": "Unsanitized superglobal access /workspace/SmartAlloc/src/Debug/ErrorCollector.php:80",
+        "severity": 15
+      }
+    ]
   },
   "features": [
-  {
-    "name": "project-history",
-    "status": "implemented",
-    "notes": ""
-  }
-]
+    {
+      "name": "project-history",
+      "status": "implemented",
+      "notes": ""
+    }
+  ],
+  "analysis": {
+    "security_errors": 0,
+    "logic_errors": 0
+  },
+  "perf_timing": {
+    "max_duration_ms": 0,
+    "default_budget_ms": 2500,
+    "scenarios": [],
+    "penalized": false
+  },
+  "last_updated_utc": "2025-09-02T19:07:53Z"
 }
