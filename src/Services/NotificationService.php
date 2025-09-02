@@ -8,6 +8,7 @@ use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Support\CircuitBreaker as SafetyCircuitBreaker;
 use SmartAlloc\Services\Logging;
 use SmartAlloc\Services\Metrics;
+use SmartAlloc\ValueObjects\ThrottleConfig;
 use SmartAlloc\Testing\FaultFlags;
 use SmartAlloc\Observability\Tracer;
 
@@ -17,19 +18,21 @@ use SmartAlloc\Observability\Tracer;
 final class NotificationService
 {
     private const RATE_LIMIT_KEY = 'smartalloc_notify_rate';
-    private const MAX_NOTIFICATIONS_PER_MINUTE = 10;
     private RetryService $retry;
     private DlqService $dlq;
+    private ThrottleConfig $throttleConfig;
 
     public function __construct(
         private CircuitBreaker $circuitBreaker,
         private Logging $logger,
         private Metrics $metrics,
         ?RetryService $retry = null,
-        ?DlqService $dlq = null
+        ?DlqService $dlq = null,
+        ?ThrottleConfig $config = null
     ) {
         $this->retry = $retry ?? new RetryService();
         $this->dlq = $dlq ?? new DlqService();
+        $this->throttleConfig = $config ?? ThrottleConfig::default();
         add_action('smartalloc_notify', [$this, 'handle']);
     }
 
@@ -200,12 +203,12 @@ final class NotificationService
     private function checkRateLimit(): bool
     {
         $current = (int) (get_transient(self::RATE_LIMIT_KEY) ?: 0);
-        return $current < self::MAX_NOTIFICATIONS_PER_MINUTE;
+        return $current < $this->throttleConfig->burstLimit();
     }
 
     private function incrementRateCounter(): void
     {
         $current = (int) (get_transient(self::RATE_LIMIT_KEY) ?: 0);
-        set_transient(self::RATE_LIMIT_KEY, $current + 1, 60);
+        set_transient(self::RATE_LIMIT_KEY, $current + 1, $this->throttleConfig->windowSeconds());
     }
 }

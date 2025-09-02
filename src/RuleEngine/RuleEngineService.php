@@ -16,6 +16,7 @@ require_once __DIR__ . '/Contracts.php';
  */
 final class RuleEngineService implements RuleEngineContract
 {
+    private const MAX_DEPTH = 3;
     private CapacityProvider $capacity;
 
     public function __construct(?CapacityProvider $capacity = null)
@@ -61,10 +62,16 @@ final class RuleEngineService implements RuleEngineContract
      * @param array<string,mixed> $context Data used for evaluation
      * @throws InvalidRuleException When an unsupported operator or comparator is encountered
      */
-    public function evaluateCompositeRule(array $rule, array $context): bool
+    public function evaluateCompositeRule(array $rule, array $context, int $depth = 0): bool
     {
+        if ($depth > self::MAX_DEPTH) {
+            throw new InvalidRuleException('Max depth exceeded');
+        }
+        if ($rule === []) {
+            throw new InvalidRuleException('Empty rule');
+        }
         if (isset($rule['operator']) && isset($rule['conditions'])) {
-            return $this->evaluateLogicalOperator($rule, $context);
+            return $this->evaluateLogicalOperator($rule, $context, $depth);
         }
         return $this->evaluateSimpleCondition($rule, $context);
     }
@@ -76,22 +83,23 @@ final class RuleEngineService implements RuleEngineContract
      * @param array<string,mixed> $context Runtime context
      * @throws InvalidRuleException When the operator is not AND or OR
      */
-    private function evaluateLogicalOperator(array $rule, array $context): bool
+    private function evaluateLogicalOperator(array $rule, array $context, int $depth): bool
     {
         $operator = strtoupper((string) ($rule['operator'] ?? ''));
         $conditions = is_array($rule['conditions'] ?? null) ? $rule['conditions'] : [];
+        $next = $depth + 1;
         return match ($operator) {
-            'AND' => $this->allConditionsTrue($conditions, $context),
-            'OR' => $this->anyConditionTrue($conditions, $context),
-            default => throw new InvalidRuleException("Unsupported operator: {$operator}"), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            'AND' => $this->allConditionsTrue($conditions, $context, $next),
+            'OR' => $this->anyConditionTrue($conditions, $context, $next),
+            default => throw new InvalidRuleException("Invalid operator: {$operator}"), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         };
     }
 
     /** @param array<int,array<string,mixed>> $conditions */
-    private function allConditionsTrue(array $conditions, array $context): bool
+    private function allConditionsTrue(array $conditions, array $context, int $depth): bool
     {
         foreach ($conditions as $condition) {
-            if (!$this->evaluateCompositeRule($condition, $context)) {
+            if (!$this->evaluateCompositeRule($condition, $context, $depth)) {
                 return false;
             }
         }
@@ -99,10 +107,10 @@ final class RuleEngineService implements RuleEngineContract
     }
 
     /** @param array<int,array<string,mixed>> $conditions */
-    private function anyConditionTrue(array $conditions, array $context): bool
+    private function anyConditionTrue(array $conditions, array $context, int $depth): bool
     {
         foreach ($conditions as $condition) {
-            if ($this->evaluateCompositeRule($condition, $context)) {
+            if ($this->evaluateCompositeRule($condition, $context, $depth)) {
                 return true;
             }
         }
