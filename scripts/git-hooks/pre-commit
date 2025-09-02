@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# .git/hooks/pre-commit - الحاق وضعیت فعلی به تاریخچه پروژه
+
+set -euo pipefail
+
+composer lint:php
+if [ -x vendor/bin/phpunit ]; then
+  composer test:smoke || { echo "Smoke failed; fix before commit."; exit 1; }
+else
+  echo "PHPUnit not installed; skipping smoke tests."
+fi
+
+# بررسی وجود last_state.yml
+if [ ! -f "ai_outputs/last_state.yml" ]; then
+    echo "⚠️ ai_outputs/last_state.yml یافت نشد. برای ایجاد وضعیت جاری، status-auditor.sh را اجرا کنید."
+    exit 0
+fi
+
+# ایجاد PROJECT_STATE.yml اگر وجود نداشت
+if [ ! -f "docs/PROJECT_STATE.yml" ]; then
+    echo "INFO: ایجاد docs/PROJECT_STATE.yml"
+    mkdir -p docs
+    cat <<'YAML' > docs/PROJECT_STATE.yml
+# تاریخچهٔ انسانی پروژه SmartAlloc
+# هر ورودی با تاریخ و وضعیت پروژه در زمان commit ذخیره می‌شود
+
+# این فایل به صورت خودکار توسط pre-commit hook به‌روز می‌شود
+# هرگز به صورت دستی ویرایش نشود
+YAML
+fi
+
+# افزودن جداکننده و تاریخ به فایل وضعیت
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "N/A")
+
+{
+  echo ""
+  echo "timestamp: \"$TIMESTAMP\""
+  echo "commit: \"$COMMIT_HASH\""
+  echo "branch: \"$BRANCH\""
+  cat ai_outputs/last_state.yml
+} >> docs/PROJECT_STATE.yml
+
+git add docs/PROJECT_STATE.yml
+
+echo "✅ وضعیت پروژه به docs/PROJECT_STATE.yml الحاق شد"
+exit 0
