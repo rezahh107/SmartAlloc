@@ -11,6 +11,9 @@ use SmartAlloc\Rules\ExternalDependencyError;
 
 require_once __DIR__ . '/Contracts.php';
 
+/**
+ * Provides rule evaluation including nested composite logic.
+ */
 final class RuleEngineService implements RuleEngineContract
 {
     private CapacityProvider $capacity;
@@ -47,8 +50,16 @@ final class RuleEngineService implements RuleEngineContract
     }
 
     /**
-     * @param array<string,mixed> $rule
-     * @param array<string,mixed> $context
+     * Evaluate a rule tree supporting nested AND/OR logic.
+     *
+     * A rule is either a simple condition:
+     * [ 'field' => 'amount', 'operator' => '>', 'value' => 100 ]
+     * or a composite node:
+     * [ 'operator' => 'AND|OR', 'conditions' => [ ...child rules... ] ]
+     *
+     * @param array<string,mixed> $rule    Root rule or condition
+     * @param array<string,mixed> $context Data used for evaluation
+     * @throws InvalidRuleException When an unsupported operator or comparator is encountered
      */
     public function evaluateCompositeRule(array $rule, array $context): bool
     {
@@ -59,8 +70,11 @@ final class RuleEngineService implements RuleEngineContract
     }
 
     /**
-     * @param array<string,mixed> $rule
-     * @param array<string,mixed> $context
+     * Evaluate a composite node using its logical operator.
+     *
+     * @param array<string,mixed> $rule    Composite rule definition
+     * @param array<string,mixed> $context Runtime context
+     * @throws InvalidRuleException When the operator is not AND or OR
      */
     private function evaluateLogicalOperator(array $rule, array $context): bool
     {
@@ -96,8 +110,11 @@ final class RuleEngineService implements RuleEngineContract
     }
 
     /**
-     * @param array<string,mixed> $rule
-     * @param array<string,mixed> $context
+     * Evaluate a simple condition against the context.
+     *
+     * @param array<string,mixed> $rule    Condition definition
+     * @param array<string,mixed> $context Runtime context
+     * @throws InvalidRuleException When the comparator is unsupported
      */
     private function evaluateSimpleCondition(array $rule, array $context): bool
     {
