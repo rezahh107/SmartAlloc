@@ -28,6 +28,7 @@ class WP_REST_Request_Ext extends \WP_REST_Request implements \ArrayAccess {
 class WP_REST_Response_Stub {
         public function __construct( public array $data = array(), public int $status = 200 ) {}
         public function get_status(): int { return $this->status; }
+        public function get_data(): array { return $this->data; }
 }
 if ( ! class_exists( '\\WP_REST_Response' ) ) {
         class_alias( WP_REST_Response_Stub::class, 'WP_REST_Response' );

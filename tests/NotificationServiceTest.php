@@ -11,7 +11,7 @@ class SpyMetrics extends SmartAlloc\Services\Metrics
     public function __construct() {}
     public function inc(string $key, float $value = 1.0, array $labels = []): void
     {
-        $this->counters[$key] = ($this->counters[$key] ?? 0) + $value;
+        $this->counters[$key] = (int) (($this->counters[$key] ?? 0) + $value);
     }
     public function observe(string $key, int $milliseconds, array $labels = []): void {}
 }

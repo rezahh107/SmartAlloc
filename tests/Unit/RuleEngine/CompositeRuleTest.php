@@ -37,7 +37,7 @@ final class CompositeRuleTest extends TestCase
     public function test_invalid_operator_throws(): void
     {
         $svc = new RuleEngineService();
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\SmartAlloc\RuleEngine\InvalidRuleException::class);
         $this->expectExceptionMessage('Invalid operator: XOR');
         $svc->evaluateCompositeRule(['operator' => 'XOR'], []);
     }
@@ -45,7 +45,7 @@ final class CompositeRuleTest extends TestCase
     public function test_depth_limit_exceeded_throws(): void
     {
         $svc = new RuleEngineService();
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\SmartAlloc\RuleEngine\InvalidRuleException::class);
         $this->expectExceptionMessage('Rule depth exceeded maximum: 3');
         $svc->evaluateCompositeRule($this->createNestedRule(4), []);
     }
