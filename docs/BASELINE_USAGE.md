@@ -7,6 +7,8 @@
 ./gap-analysis --target-phase=foundation
 ```
 
+Baseline check reports now include `overall_score` and `phase_gate_status` fields for easier automation.
+
 ## Composer Scripts
 ```
 composer run baseline:foundation

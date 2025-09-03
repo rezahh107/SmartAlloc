@@ -28,6 +28,9 @@ class BaselineComparator
         ];
 
         foreach ($fromMetrics as $dimension => $fromValue) {
+            if (in_array($dimension, ['phase_gate_status', 'overall_score'], true)) {
+                continue;
+            }
             $toValue = $toMetrics[$dimension] ?? 0;
             $delta   = $toValue - $fromValue;
 
@@ -38,6 +41,26 @@ class BaselineComparator
             } else {
                 $comparison['unchanged'][] = $dimension;
             }
+        }
+
+        if (isset($fromMetrics['overall_score'], $toMetrics['overall_score'])) {
+            $delta = $toMetrics['overall_score'] - $fromMetrics['overall_score'];
+            if ($delta > 0) {
+                $comparison['improvements']['overall_score'] = $delta;
+            } elseif ($delta < 0) {
+                $comparison['regressions']['overall_score'] = $delta;
+            } else {
+                $comparison['unchanged'][] = 'overall_score';
+            }
+        }
+
+        if (isset($fromMetrics['phase_gate_status'], $toMetrics['phase_gate_status'])) {
+            $comparison['phase_gate'] = [
+                'from'      => $fromMetrics['phase_gate_status'],
+                'to'        => $toMetrics['phase_gate_status'],
+                'regressed' => $fromMetrics['phase_gate_status'] === 'PASS'
+                    && $toMetrics['phase_gate_status'] !== 'PASS',
+            ];
         }
 
         return $comparison;
