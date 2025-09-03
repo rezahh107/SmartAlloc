@@ -59,6 +59,13 @@ final class NotificationService
         $recipient = (string) ($payload['recipient'] ?? '');
         if (!$this->throttler->canSend($recipient)) {
             $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $recipient]);
+            $this->dlq->push([
+                'event_name' => 'notify',
+                'payload'    => $payload,
+                'attempts'   => 1,
+                'error_text' => 'rate_limit',
+            ]);
+            $this->metrics->inc('notify_throttled_total');
             throw new Exceptions\ThrottleException('Rate limit exceeded');
         }
         $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
@@ -219,7 +226,7 @@ final class NotificationService
     {
         $defaults = [
             'limit_per_minute' => 10,
-            'burst_limit' => 3,
+            'burst_limit' => 10,
             'window_seconds' => 60,
             'dlq_enabled' => true,
         ];

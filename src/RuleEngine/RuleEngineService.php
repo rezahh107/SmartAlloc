@@ -65,7 +65,7 @@ final class RuleEngineService implements RuleEngineContract
     public function evaluateCompositeRule(array $rule, array $context, int $depth = 0): bool
     {
         if ($depth > self::MAX_DEPTH) {
-            throw new \InvalidArgumentException('Rule depth exceeded maximum: ' . self::MAX_DEPTH); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new InvalidRuleException('Rule depth exceeded maximum: ' . self::MAX_DEPTH); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ($rule === []) {
             return false;
@@ -74,7 +74,7 @@ final class RuleEngineService implements RuleEngineContract
         if (isset($rule['conditions'])) {
             $upper = strtoupper((string) $op);
             if (!in_array($upper, ['AND', 'OR', 'SINGLE'], true)) {
-                throw new \InvalidArgumentException('Invalid operator: ' . $upper); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw new InvalidRuleException('Invalid operator: ' . $upper); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
             if ($upper === 'SINGLE') {
                 $child = $rule['conditions'][0] ?? [];
@@ -84,7 +84,7 @@ final class RuleEngineService implements RuleEngineContract
         }
         if (is_string($op) && !in_array($op, ['>', '>=', '<', '<=', '=', '!='], true)) {
             $upper = strtoupper($op);
-            throw new \InvalidArgumentException('Invalid operator: ' . $upper); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new InvalidRuleException('Invalid operator: ' . $upper); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $this->evaluateSimpleCondition($rule, $context);
     }
@@ -104,7 +104,7 @@ final class RuleEngineService implements RuleEngineContract
         return match ($operator) {
             'AND' => $this->allConditionsTrue($conditions, $context, $next),
             'OR' => $this->anyConditionTrue($conditions, $context, $next),
-            default => throw new \InvalidArgumentException('Invalid operator: ' . $operator), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            default => throw new InvalidRuleException('Invalid operator: ' . $operator), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         };
     }
 
