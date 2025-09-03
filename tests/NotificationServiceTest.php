@@ -168,8 +168,8 @@ final class NotificationServiceTest extends BaseTestCase
         $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
         $svc->handle(['event_name' => 'x', 'body' => [], '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES]);
         $this->assertTrue($spy->has('x'));
-        $this->assertSame(1, $metrics->counters['notify_failed_total'] ?? 0);
-        $this->assertSame(1, $metrics->counters['dlq_push_total'] ?? 0);
+        $this->assertSame(1.0, $metrics->counters['notify_failed_total'] ?? 0.0);
+        $this->assertSame(1.0, $metrics->counters['dlq_push_total'] ?? 0.0);
         unset($GLOBALS['filters']['smartalloc_notify_transport']);
     }
 }
