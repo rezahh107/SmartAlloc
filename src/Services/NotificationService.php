@@ -14,6 +14,23 @@ use SmartAlloc\Observability\Tracer;
 
 /**
  * Notification queue with circuit breaker, retries and DLQ.
+ *
+ * Usage:
+ *
+ * ```php
+ * $notificationService->send([
+ *     'event_name' => 'user_registered',
+ *     'body'       => ['user_id' => 123],
+ * ]);
+ *
+ * $notificationService->handle([
+ *     'event_name' => 'password_reset',
+ *     'body'       => ['email' => 'test@example.com'],
+ * ]);
+ * ```
+ *
+ * Default rate limit is 10/min, adjustable via the `smartalloc_notify_limit_per_min`
+ * filter to meet specific needs (e.g., 100/min).
  */
 final class NotificationService
 {
@@ -150,21 +167,33 @@ final class NotificationService
      */
     public function sendMail(array $payload): bool
     {
-        $attempt    = (int) ( $payload['_attempt'] ?? 1 );
-        $id_payload = $payload;
-        unset( $id_payload['_attempt'] );
-        $key = 'sa_mail_' . sha1( wp_json_encode( $id_payload ) );
-        if ( get_transient( $key ) ) {
+        $attempt = (int) ($payload['_attempt'] ?? 1);
+        $to      = sanitize_email((string) ($payload['to'] ?? ''));
+        $subject = sanitize_text_field((string) ($payload['subject'] ?? ''));
+        $message = sanitize_textarea_field((string) ($payload['message'] ?? ''));
+        $headers = array_map('sanitize_text_field', (array) ($payload['headers'] ?? []));
+        $payload['to']      = $to;
+        $payload['subject'] = $subject;
+        $payload['message'] = $message;
+        $payload['headers'] = $headers;
+        $id_payload = [
+            'to'      => $to,
+            'subject' => $subject,
+            'message' => $message,
+            'headers' => $headers,
+        ];
+        $key = 'sa_mail_' . sha1(wp_json_encode($id_payload));
+        if (get_transient($key)) {
             return true;
         }
         try {
             $ok = SafetyCircuitBreaker::call(
                 'mail',
                 fn() => wp_mail( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
-                    (string) ( $payload['to'] ?? '' ),
-                    (string) ( $payload['subject'] ?? '' ),
-                    (string) ( $payload['message'] ?? '' ),
-                    $payload['headers'] ?? array()
+                    $to,
+                    $subject,
+                    $message,
+                    $headers
                 ),
                 5,
                 120
@@ -174,22 +203,30 @@ final class NotificationService
             $ok  = false;
             $err = $e->getMessage();
         }
-        if ( $ok ) {
-            set_transient( $key, 1, DAY_IN_SECONDS );
+        if ($ok) {
+            set_transient($key, 1, DAY_IN_SECONDS);
             return true;
         }
-        $this->logger->error( 'notify.mail.fail', array( 'email' => $payload['to'] ?? '', 'attempt' => $attempt, 'error' => $err ) );
-        if ( $attempt >= SMARTALLOC_NOTIFY_MAX_TRIES ) {
-            $this->dlq->push(array(
+        $this->logger->error('notify.mail.fail', ['email' => $to, 'attempt' => $attempt, 'error' => $err]);
+        if ($attempt >= SMARTALLOC_NOTIFY_MAX_TRIES) {
+            $this->dlq->push([
                 'event_name' => 'mail',
-                'payload'    => $payload,
+                'payload'    => array_merge(
+                    $payload,
+                    [
+                        'to'      => $to,
+                        'subject' => $subject,
+                        'message' => $message,
+                        'headers' => $headers,
+                    ]
+                ),
                 'attempts'   => $attempt,
                 'error_text' => $err,
-            ));
+            ]);
             return false;
         }
         $payload['_attempt'] = $attempt + 1;
-        $this->enqueue( 'smartalloc_notify_mail', $payload, $this->mailDelay( $attempt ) );
+        $this->enqueue('smartalloc_notify_mail', $payload, $this->mailDelay($attempt));
         return false;
     }
 
