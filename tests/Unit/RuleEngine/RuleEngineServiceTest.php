@@ -53,7 +53,7 @@ final class RuleEngineServiceTest extends TestCase
     {
         $rule=['operator'=>'AND','conditions'=>[]];
         $this->expectException(InvalidRuleException::class);
-        $this->expectExceptionMessage('Max depth exceeded');
+        $this->expectExceptionMessage('Rule depth exceeded maximum');
         $this->svc->evaluateCompositeRule($rule,[],4);
     }
 

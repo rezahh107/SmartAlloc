@@ -14,7 +14,7 @@ class TestWpdb extends wpdb {
     private int $calls = 0;
     public function __construct() {}
     public function query($sql): void { $this->last_query = $sql; }
-    public function get_results($sql): array {
+    public function get_results($sql, $output = OBJECT): array {
         $this->last_query = $sql;
         if ($this->calls++ > 0) {
             return [];

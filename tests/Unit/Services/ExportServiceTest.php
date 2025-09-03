@@ -7,7 +7,16 @@ namespace {
         class wpdb {
             public string $prefix = 'wp_';
             public string $last_query = '';
+            public array $results = [];
             public function query($sql): void { $this->last_query = $sql; }
+            public function prepare($sql, ...$args): string {
+                $this->last_query = vsprintf($sql, $args);
+                return $this->last_query;
+            }
+            public function get_results($sql): array {
+                $this->last_query = $sql;
+                return $this->results;
+            }
         }
     }
 }
