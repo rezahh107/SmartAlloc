@@ -122,9 +122,16 @@ final class NotificationServiceTest extends BaseTestCase
         $spy = new SpyDlq();
         $dlq = new DlqService($spy);
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics(), null, $dlq);
-        $svc->sendMail(['to' => 'a', 'subject' => 's', 'message' => 'm', '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES, 'meta' => 'x']);
+        $svc->sendMail([
+            'to' => 'test@example.com',
+            'subject' => 's',
+            'message' => 'm',
+            '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES,
+            'meta' => 'x',
+        ]);
         $p = $spy->last('mail');
         $this->assertSame('x', $p['meta']);
+        $this->assertSame('te**@example.com', $p['to']);
         $this->assertSame(SMARTALLOC_NOTIFY_MAX_TRIES, $p['attempts']);
     }
 
@@ -138,8 +145,12 @@ final class NotificationServiceTest extends BaseTestCase
         $dlq = new DlqService($spy);
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics(), null, $dlq);
         $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
-        $svc->handle(['event_name' => 'mail', 'body' => [], '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES]);
-        $this->assertTrue($spy->has('mail'));
+        $svc->handle([
+            'event_name' => 'password_reset',
+            'body' => ['email' => 'a@example.com'],
+            '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES,
+        ]);
+        $this->assertTrue($spy->has('password_reset'));
         unset($GLOBALS['filters']['smartalloc_notify_transport']);
     }
 
@@ -149,9 +160,9 @@ final class NotificationServiceTest extends BaseTestCase
         $t = [];
         $GLOBALS['filters']['smartalloc_notify_burst'] = fn($v) => 2;
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics());
-        $svc->send(['event_name' => 'a']);
-        $svc->send(['event_name' => 'b']);
-        $svc->send(['event_name' => 'c']);
+        $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1]]);
+        $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1]]);
+        $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1]]);
         $this->assertSame(2, $t['smartalloc_notify_rate'] ?? 0);
         unset($GLOBALS['filters']['smartalloc_notify_burst']);
     }
@@ -166,11 +177,22 @@ final class NotificationServiceTest extends BaseTestCase
         $metrics = new SpyMetrics();
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), $metrics, null, $dlq);
         $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
-        $svc->handle(['event_name' => 'x', 'body' => [], '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES]);
-        $this->assertTrue($spy->has('x'));
+        $svc->handle([
+            'event_name' => 'password_reset',
+            'body' => ['email' => 'a@example.com'],
+            '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES,
+        ]);
+        $this->assertTrue($spy->has('password_reset'));
         $this->assertSame(1, $metrics->counters['notify_failed_total'] ?? 0);
         $this->assertSame(1, $metrics->counters['dlq_push_total'] ?? 0);
         unset($GLOBALS['filters']['smartalloc_notify_transport']);
+    }
+
+    public function test_invalid_event_rejected(): void
+    {
+        $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics());
+        $this->expectException(\InvalidArgumentException::class);
+        $svc->send(['event_name' => 'invalid', 'body' => ['user_id' => 1]]);
     }
 }
 

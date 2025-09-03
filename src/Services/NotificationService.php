@@ -69,16 +69,17 @@ final class NotificationService
      */
     public function send(array $payload): void
     {
+        $payload = $this->validatePayload($payload);
         if (!$this->checkRateLimit()) {
             $this->logger->warning('notify.throttle');
             return;
         }
         $recipient = (string) ($payload['recipient'] ?? '');
         if (!$this->throttler->canSend($recipient)) {
-            $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $recipient]);
+            $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
             $this->dlq->push([
                 'event_name' => 'notify',
-                'payload'    => $payload,
+                'payload'    => $this->maskSensitiveData($payload),
                 'attempts'   => 1,
                 'error_text' => 'rate_limit',
             ]);
@@ -98,6 +99,7 @@ final class NotificationService
      */
     public function handle(array $payload): void
     {
+        $payload = $this->validatePayload($payload);
         $attempt = (int) ($payload['_attempt'] ?? 1);
         if (defined('SMARTALLOC_TEST_MODE') && SMARTALLOC_TEST_MODE) {
             Tracer::start('notify.dispatch');
@@ -134,11 +136,15 @@ final class NotificationService
             }
             $this->circuitBreaker->success('notify');
             $this->metrics->inc('notify_success_total');
-            $this->logger->info('notify.success', ['payload' => $payload]);
+            $this->logger->info('notify.success', ['payload' => $this->maskSensitiveData($payload)]);
         } catch (\Throwable $e) {
-            $this->circuitBreaker->failure('notify',$e);
+            $this->circuitBreaker->failure('notify', $e);
             $this->metrics->inc('notify_failed_total');
-            $this->logger->warning('notify.fail', ['error' => $e->getMessage(), 'attempt' => $attempt]);
+            $this->logger->warning('notify.fail', [
+                'error' => $e->getMessage(),
+                'attempt' => $attempt,
+                'payload' => $this->maskSensitiveData($payload),
+            ]);
             $maxTries = defined('SMARTALLOC_NOTIFY_MAX_TRIES') ? (int) SMARTALLOC_NOTIFY_MAX_TRIES : 5;
             if ($attempt < $maxTries) {
                 $this->metrics->inc('notify_retry_total');
@@ -149,7 +155,7 @@ final class NotificationService
             }
             $this->dlq->push([
                 'event_name' => (string) ($payload['event_name'] ?? 'notify'),
-                'payload'    => $body,
+                'payload'    => $this->maskSensitiveData(['body' => $body])['body'],
                 'attempts'   => $attempt,
                 'error_text' => $e->getMessage(),
             ]);
@@ -207,18 +213,24 @@ final class NotificationService
             set_transient($key, 1, DAY_IN_SECONDS);
             return true;
         }
-        $this->logger->error('notify.mail.fail', ['email' => $to, 'attempt' => $attempt, 'error' => $err]);
+        $this->logger->error('notify.mail.fail', [
+            'email' => $this->maskEmail($to),
+            'attempt' => $attempt,
+            'error' => $err,
+        ]);
         if ($attempt >= SMARTALLOC_NOTIFY_MAX_TRIES) {
             $this->dlq->push([
                 'event_name' => 'mail',
-                'payload'    => array_merge(
-                    $payload,
-                    [
-                        'to'      => $to,
-                        'subject' => $subject,
-                        'message' => $message,
-                        'headers' => $headers,
-                    ]
+                'payload'    => $this->maskSensitiveData(
+                    array_merge(
+                        $payload,
+                        [
+                            'to'      => $to,
+                            'subject' => $subject,
+                            'message' => $message,
+                            'headers' => $headers,
+                        ]
+                    )
                 ),
                 'attempts'   => $attempt,
                 'error_text' => $err,
@@ -293,5 +305,86 @@ final class NotificationService
     {
         $current = (int) (get_transient(self::RATE_LIMIT_KEY) ?: 0);
         set_transient(self::RATE_LIMIT_KEY, $current + 1, $this->throttleConfig->windowSeconds());
+    }
+
+    /**
+     * Validate notification payload structure and content
+     */
+    private function validatePayload(array $payload): array
+    {
+        $errors = [];
+        if (!isset($payload['event_name']) || !is_string($payload['event_name'])) {
+            $errors[] = 'event_name is required and must be a string';
+        }
+        if (!isset($payload['body']) || !is_array($payload['body'])) {
+            $errors[] = 'body is required and must be an array';
+        }
+        $allowedEvents = [
+            'user_registered', 'password_reset', 'order_completed',
+            'subscription_renewed', 'payment_failed',
+        ];
+        if (isset($payload['event_name']) && !in_array($payload['event_name'], $allowedEvents, true)) {
+            $errors[] = 'event_name not in allowed list: ' . implode(', ', $allowedEvents);
+        }
+        if (isset($payload['event_name'], $payload['body'])) {
+            $errors = array_merge($errors, $this->validateEventBody($payload['event_name'], $payload['body']));
+        }
+        if (!empty($errors)) {
+            throw new \InvalidArgumentException('Payload validation failed: ' . implode('; ', $errors));
+        }
+        return $payload;
+    }
+
+    private function validateEventBody(string $eventName, array $body): array
+    {
+        $errors = [];
+        switch ($eventName) {
+            case 'user_registered':
+                if (!isset($body['user_id']) || !is_numeric($body['user_id'])) {
+                    $errors[] = 'user_registered requires numeric user_id';
+                }
+                break;
+            case 'password_reset':
+                if (!isset($body['email']) || !filter_var($body['email'], FILTER_VALIDATE_EMAIL)) {
+                    $errors[] = 'password_reset requires valid email';
+                }
+                break;
+        }
+        return $errors;
+    }
+
+    /**
+     * Mask sensitive data before logging
+     *
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>
+     */
+    private function maskSensitiveData(array $data): array
+    {
+        $masked = $data;
+        if (isset($masked['to'])) {
+            $masked['to'] = $this->maskEmail((string) $masked['to']);
+        }
+        if (isset($masked['body']['user_id'])) {
+            $masked['body']['user_id'] = 'user_' . substr(hash('sha256', (string) $masked['body']['user_id']), 0, 8);
+        }
+        foreach (['email', 'phone', 'ssn'] as $field) {
+            if (isset($masked['body'][$field])) {
+                $masked['body'][$field] = '[REDACTED]';
+            }
+        }
+        return $masked;
+    }
+
+    private function maskEmail(string $email): string
+    {
+        $parts = explode('@', $email);
+        if (count($parts) !== 2) {
+            return '[INVALID_EMAIL]';
+        }
+        $local = $parts[0];
+        $domain = $parts[1];
+        $maskedLocal = substr($local, 0, 2) . str_repeat('*', max(0, strlen($local) - 2));
+        return $maskedLocal . '@' . $domain;
     }
 }

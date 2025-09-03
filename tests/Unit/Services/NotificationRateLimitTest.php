@@ -40,10 +40,10 @@ final class NotificationRateLimitTest extends TestCase
         $GLOBALS['wpdb'] = new wpdb();
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new Metrics());
         for ($i = 0; $i < 10; $i++) {
-            $svc->send(['body' => []]);
+            $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => $i]]);
         }
         $this->assertSame(10, get_transient('smartalloc_notify_rate'));
-        $svc->send(['body' => []]);
+        $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 99]]);
         $this->assertSame(10, get_transient('smartalloc_notify_rate'));
     }
 
@@ -52,10 +52,10 @@ final class NotificationRateLimitTest extends TestCase
         global $t; $t = ['smartalloc_notify_rate' => 10];
         $GLOBALS['wpdb'] = new wpdb();
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new Metrics());
-        $svc->send(['body' => []]);
+        $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1]]);
         $this->assertSame(10, get_transient('smartalloc_notify_rate'));
         unset($t['smartalloc_notify_rate']);
-        $svc->send(['body' => []]);
+        $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1]]);
         $this->assertSame(1, get_transient('smartalloc_notify_rate'));
     }
 }

@@ -29,7 +29,13 @@ final class NotificationServiceIntegrationTest extends TestCase
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new Metrics());
         for ($i = 0; $i < 11; $i++) {
             if ($i === 3) { global $t; $t['smartalloc_notify_rate'] = 0; }
-            try { $svc->send(['recipient' => 'r', 'body' => []]); } catch (\Throwable $e) {}
+            try {
+                $svc->send([
+                    'event_name' => 'user_registered',
+                    'body' => ['user_id' => $i],
+                    'recipient' => 'r',
+                ]);
+            } catch (\Throwable $e) {}
         }
         $ctrl = new HealthController(new RateLimiter());
         $data = $ctrl->handle(new WP_REST_Request())->get_data();
