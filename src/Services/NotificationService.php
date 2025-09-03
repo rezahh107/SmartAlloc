@@ -86,6 +86,8 @@ final class NotificationService
                 ]);
                 $this->metrics->inc('notify_throttled_total');
                 $this->metrics->inc('dlq_push_total');
+                // count throttled notifications as failures
+                $this->metrics->inc('notify_failed_total');
                 throw new Exceptions\ThrottleException('Rate limit exceeded');
             }
             $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
