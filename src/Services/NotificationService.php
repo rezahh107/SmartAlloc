@@ -320,10 +320,21 @@ final class NotificationService
             $errors[] = 'body is required and must be an array';
         }
         $allowedEvents = [
-            'user_registered', 'password_reset', 'order_completed',
-            'subscription_renewed', 'payment_failed',
+            'user_registered',
+            'password_reset',
+            'order_completed',
+            'subscription_renewed',
+            'payment_failed',
+            'MentorAssigned',
         ];
-        if (isset($payload['event_name']) && !in_array($payload['event_name'], $allowedEvents, true)) {
+        if (function_exists('apply_filters')) {
+            /** @var string[] $allowedEvents */
+            $allowedEvents = apply_filters('smartalloc_notify_event_allowlist', $allowedEvents);
+        }
+        if (
+            isset($payload['event_name'])
+            && !in_array($payload['event_name'], $allowedEvents, true)
+        ) {
             $errors[] = 'event_name not in allowed list: ' . implode(', ', $allowedEvents);
         }
         if (isset($payload['event_name'], $payload['body'])) {

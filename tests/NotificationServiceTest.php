@@ -188,6 +188,16 @@ final class NotificationServiceTest extends BaseTestCase
         unset($GLOBALS['filters']['smartalloc_notify_transport']);
     }
 
+    public function test_notify_listener_event_allowed(): void
+    {
+        global $s, $t;
+        $s = null;
+        $t = [];
+        $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics());
+        $svc->send(['event_name' => 'MentorAssigned', 'body' => ['user_id' => 1]]);
+        $this->assertSame('smartalloc_notify', $s[0]);
+    }
+
     public function test_invalid_event_rejected(): void
     {
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics());
