@@ -13,6 +13,10 @@ if (!function_exists('apply_filters')) {
     }
 }
 
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
+
 if (!function_exists('add_action')) {
     function add_action($hook, $callback, $priority = 10, $accepted_args = 1) {
         return true;
@@ -63,6 +67,7 @@ if (!class_exists('wpdb')) {
         }
         public function query($query) { return 0; }
         public function get_var($query) { return 0; }
+        public function get_results($query, $output = OBJECT) { return []; }
     }
     // make a global instance like WordPress does
     $GLOBALS['wpdb'] = new wpdb();
