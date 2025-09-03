@@ -69,27 +69,38 @@ final class NotificationService
      */
     public function send(array $payload): void
     {
-        $payload = $this->validatePayload($payload);
-        if (!$this->checkRateLimit()) {
-            $this->logger->warning('notify.throttle');
-            return;
+        try {
+            $payload = $this->validatePayload($payload);
+            if (!$this->checkRateLimit()) {
+                $this->logger->warning('notify.throttle');
+                return;
+            }
+            $recipient = (string) ($payload['recipient'] ?? '');
+            if (!$this->throttler->canSend($recipient)) {
+                $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
+                $this->dlq->push([
+                    'event_name' => 'notify',
+                    'payload'    => $this->maskSensitiveData($payload),
+                    'attempts'   => 1,
+                    'error_text' => 'rate_limit',
+                ]);
+                $this->metrics->inc('notify_throttled_total');
+                $this->metrics->inc('dlq_push_total');
+                throw new Exceptions\ThrottleException('Rate limit exceeded');
+            }
+            $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
+            $this->incrementRateCounter();
+            $this->throttler->recordSend($recipient);
+            $this->enqueue('smartalloc_notify', $payload, 0);
+        } catch (Exceptions\ThrottleException $e) {
+            throw $e;
+        } catch (\InvalidArgumentException $e) {
+            $this->logger->error('notify.validation', ['error' => $e->getMessage(), 'payload' => $this->maskSensitiveData($payload)]);
+            $this->metrics->inc('notify_failed_total');
+        } catch (\Throwable $e) {
+            $this->logger->error('notify.send.error', ['error' => $e->getMessage(), 'payload' => $this->maskSensitiveData($payload)]);
+            $this->metrics->inc('notify_failed_total');
         }
-        $recipient = (string) ($payload['recipient'] ?? '');
-        if (!$this->throttler->canSend($recipient)) {
-            $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
-            $this->dlq->push([
-                'event_name' => 'notify',
-                'payload'    => $this->maskSensitiveData($payload),
-                'attempts'   => 1,
-                'error_text' => 'rate_limit',
-            ]);
-            $this->metrics->inc('notify_throttled_total');
-            throw new Exceptions\ThrottleException('Rate limit exceeded');
-        }
-        $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
-        $this->incrementRateCounter();
-        $this->throttler->recordSend($recipient);
-        $this->enqueue('smartalloc_notify', $payload, 0);
     }
 
     /**
@@ -211,8 +222,10 @@ final class NotificationService
         }
         if ($ok) {
             set_transient($key, 1, DAY_IN_SECONDS);
+            $this->metrics->inc('notify_success_total');
             return true;
         }
+        $this->metrics->inc('notify_failed_total');
         $this->logger->error('notify.mail.fail', [
             'email' => $this->maskEmail($to),
             'attempt' => $attempt,
@@ -235,6 +248,7 @@ final class NotificationService
                 'attempts'   => $attempt,
                 'error_text' => $err,
             ]);
+            $this->metrics->inc('dlq_push_total');
             return false;
         }
         $payload['_attempt'] = $attempt + 1;

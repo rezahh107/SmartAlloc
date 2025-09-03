@@ -42,6 +42,8 @@ final class NotificationFlowTest extends BaseTestCase
             $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1], 'recipient' => 'r']);
         } catch (ThrottleException $e) {}
         $this->assertTrue($spyDlq->has('notify'));
+        $this->assertSame(1, $metrics->counters['notify_throttled_total'] ?? 0);
+        $this->assertSame(1, $metrics->counters['dlq_push_total'] ?? 0);
         unset($GLOBALS['filters']['smartalloc_notify_burst']);
 
         // failed transport retries with backoff
@@ -49,6 +51,8 @@ final class NotificationFlowTest extends BaseTestCase
         $svc->handle(['event_name' => 'password_reset', 'body' => ['email' => 'a@example.com'], '_attempt' => 1]);
         $this->assertGreaterThan(0, $s[0]);
         $this->assertSame('smartalloc_notify', $s[1]);
+        $this->assertSame(1, $metrics->counters['notify_failed_total'] ?? 0);
+        $this->assertSame(1, $metrics->counters['notify_retry_total'] ?? 0);
         unset($GLOBALS['filters']['smartalloc_notify_transport']);
     }
 }
