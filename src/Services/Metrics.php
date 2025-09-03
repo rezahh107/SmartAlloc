@@ -7,7 +7,7 @@ namespace SmartAlloc\Services;
 /**
  * Metrics collection service
  */
-final class Metrics
+class Metrics
 {
     private string $table;
 
