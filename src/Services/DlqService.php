@@ -127,17 +127,24 @@ final class DlqService
      */
     private function maskSensitiveData(array $data): array
     {
-        if (isset($data['to'])) {
-            $data['to'] = $this->maskEmail((string) $data['to']);
-        }
-        if (isset($data['user_id'])) {
-            $data['user_id'] = 'user_' . substr(hash('sha256', (string) $data['user_id']), 0, 8);
-        }
-        foreach (['email', 'phone', 'ssn'] as $field) {
-            if (isset($data[$field])) {
-                $data[$field] = '[REDACTED]';
+        foreach ($data as $key => &$value) {
+            if (is_array($value)) {
+                $value = $this->maskSensitiveData($value);
+                continue;
+            }
+            if ($key === 'to') {
+                $value = $this->maskEmail((string) $value);
+                continue;
+            }
+            if ($key === 'user_id') {
+                $value = 'user_' . substr(hash('sha256', (string) $value), 0, 8);
+                continue;
+            }
+            if (in_array($key, ['email', 'phone', 'ssn'], true)) {
+                $value = '[REDACTED]';
             }
         }
+        unset($value);
         return $data;
     }
 
