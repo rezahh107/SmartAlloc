@@ -32,21 +32,21 @@ final class NotificationFlowTest extends BaseTestCase
         $svc = new NotificationService(new CircuitBreaker(), new Logging(), $metrics, null, new DlqService($spyDlq));
 
         // successful notification
-        $svc->handle(['event_name' => 'a', 'body' => []]);
+        $svc->handle(['event_name' => 'user_registered', 'body' => ['user_id' => 1]]);
         $this->assertSame(1, $metrics->counters['notify_success_total'] ?? 0);
 
         // rate limit triggers DLQ
         $GLOBALS['filters']['smartalloc_notify_burst'] = fn($v)=>1;
         try {
-            $svc->send(['recipient'=>'r','body'=>[]]);
-            $svc->send(['recipient'=>'r','body'=>[]]);
+            $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1], 'recipient' => 'r']);
+            $svc->send(['event_name' => 'user_registered', 'body' => ['user_id' => 1], 'recipient' => 'r']);
         } catch (ThrottleException $e) {}
         $this->assertTrue($spyDlq->has('notify'));
         unset($GLOBALS['filters']['smartalloc_notify_burst']);
 
         // failed transport retries with backoff
         $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
-        $svc->handle(['event_name'=>'b','body'=>[],'_attempt'=>1]);
+        $svc->handle(['event_name' => 'password_reset', 'body' => ['email' => 'a@example.com'], '_attempt' => 1]);
         $this->assertGreaterThan(0, $s[0]);
         $this->assertSame('smartalloc_notify', $s[1]);
         unset($GLOBALS['filters']['smartalloc_notify_transport']);

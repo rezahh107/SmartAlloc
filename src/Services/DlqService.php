@@ -26,7 +26,9 @@ final class DlqService
      */
     public function push(array $entry): void
     {
-        $payload = $this->sortRecursive((array) ($entry['payload'] ?? []));
+        $payload = $this->maskSensitiveData(
+            $this->sortRecursive((array) ($entry['payload'] ?? []))
+        );
         $payload['attempts'] = (int) ($entry['attempts'] ?? 0);
         $this->repo->insert(
             (string) ($entry['event_name'] ?? ''),
@@ -115,5 +117,39 @@ final class DlqService
         }
         unset($v);
         return $data;
+    }
+
+    /**
+     * Mask sensitive data before storage
+     *
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>
+     */
+    private function maskSensitiveData(array $data): array
+    {
+        if (isset($data['to'])) {
+            $data['to'] = $this->maskEmail((string) $data['to']);
+        }
+        if (isset($data['user_id'])) {
+            $data['user_id'] = 'user_' . substr(hash('sha256', (string) $data['user_id']), 0, 8);
+        }
+        foreach (['email', 'phone', 'ssn'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = '[REDACTED]';
+            }
+        }
+        return $data;
+    }
+
+    private function maskEmail(string $email): string
+    {
+        $parts = explode('@', $email);
+        if (count($parts) !== 2) {
+            return '[INVALID_EMAIL]';
+        }
+        $local = $parts[0];
+        $domain = $parts[1];
+        $maskedLocal = substr($local, 0, 2) . str_repeat('*', max(0, strlen($local) - 2));
+        return $maskedLocal . '@' . $domain;
     }
 }
