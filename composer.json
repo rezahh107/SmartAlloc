@@ -54,7 +54,21 @@
     "test": "vendor/bin/phpunit --testsuite Unit,WordPress,VIP,Integration",
     "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
     "gen:features": "php scripts/generate_features_md.php",
-    "gen:context": "php scripts/ai_context_sync.php"
+    "gen:context": "php scripts/ai_context_sync.php",
+    "baseline:check": "php scripts/baseline-check.php",
+    "baseline:compare": "php scripts/baseline-compare.php",
+    "baseline:gap-analysis": "php scripts/gap-analysis.php",
+    "baseline:foundation": "php scripts/baseline-check.php --current-phase=foundation",
+    "baseline:expansion": "php scripts/baseline-check.php --current-phase=expansion",
+    "baseline:polish": "php scripts/baseline-check.php --current-phase=polish"
+  },
+  "scripts-descriptions": {
+    "baseline:check": "Run baseline compliance check for current phase",
+    "baseline:compare": "Compare current state with baseline reference",
+    "baseline:gap-analysis": "Analyze gaps between current and target state",
+    "baseline:foundation": "Quick foundation phase validation",
+    "baseline:expansion": "Quick expansion phase validation",
+    "baseline:polish": "Quick polish phase validation"
   },
   "autoload-dev": {
     "psr-4": {
