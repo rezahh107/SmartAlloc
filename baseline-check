@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+$script = __DIR__ . '/scripts/baseline-check.php';
+
+if (!is_file($script)) {
+    fwrite(STDERR, "Error: $script missing\n");
+    exit(1);
+}
+
+$cmd = array_merge(['php', $script], array_slice($argv, 1));
+$proc = proc_open($cmd, [0 => STDIN, 1 => STDOUT, 2 => STDERR], $pipes);
+exit(is_resource($proc) ? proc_close($proc) : 1);
