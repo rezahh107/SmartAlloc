@@ -4,23 +4,19 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
-use SmartAlloc\Services\DbSafe;
 use SmartAlloc\Infrastructure\Contracts\DlqRepository;
-use SmartAlloc\Infrastructure\WpDb\{WpDlqRepository,WpdbAdapter};
+use SmartAlloc\Infrastructure\WpDb\WpDlqRepository;
 use DateTimeImmutable;
 use DateTimeZone;
-
-/* phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching */
 
 /**
  * Dead letter queue storage service.
  */
 final class DlqService
 {
-    private string $table;
-    public function __construct(private ?DlqRepository $repo = null) {
-        global $wpdb; $this->table = $wpdb->prefix . 'smartalloc_dlq';
-        $this->repo ??= new WpDlqRepository(new WpdbAdapter($wpdb), $this->table);
+    public function __construct(private ?DlqRepository $repo = null)
+    {
+        $this->repo ??= WpDlqRepository::createDefault();
     }
 
     /**
@@ -46,18 +42,7 @@ final class DlqService
      */
     public function listRecent(int $limit = 200): array
     {
-        global $wpdb;
-        $sql = DbSafe::mustPrepare(
-            "SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} ORDER BY created_at DESC LIMIT %d",
-            [$limit]
-        );
-        // @security-ok-sql
-        $rows = $wpdb->get_results($sql, ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        foreach ($rows as &$r) {
-            $r['payload'] = json_decode((string) $r['payload'], true);
-        }
-        unset($r);
-        return $rows;
+        return $this->repo->listRecent($limit);
     }
 
     /**
@@ -67,23 +52,12 @@ final class DlqService
      */
     public function get(int $id): ?array
     {
-        global $wpdb;
-        $sql = DbSafe::mustPrepare(
-            "SELECT id,event_name,payload,attempts,error_text,created_at FROM {$this->table} WHERE id=%d",
-            [$id]
-        );
-        $row = $wpdb->get_row($sql, ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        if (!$row) {
-            return null;
-        }
-        $row['payload'] = json_decode((string) $row['payload'], true);
-        return $row;
+        return $this->repo->get($id);
     }
 
     public function delete(int $id): void
     {
-        global $wpdb;
-        $wpdb->delete($this->table, ['id' => $id]);
+        $this->repo->delete($id);
     }
 
     /** @return array{ok:int,fail:int,depth:int} */
@@ -124,10 +98,7 @@ final class DlqService
 
     private function count(): int
     {
-        global $wpdb;
-        $sql = DbSafe::mustPrepare("SELECT COUNT(*) FROM {$this->table}", []);
-        // @security-ok-sql
-        return (int) $wpdb->get_var($sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        return $this->repo->count();
     }
 
     /**
