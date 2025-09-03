@@ -361,19 +361,25 @@ final class NotificationService
      */
     private function maskSensitiveData(array $data): array
     {
-        $masked = $data;
-        if (isset($masked['to'])) {
-            $masked['to'] = $this->maskEmail((string) $masked['to']);
-        }
-        if (isset($masked['body']['user_id'])) {
-            $masked['body']['user_id'] = 'user_' . substr(hash('sha256', (string) $masked['body']['user_id']), 0, 8);
-        }
-        foreach (['email', 'phone', 'ssn'] as $field) {
-            if (isset($masked['body'][$field])) {
-                $masked['body'][$field] = '[REDACTED]';
+        foreach ($data as $key => &$value) {
+            if (is_array($value)) {
+                $value = $this->maskSensitiveData($value);
+                continue;
+            }
+            if ($key === 'to') {
+                $value = $this->maskEmail((string) $value);
+                continue;
+            }
+            if ($key === 'user_id') {
+                $value = 'user_' . substr(hash('sha256', (string) $value), 0, 8);
+                continue;
+            }
+            if (in_array($key, ['email', 'phone', 'ssn'], true)) {
+                $value = '[REDACTED]';
             }
         }
-        return $masked;
+        unset($value);
+        return $data;
     }
 
     private function maskEmail(string $email): string

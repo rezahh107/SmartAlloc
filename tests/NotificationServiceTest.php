@@ -194,5 +194,35 @@ final class NotificationServiceTest extends BaseTestCase
         $this->expectException(\InvalidArgumentException::class);
         $svc->send(['event_name' => 'invalid', 'body' => ['user_id' => 1]]);
     }
+
+    public function test_nested_student_fields_masked_in_dlq(): void
+    {
+        global $s, $t;
+        $s = null;
+        $t = [];
+        $spy = new SpyDlq();
+        $dlq = new DlqService($spy);
+        $svc = new NotificationService(new CircuitBreaker(), new Logging(), new NullMetrics(), null, $dlq);
+        $GLOBALS['filters']['smartalloc_notify_transport'] = fn() => 'fail';
+        $svc->handle([
+            'event_name' => 'user_registered',
+            'body' => [
+                'student' => [
+                    'user_id' => 123,
+                    'email' => 's@example.com',
+                    'phone' => '555-1212',
+                    'ssn' => '000-00-0000',
+                ],
+            ],
+            '_attempt' => SMARTALLOC_NOTIFY_MAX_TRIES,
+        ]);
+        $payload = $spy->last('user_registered');
+        $student = $payload['student'];
+        $this->assertMatchesRegularExpression('/^user_[0-9a-f]{8}$/', (string) ($student['user_id'] ?? ''));
+        $this->assertSame('[REDACTED]', $student['email'] ?? null);
+        $this->assertSame('[REDACTED]', $student['phone'] ?? null);
+        $this->assertSame('[REDACTED]', $student['ssn'] ?? null);
+        unset($GLOBALS['filters']['smartalloc_notify_transport']);
+    }
 }
 
