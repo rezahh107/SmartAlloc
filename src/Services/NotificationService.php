@@ -251,6 +251,8 @@ final class NotificationService
             $this->metrics->inc('dlq_push_total');
             return false;
         }
+        // Increment retry metric before scheduling the retry
+        $this->metrics->inc('notify_retry_total');
         $payload['_attempt'] = $attempt + 1;
         $this->enqueue('smartalloc_notify_mail', $payload, $this->mailDelay($attempt));
         return false;
@@ -344,7 +346,9 @@ final class NotificationService
             $errors = array_merge($errors, $this->validateEventBody($payload['event_name'], $payload['body']));
         }
         if (!empty($errors)) {
-            throw new \InvalidArgumentException('Payload validation failed: ' . implode('; ', $errors));
+            throw new \InvalidArgumentException(
+                'Payload validation failed: ' . implode('; ', $errors) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
         }
         return $payload;
     }
