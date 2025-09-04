@@ -8,13 +8,15 @@ use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Infrastructure\WpDb\WpDlqRepository;
 use DateTimeImmutable;
 use DateTimeZone;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Dead letter queue storage service.
  */
 final class DlqService
 {
-    public function __construct(private ?DlqRepository $repo = null)
+    public function __construct(private ?DlqRepository $repo = null, private ?LoggerInterface $logger = null)
     {
         $this->repo ??= WpDlqRepository::createDefault();
     }
@@ -90,12 +92,36 @@ final class DlqService
                 \do_action('smartalloc_notify', $payload);
                 $this->delete((int) $row['id']);
                 $ok++;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
+                $this->logReplayError($e, $row['id'] ?? 'unknown');
                 $fail++;
+                continue;
             }
         }
         $depth = $this->count();
         return ['ok' => $ok, 'fail' => $fail, 'depth' => $depth];
+    }
+
+    /**
+     * Log replay error with context.
+     *
+     * @param Throwable $e     The caught exception
+     * @param mixed     $rowId The problematic row identifier
+     */
+    private function logReplayError(Throwable $e, $rowId): void
+    {
+        if ($this->logger) {
+            $this->logger->error('DlqService::doReplay failed for row', [
+                'method'    => __METHOD__,
+                'row_id'    => $rowId,
+                'exception' => $e->getMessage(),
+                'trace'     => $e->getTraceAsString(),
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ]);
+        } else {
+            error_log('DlqService::doReplay: Row ID ' . $rowId . ' - ' . $e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        }
     }
 
     private function count(): int
