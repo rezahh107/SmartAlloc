@@ -70,12 +70,26 @@ final class NotificationService
     public function send(array $payload): void
     {
         try {
-            $payload = $this->validatePayload($payload);
-            if (!$this->checkRateLimit()) {
-                $this->logger->warning('notify.throttle');
-                return;
-            }
+            $payload   = $this->validatePayload($payload);
             $recipient = (string) ($payload['recipient'] ?? '');
+            if (!$this->checkRateLimit()) {
+                $this->metrics->inc('notify_throttled_total');
+                $this->metrics->inc('dlq_push_total');
+                $this->metrics->inc('notify_failed_total');
+                $sanitized = $this->maskSensitiveData($payload);
+                $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
+                try {
+                    $this->dlq->push([
+                        'event_name' => 'notify',
+                        'payload'    => $sanitized,
+                        'attempts'   => 1,
+                        'error_text' => 'rate_limit',
+                    ]);
+                } catch (\Throwable $e) {
+                    $this->logger->error('notify.dlq_push_failed', ['error' => $e->getMessage()]);
+                }
+                throw new Exceptions\ThrottleException('Rate limit exceeded');
+            }
             if (!$this->throttler->canSend($recipient)) {
                 $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
                 $this->dlq->push([
