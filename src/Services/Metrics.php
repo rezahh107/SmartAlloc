@@ -4,17 +4,27 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Infrastructure\Contracts\DbProxy;
+use SmartAlloc\Infrastructure\WpDb\WpdbAdapter;
+use Throwable;
+
 /**
  * Metrics collection service
  */
 class Metrics
 {
+    private DbProxy $db;
     private string $table;
 
-    public function __construct()
+    public function __construct(?DbProxy $db = null, ?string $table = null)
     {
-        global $wpdb;
-        $this->table = $wpdb->prefix . 'salloc_metrics';
+        $this->db = $db ?? WpdbAdapter::fromGlobals();
+        $this->table = $table ?? $this->db->getPrefix() . 'salloc_metrics';
+    }
+
+    public static function createDefault(): self
+    {
+        return new self(WpdbAdapter::fromGlobals());
     }
 
     /**
@@ -22,14 +32,15 @@ class Metrics
      */
     public function inc(string $key, float $value = 1.0, array $labels = []): void
     {
-        global $wpdb;
-        
-        // @security-ok-sql
-        $wpdb->insert($this->table, [
-            'metric_key' => $key,
-            'labels' => wp_json_encode($labels),
-            'value' => $value,
-        ]);
+        try {
+            $this->db->insert($this->table, [
+                'metric_key' => $key,
+                'labels' => \wp_json_encode($labels),
+                'value' => $value,
+            ]);
+        } catch (Throwable $e) {
+            error_log('Metrics::inc: ' . $e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        }
     }
 
     /**
@@ -45,27 +56,18 @@ class Metrics
      */
     public function get(string $key, int $limit = 100): array
     {
-        global $wpdb;
-        
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT metric_key, labels, value, ts 
-             FROM {$this->table} 
-             WHERE metric_key = %s 
-             ORDER BY ts DESC 
-             LIMIT %d",
-            $key,
-            $limit
-        ), ARRAY_A);
-        
-        if (!$results) {
+        try {
+            $sql = "SELECT metric_key, labels, value, ts FROM {$this->table} WHERE metric_key = %s ORDER BY ts DESC LIMIT %d";
+            $results = $this->db->getResults($sql, [$key, $limit]);
+        } catch (Throwable $e) {
+            error_log('Metrics::get: ' . $e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return [];
         }
-        
-        // Decode labels
+
         foreach ($results as &$result) {
             $result['labels'] = json_decode($result['labels'] ?: '[]', true);
         }
-        
+
         return $results;
     }
 
@@ -74,37 +76,28 @@ class Metrics
      */
     public function getAggregated(string $key, string $aggregation = 'sum', int $hours = 24): array
     {
-        global $wpdb;
-        
-        $sql = match ($aggregation) {
+        $sqlAgg = match ($aggregation) {
             'sum' => 'SUM(value)',
             'avg' => 'AVG(value)',
             'count' => 'COUNT(*)',
             'min' => 'MIN(value)',
             'max' => 'MAX(value)',
-            default => 'SUM(value)'
+            default => 'SUM(value)',
         };
-        
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT {$sql} as value, labels
-             FROM {$this->table} 
-             WHERE metric_key = %s 
-             AND ts >= DATE_SUB(NOW(), INTERVAL %d HOUR)
-             GROUP BY labels
-             ORDER BY value DESC",
-            $key,
-            $hours
-        ), ARRAY_A);
-        
-        if (!$results) {
+
+        try {
+            $sql = "SELECT {$sqlAgg} as value, labels FROM {$this->table} WHERE metric_key = %s AND ts >= DATE_SUB(NOW(), INTERVAL %d HOUR) GROUP BY labels ORDER BY value DESC";
+            $results = $this->db->getResults($sql, [$key, $hours]);
+        } catch (Throwable $e) {
+            error_log('Metrics::getAggregated: ' . $e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return [];
         }
-        
-        // Decode labels
+
         foreach ($results as &$result) {
             $result['labels'] = json_decode($result['labels'] ?: '[]', true);
         }
-        
+
         return $results;
     }
-} 
+}
+
