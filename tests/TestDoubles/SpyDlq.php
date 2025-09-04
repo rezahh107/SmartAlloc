@@ -11,9 +11,10 @@ final class SpyDlq implements DlqRepository
     /** @var array<int,array{topic:string,payload:array,ts:DateTimeImmutable}> */
     public array $entries = [];
 
-    public function insert(string $topic, array $payload, DateTimeImmutable $createdAtUtc): void
+    public function insert(string $topic, array $payload, DateTimeImmutable $createdAtUtc): bool
     {
         $this->entries[] = ['topic' => $topic, 'payload' => $payload, 'ts' => $createdAtUtc];
+        return true;
     }
 
     public function has(string $topic): bool
@@ -60,13 +61,15 @@ final class SpyDlq implements DlqRepository
         return $items[$id - 1] ?? null;
     }
 
-    public function delete(int $id): void
+    public function delete(int $id): bool
     {
         $index = $id - 1;
         if (isset($this->entries[$index])) {
             unset($this->entries[$index]);
             $this->entries = array_values($this->entries);
+            return true;
         }
+        return false;
     }
 
     public function count(): int
