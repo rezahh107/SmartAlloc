@@ -98,7 +98,7 @@ final class DlqService
                         \do_action('smartalloc_notify', $payload);
                         $this->delete((int) $row['id']);
                     } catch (Throwable $e) {
-                        throw new ReplayException('Replay failed', 0, $e);
+                        throw new ReplayException('Replay failed', 0, $e); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     }
                 });
                 if ($this->logger) {
@@ -127,17 +127,23 @@ final class DlqService
      */
     private function logReplayError(Throwable $e, $rowId): void
     {
+        $prev    = $e->getPrevious();
+        $message = $prev?->getMessage() ?? $e->getMessage();
+        $trace   = $prev?->getTraceAsString() ?? $e->getTraceAsString();
+        $file    = $prev?->getFile() ?? $e->getFile();
+        $line    = $prev?->getLine() ?? $e->getLine();
+
         if ($this->logger) {
             $this->logger->error('DlqService::doReplay failed for row', [
                 'method'    => __METHOD__,
                 'row_id'    => $rowId,
-                'exception' => $e->getMessage(),
-                'trace'     => $e->getTraceAsString(),
-                'file'      => $e->getFile(),
-                'line'      => $e->getLine(),
+                'exception' => $message,
+                'trace'     => $trace,
+                'file'      => $file,
+                'line'      => $line,
             ]);
         } else {
-            error_log('DlqService::doReplay: Row ID ' . $rowId . ' - ' . $e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log('DlqService::doReplay: Row ID ' . $rowId . ' - ' . $message); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
         }
     }
 
