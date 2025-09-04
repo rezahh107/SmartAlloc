@@ -120,5 +120,46 @@ final class DlqServiceTest extends BaseTestCase
         @unlink($tmpLog);
     }
 
+    public function testReplayWarnsWhenIterationExceedsBudget(): void
+    {
+        $repo = new class implements DlqRepository {
+            public array $rows = [];
+            public function insert(string $topic, array $payload, \DateTimeImmutable $createdAtUtc): bool
+            {
+                $this->rows[] = ['id' => count($this->rows) + 1, 'event_name' => $topic, 'payload' => $payload];
+                return true;
+            }
+            public function listRecent(int $limit): array
+            {
+                return $this->rows;
+            }
+            public function get(int $id): ?array
+            {
+                return $this->rows[0] ?? null;
+            }
+            public function delete(int $id): bool
+            {
+                usleep(200000); // 200ms to trigger budget warning
+                return true;
+            }
+            public function count(): int
+            {
+                return count($this->rows);
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with(
+                'DlqService::doReplay iteration',
+                $this->callback(static fn($context) => ($context['duration_ms'] ?? 0) > 150)
+            );
+
+        $svc = new DlqService($repo, $logger);
+        $svc->push(['event_name' => 'Evt', 'payload' => []]);
+        $svc->replay(1);
+    }
+
 }
 
