@@ -10,6 +10,17 @@ namespace SmartAlloc\Services {
 
 namespace {
 use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, Metrics, DlqService};
+class SpyMetrics extends Metrics {
+    public array $records = array();
+    public function __construct() {}
+    public function inc(string $key, float $value = 1.0, array $labels = array()): void {
+        global $wpdb; $wpdb->records[] = array('metric_key' => $key); $this->records[] = $key;
+    }
+    public function observe(string $key, int $milliseconds, array $labels = array()): void {
+        $this->inc($key, (float) $milliseconds, $labels);
+    }
+}
+use SmartAlloc\Services\Exceptions\ThrottleException;
 use SmartAlloc\Http\Rest\HealthController;
 use SmartAlloc\Security\RateLimiter;
 use PHPUnit\Framework\TestCase;
@@ -44,7 +55,7 @@ final class NotificationServiceIntegrationTest extends TestCase
     public function test_throttle_stats_exposed_in_health(): void
     {
         global $t, $o; $t = $o = array();
-        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new Metrics() );
+        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new SpyMetrics() );
         for ( $i = 0; $i < 11; $i++ ) {
             if ( 3 === $i ) { global $t; $t['smartalloc_notify_rate'] = 0; }
             try {
@@ -77,7 +88,7 @@ final class NotificationServiceIntegrationTest extends TestCase
             public function delete( int $id ): bool { return true; }
             public function count(): int { return count( $this->items ); }
         };
-        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new Metrics(), null, new DlqService( $repo ) );
+        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new SpyMetrics(), null, new DlqService( $repo ) );
         $svc->handle(
             array(
                 'event_name' => 'user_registered',
@@ -110,7 +121,7 @@ final class NotificationServiceIntegrationTest extends TestCase
             public function delete( int $id ): bool { return true; }
             public function count(): int { return count( $this->items ); }
         };
-        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new Metrics(), null, new DlqService( $repo ) );
+        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new SpyMetrics(), null, new DlqService( $repo ) );
         $GLOBALS['filters']['smartalloc_notify_transport'] = fn( $r, $body, $attempt ) => 'fail';
         $svc->handle(
             array(
@@ -126,6 +137,37 @@ final class NotificationServiceIntegrationTest extends TestCase
         }
         $this->assertStringNotContainsString( 'foo@example.com', $log );
         $this->assertStringNotContainsString( '123', $log );
+    }
+
+    public function test_rate_limit_pushes_sanitized_payload_to_dlq(): void
+    {
+        global $t, $o, $wpdb; $wpdb = new WpdbMock(); $t = array( 'smartalloc_notify_rate' => 10 ); $o = array(); $wpdb->records = array();
+        $repo = new class implements DlqRepository {
+            public array $items = array();
+            public function insert( string $topic, array $payload, \DateTimeImmutable $created_at_utc ): bool { $this->items[] = array( 'topic' => $topic, 'payload' => $payload ); return true; }
+            public function listRecent( int $limit ): array { return array(); }
+            public function get( int $id ): ?array { return null; }
+            public function delete( int $id ): bool { return true; }
+            public function count(): int { return count( $this->items ); }
+        };
+        $svc = new NotificationService( new CircuitBreaker(), new Logging(), new SpyMetrics(), null, new DlqService( $repo ) );
+        try {
+            $svc->send(
+                array(
+                    'event_name' => 'user_registered',
+                    'body'       => array( 'email' => 'foo@example.com', 'user_id' => 123 ),
+                    'recipient'  => 'foo@example.com',
+                )
+            );
+            $this->fail( 'ThrottleException not thrown' );
+        } catch ( ThrottleException $e ) {
+            $counts = array_count_values( array_column( $wpdb->records, 'metric_key' ) );
+            $this->assertSame( 1, $counts['notify_throttled_total'] ?? 0 );
+            $this->assertSame( 1, $counts['dlq_push_total'] ?? 0 );
+            $this->assertSame( 1, $counts['notify_failed_total'] ?? 0 );
+            $this->assertSame( '[REDACTED]', $repo->items[0]['payload']['body']['email'] ?? '' );
+            $this->assertStringStartsWith( 'user_', $repo->items[0]['payload']['body']['user_id'] ?? '' );
+        }
     }
 }
 }

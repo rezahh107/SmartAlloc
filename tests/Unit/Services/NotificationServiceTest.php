@@ -6,10 +6,13 @@ namespace SmartAlloc\Tests\Unit\Services;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use SmartAlloc\Services\{NotificationService,CircuitBreaker,Logging,DlqService};
+use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, DlqService};
+use SmartAlloc\Services\Exceptions\ThrottleException;
+use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Tests\TestDoubles\SpyDlq;
 use SmartAlloc\Services\Metrics;
+use SmartAlloc\ValueObjects\ThrottleConfig;
 
 final class SpyMetrics extends Metrics
 {
@@ -98,4 +101,36 @@ final class NotificationServiceTest extends BaseTestCase
         $this->assertArrayNotHasKey('notify_retry_total', $metrics->counters);
         $this->assertTrue($spyDlq->has('mail'));
     }
+
+    public function testRateLimitExceededPushesDlqAndMetrics(): void
+    {
+        global $t; $t = [];
+        $metrics = new SpyMetrics();
+        $spyDlq  = new SpyDlq();
+        $dlq     = new DlqService($spyDlq);
+        $config  = new ThrottleConfig(0, 1, 60);
+        $svc     = new NotificationService(new CircuitBreaker(), new Logging(), $metrics, null, $dlq, $config);
+        $svc->send([
+            'event_name' => 'user_registered',
+            'body'       => ['email' => 'foo1@example.com', 'user_id' => 41],
+            'recipient'  => 'foo1@example.com',
+        ]);
+        try {
+            $svc->send([
+                'event_name' => 'user_registered',
+                'body'       => ['email' => 'foo@example.com', 'user_id' => 42],
+                'recipient'  => 'foo@example.com',
+            ]);
+            $this->fail('ThrottleException not thrown');
+        } catch (ThrottleException $e) {
+            $this->assertSame(1, $metrics->counters['notify_throttled_total'] ?? 0);
+            $this->assertSame(1, $metrics->counters['dlq_push_total'] ?? 0);
+            $this->assertSame(1, $metrics->counters['notify_failed_total'] ?? 0);
+            $this->assertTrue($spyDlq->has('notify'));
+            $payload = $spyDlq->last('notify');
+            $this->assertSame('[REDACTED]', $payload['body']['email'] ?? '');
+            $this->assertStringStartsWith('user_', $payload['body']['user_id'] ?? '');
+        }
+    }
+
 }
