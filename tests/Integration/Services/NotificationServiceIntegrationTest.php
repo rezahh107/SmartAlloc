@@ -71,10 +71,10 @@ final class NotificationServiceIntegrationTest extends TestCase
         $GLOBALS['filters']['smartalloc_log_path'] = fn( $p ) => $tmp;
         $repo = new class implements DlqRepository {
             public array $items = array();
-            public function insert( string $topic, array $payload, \DateTimeImmutable $created_at_utc ): void { $this->items[] = array( 'topic' => $topic, 'payload' => $payload ); }
+            public function insert( string $topic, array $payload, \DateTimeImmutable $created_at_utc ): bool { $this->items[] = array( 'topic' => $topic, 'payload' => $payload ); return true; }
             public function listRecent( int $limit ): array { return array(); }
             public function get( int $id ): ?array { return null; }
-            public function delete( int $id ): void {}
+            public function delete( int $id ): bool { return true; }
             public function count(): int { return count( $this->items ); }
         };
         $svc = new NotificationService( new CircuitBreaker(), new Logging(), new Metrics(), null, new DlqService( $repo ) );
@@ -104,10 +104,10 @@ final class NotificationServiceIntegrationTest extends TestCase
         }
         $repo = new class implements DlqRepository {
             public array $items = array();
-            public function insert( string $topic, array $payload, \DateTimeImmutable $created_at_utc ): void { $this->items[] = array( 'topic' => $topic, 'payload' => $payload ); }
+            public function insert( string $topic, array $payload, \DateTimeImmutable $created_at_utc ): bool { $this->items[] = array( 'topic' => $topic, 'payload' => $payload ); return true; }
             public function listRecent( int $limit ): array { return array(); }
             public function get( int $id ): ?array { return null; }
-            public function delete( int $id ): void {}
+            public function delete( int $id ): bool { return true; }
             public function count(): int { return count( $this->items ); }
         };
         $svc = new NotificationService( new CircuitBreaker(), new Logging(), new Metrics(), null, new DlqService( $repo ) );
