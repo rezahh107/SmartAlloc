@@ -8,13 +8,18 @@ use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Infrastructure\WpDb\WpDlqRepository;
 use DateTimeImmutable;
 use DateTimeZone;
+use Psr\Log\LoggerInterface;
+use SmartAlloc\Perf\Stopwatch;
+use SmartAlloc\Services\Exceptions\ReplayException;
 
 /**
  * Dead letter queue storage service.
  */
 final class DlqService
 {
-    public function __construct(private ?DlqRepository $repo = null)
+    private const REPLAY_BUDGET_MS = 150.0;
+
+    public function __construct(private ?DlqRepository $repo = null, private ?LoggerInterface $logger = null)
     {
         $this->repo ??= WpDlqRepository::createDefault();
     }
@@ -87,15 +92,49 @@ final class DlqService
                 '_attempt'   => 1,
             ];
             try {
-                \do_action('smartalloc_notify', $payload);
-                $this->delete((int) $row['id']);
+                $perf = Stopwatch::measure(function () use ($payload, $row): void {
+                    try {
+                        \do_action('smartalloc_notify', $payload);
+                        $this->delete((int) $row['id']);
+                    } catch (\Throwable $e) {
+                        throw new ReplayException($e->getMessage(), 0, $e); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                    }
+                });
+                if ($this->logger) {
+                    $level = $perf->durationMs > self::REPLAY_BUDGET_MS ? 'warning' : 'info';
+                    $this->logger->$level('DlqService::doReplay row processed', [
+                        'method'      => __METHOD__,
+                        'row_id'      => $row['id'] ?? 'unknown',
+                        'duration_ms' => $perf->durationMs,
+                    ]);
+                }
                 $ok++;
-            } catch (\Throwable $e) {
+            } catch (ReplayException $e) {
+                $this->logReplayError($e, $row['id'] ?? 'unknown');
                 $fail++;
             }
         }
         $depth = $this->count();
         return ['ok' => $ok, 'fail' => $fail, 'depth' => $depth];
+    }
+
+    private function logReplayError(\Throwable $e, int|string $rowId): void
+    {
+        if ($this->logger) {
+            $this->logger->error('DlqService::doReplay failed for row', [
+                'method'    => __METHOD__,
+                'row_id'    => $rowId,
+                'exception' => $e->getMessage(),
+                'trace'     => $e->getTraceAsString(),
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ]);
+            return;
+        }
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        error_log(
+            'DlqService::doReplay: Row ID ' . $rowId . ' - ' . $e->getMessage()
+        );
     }
 
     private function count(): int
