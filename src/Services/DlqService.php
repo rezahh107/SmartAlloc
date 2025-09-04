@@ -6,6 +6,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Infrastructure\WpDb\WpDlqRepository;
+use SmartAlloc\Perf\Stopwatch;
+use SmartAlloc\Exception\ReplayException;
 use DateTimeImmutable;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
@@ -16,6 +18,8 @@ use Throwable;
  */
 final class DlqService
 {
+    private const REPLAY_BUDGET_MS = 150.0;
+
     public function __construct(private ?DlqRepository $repo = null, private ?LoggerInterface $logger = null)
     {
         $this->repo ??= WpDlqRepository::createDefault();
@@ -83,19 +87,32 @@ final class DlqService
         $ok = 0;
         $fail = 0;
         foreach ($rows as $row) {
-            $payload = [
-                'event_name' => (string) $row['event_name'],
-                'body'       => $row['payload'],
-                '_attempt'   => 1,
-            ];
             try {
-                \do_action('smartalloc_notify', $payload);
-                $this->delete((int) $row['id']);
+                $perf = Stopwatch::measure(function () use ($row): void {
+                    $payload = [
+                        'event_name' => (string) $row['event_name'],
+                        'body'       => $row['payload'],
+                        '_attempt'   => 1,
+                    ];
+                    try {
+                        \do_action('smartalloc_notify', $payload);
+                        $this->delete((int) $row['id']);
+                    } catch (Throwable $e) {
+                        throw new ReplayException('Replay failed', 0, $e);
+                    }
+                });
+                if ($this->logger) {
+                    $level = $perf->durationMs > self::REPLAY_BUDGET_MS ? 'warning' : 'info';
+                    $this->logger->$level('DlqService::doReplay iteration', [
+                        'method'      => __METHOD__,
+                        'row_id'      => $row['id'] ?? 'unknown',
+                        'duration_ms' => $perf->durationMs,
+                    ]);
+                }
                 $ok++;
-            } catch (Throwable $e) {
+            } catch (ReplayException $e) {
                 $this->logReplayError($e, $row['id'] ?? 'unknown');
                 $fail++;
-                continue;
             }
         }
         $depth = $this->count();
