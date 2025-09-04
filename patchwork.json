@@ -1,3 +1,3 @@
 {
-    "redefinable-internals": ["header", "time", "filter_input"]
+    "redefinable-internals": ["header", "time", "filter_input", "error_log"]
 }
