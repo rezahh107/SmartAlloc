@@ -15,6 +15,13 @@ class BaselineChecker
 {
     private const BASELINE_CONFIG = __DIR__ . '/../config/baseline.json';
     private const METRICS_FILE    = __DIR__ . '/../metrics/current.json';
+    private const WEIGHTS = [
+        'Security'       => 0.2,
+        'Logic'          => 0.2,
+        'Performance'    => 0.2,
+        'Observability'  => 0.2,
+        'Maintainability'=> 0.2,
+    ];
 
     private array $baseline;
     private array $currentMetrics;
@@ -46,11 +53,17 @@ class BaselineChecker
             }
         }
 
+        $overallScore    = $this->calculateScore($phaseData['metrics']);
+        $completionTarget = $phaseData['completion_target'] ?? 0;
+        $status           = ($overallScore >= $completionTarget && empty($gaps)) ? 'PASS' : 'FAIL';
+
         return [
-            'phase'            => $phase,
-            'valid'            => empty($gaps),
-            'gaps'             => $gaps,
-            'overall_progress' => $this->calculateProgress($phaseData['metrics']),
+            'phase'             => $phase,
+            'valid'             => empty($gaps),
+            'gaps'              => $gaps,
+            'overall_progress'  => $this->calculateProgress($phaseData['metrics']),
+            'overall_score'     => $overallScore,
+            'phase_gate_status' => $status,
         ];
     }
 
@@ -77,6 +90,25 @@ class BaselineChecker
         }
 
         return round(($current / $requiredTotal) * 100, 2);
+    }
+
+    private function calculateScore(array $requirements): float
+    {
+        $totalWeight = array_sum(self::WEIGHTS);
+        if ($totalWeight <= 0) {
+            return 0.0;
+        }
+
+        $score = 0.0;
+        foreach ($requirements as $dimension => $required) {
+            $weight  = self::WEIGHTS[$dimension] ?? 0;
+            $current = min($this->currentMetrics[$dimension] ?? 0, $required);
+            if ($required > 0 && $weight > 0) {
+                $score += ($current / $required) * $weight;
+            }
+        }
+
+        return round(($score / $totalWeight) * 100, 2);
     }
 }
 
