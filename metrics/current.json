@@ -1,7 +1,7 @@
 {
   "Security": 20,
-  "Logic": 15,
-  "Performance": 14,
-  "Observability": 12,
+  "Logic": 16,
+  "Performance": 16,
+  "Observability": 14,
   "Maintainability": 17
 }
