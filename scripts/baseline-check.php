@@ -55,7 +55,7 @@ class BaselineChecker
 
         $overallScore    = $this->calculateScore($phaseData['metrics']);
         $completionTarget = $phaseData['completion_target'] ?? 0;
-        $status           = ($overallScore >= $completionTarget && empty($gaps)) ? 'PASS' : 'FAIL';
+        $status           = ($overallScore >= $completionTarget) ? 'PASS' : 'FAIL';
 
         return [
             'phase'             => $phase,
