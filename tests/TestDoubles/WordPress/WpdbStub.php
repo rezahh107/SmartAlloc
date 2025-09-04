@@ -17,6 +17,7 @@ if (!class_exists('wpdb', false)) {
         public int $var = 0;
         public string $last_error = '';
         public int $rows_affected = 0;
+        public int $insert_id = 0;
 
         public function __construct()
         {
@@ -111,6 +112,7 @@ if (!class_exists('wpdb', false)) {
         public function insert(string $table, array $data)
         {
             $this->log('INSERT');
+            $this->insert_id++;
             if (isset($data['entry_id'])) {
                 $id = $data['entry_id'];
                 if (isset($this->rows[$id])) {
@@ -118,12 +120,12 @@ if (!class_exists('wpdb', false)) {
                     return false;
                 }
                 $this->rows[$id] = $data;
-                return 1;
+                return $this->insert_id;
             }
             if (str_contains($table, 'history')) {
                 $this->history[] = $data;
             }
-            return 1;
+            return $this->insert_id;
         }
     }
 }
