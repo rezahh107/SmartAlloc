@@ -7,7 +7,9 @@
 ./gap-analysis --target-phase=foundation
 ```
 
-Baseline check reports now include `overall_score` and `phase_gate_status` fields for easier automation.
+Baseline check reports now include `overall_score` and `phase_gate_status` fields for easier automation. `phase_gate_status`
+returns `PASS` when the weighted overall score meets or exceeds the phase's `completion_target`, even if some individual
+metrics are still below their required values.
 
 ## Composer Scripts
 ```
