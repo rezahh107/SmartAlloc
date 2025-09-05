@@ -76,6 +76,41 @@ final class DlqServiceTest extends BaseTestCase
         $this->assertStringContainsString('DlqService::doReplay: Row ID 1 - Fallback error', $captured);
     }
 
+    public function testDoReplayLogsAndContinuesOnLoggerException(): void
+    {
+        $repo = new class implements DlqRepository {
+            public array $rows = [];
+            public function insert(string $topic, array $payload, \DateTimeImmutable $createdAtUtc): bool { $this->rows[] = ['id' => count($this->rows) + 1, 'event_name' => $topic, 'payload' => $payload]; return true; }
+            public function listRecent(int $limit): array { return $this->rows; }
+            public function get(int $id): ?array { return null; }
+            public function delete(int $id): bool { unset($this->rows[$id - 1]); return true; }
+            public function count(): int { return count($this->rows); }
+        };
+        $repo->insert('Evt', ['payload' => 'x'], new \DateTimeImmutable());
+
+        $logger = new class implements LoggerInterface {
+            public array $errors = [];
+            public function error($message, array $context = []): void { $this->errors[] = $context; }
+            public function warning($message, array $context = []): void { throw new \RuntimeException('warn fail'); }
+            public function info($message, array $context = []): void { throw new \RuntimeException('info fail'); }
+            public function emergency($message, array $context = []): void {}
+            public function alert($message, array $context = []): void {}
+            public function critical($message, array $context = []): void {}
+            public function notice($message, array $context = []): void {}
+            public function debug($message, array $context = []): void {}
+            public function log($level, $message, array $context = []): void {}
+        };
+
+        $svc = new DlqService($repo, $logger);
+        $stats = $svc->replay(1);
+
+        $this->assertSame(0, $stats['ok']);
+        $this->assertSame(1, $stats['fail']);
+        $this->assertSame(0, $stats['depth']);
+        $this->assertCount(1, $logger->errors);
+        $this->assertSame(1, $logger->errors[0]['row_id'] ?? null);
+    }
+
     public function testBackwardCompatibilityWithoutLogger(): void
     {
         $repo = new SpyDlq();
