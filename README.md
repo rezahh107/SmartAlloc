@@ -438,6 +438,90 @@ ai_context.json: ADR-derived AI context for implemented features
 
 PROJECT_STATE.md: snapshot summary (implemented features only; CI also uploads as artifact)
 
+## Developer Hooks
+
+### Activation Hook
+
+SmartAlloc provides an activation hook that fires after the plugin is fully activated:
+
+```php
+/**
+ * Fires after SmartAlloc activation is complete
+ *
+ * @param bool $network_wide Whether activated network-wide
+ */
+do_action('smartalloc_activate', $network_wide);
+```
+
+#### Usage Examples
+
+**Basic Integration Setup:**
+```php
+add_action('smartalloc_activate', function($network_wide) {
+    // Initialize your plugin's SmartAlloc integration
+    MyPlugin\SmartAllocIntegration::initialize();
+
+    if ($network_wide) {
+        // Handle network-wide activation
+        MyPlugin\NetworkSetup::configure_sites();
+    }
+});
+```
+
+**Create Default Allocation Rules:**
+```php
+add_action('smartalloc_activate', function($network_wide) {
+    // Create default allocation rules for your custom post type
+    $rule_engine = SmartAlloc\Services\RuleEngine::getInstance();
+    $rule_engine->addRule([
+        'name' => 'My Plugin Default Rule',
+        'conditions' => ['post_type' => 'my_custom_type'],
+        'allocation' => ['strategy' => 'round_robin']
+    ]);
+});
+```
+
+**Database Setup:**
+```php
+add_action('smartalloc_activate', function($network_wide) {
+    // Create tables that depend on SmartAlloc structure
+    MyPlugin\Database::create_integration_tables();
+
+    // Set default options
+    update_option('myplugin_smartalloc_enabled', true);
+});
+```
+
+#### Hook Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$network_wide` | `bool` | `true` if activated network-wide on multisite, `false` otherwise |
+
+#### Best Practices
+
+1. **Check Dependencies:** Verify SmartAlloc services are available before using them
+2. **Handle Errors:** Wrap integration code in try-catch blocks
+3. **Network Awareness:** Check `$network_wide` parameter for multisite installations
+4. **Cleanup:** Use `register_deactivation_hook()` for cleanup if needed
+
+```php
+add_action('smartalloc_activate', function($network_wide) {
+    try {
+        // Check if required SmartAlloc services are available
+        if (!class_exists('SmartAlloc\\Services\\RuleEngine')) {
+            throw new Exception('SmartAlloc RuleEngine not available');
+        }
+
+        // Your integration code here
+
+    } catch (Exception $e) {
+        // Log error but don't break activation
+        error_log('MyPlugin SmartAlloc integration failed: ' . $e->getMessage());
+    }
+});
+```
+
 ## Codex Prompt Handoff
 
 Generate a context-aware prompt for Codex:

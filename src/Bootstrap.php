@@ -66,7 +66,12 @@ final class Bootstrap
     }
 
     /**
-     * Plugin activation hook
+     * Activate the plugin
+     *
+     * Performs initial setup tasks and fires activation hook for extensibility.
+     *
+     * @param bool $network_wide Whether plugin is being activated network-wide
+     * @return void
      */
     public static function activate(bool $network_wide = false): void
     {
@@ -92,6 +97,24 @@ final class Bootstrap
 
         // Flush rewrite rules for REST API
         flush_rewrite_rules();
+
+        /**
+         * Fires after SmartAlloc plugin activation is complete.
+         *
+         * This action hook allows other plugins and themes to perform setup tasks
+         * after SmartAlloc has been fully activated. Use this hook to:
+         * - Initialize dependent data structures
+         * - Register custom post types that depend on SmartAlloc
+         * - Set up integration configurations
+         * - Create default allocation rules
+         *
+         * @since 1.0.0
+         *
+         * @param bool $network_wide Whether the plugin is being activated network-wide
+         *                          on a multisite installation. False for single-site
+         *                          or individual site activation.
+         */
+        do_action('smartalloc_activate', $network_wide);
     }
 
     /**
