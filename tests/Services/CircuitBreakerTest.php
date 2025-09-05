@@ -137,6 +137,50 @@ final class CircuitBreakerTest extends WP_UnitTestCase
         $this->assertSame(7, $cb2->getStatus()->threshold);
     }
 
+    public function test_filter_parameters(): void
+    {
+        $received_params = [];
+
+        add_filter('smartalloc_cb_threshold', function ($default, $key) use (&$received_params) {
+            $received_params['threshold'] = [$default, $key];
+            return $default;
+        }, 10, 2);
+
+        add_filter('smartalloc_cb_cooldown', function ($default, $key) use (&$received_params) {
+            $received_params['cooldown'] = [$default, $key];
+            return $default;
+        }, 10, 2);
+
+        new CircuitBreaker('test_key');
+
+        $this->assertSame([5, 'test_key'], $received_params['threshold']);
+        $this->assertSame([300, 'test_key'], $received_params['cooldown']);
+    }
+
+    public function test_filter_values_are_cast_to_integers(): void
+    {
+        add_filter('smartalloc_cb_threshold', function () {
+            return '15';
+        });
+
+        add_filter('smartalloc_cb_cooldown', function () {
+            return 450.7;
+        });
+
+        $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+        $status = $cb->getStatus();
+
+        $this->assertSame(15, $status->threshold);
+        $this->assertIsInt($status->threshold);
+
+        $reflection = new \ReflectionClass($cb);
+        $cooldownProperty = $reflection->getProperty('cooldown');
+        $cooldownProperty->setAccessible(true);
+
+        $this->assertSame(450, $cooldownProperty->getValue($cb));
+        $this->assertIsInt($cooldownProperty->getValue($cb));
+    }
+
     public function test_auto_recovery_when_cooldown_expired(): void
     {
         $expired = time() - 100;
