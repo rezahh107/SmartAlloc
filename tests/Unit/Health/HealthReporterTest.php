@@ -4,55 +4,37 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Unit\Health;
 
+use PHPUnit\Framework\TestCase;
 use SmartAlloc\Health\HealthReporter;
-use SmartAlloc\Tests\Unit\TestCase;
-use Brain\Monkey;
+use SmartAlloc\Services\CircuitBreaker;
+use SmartAlloc\ValueObjects\CircuitBreakerStatus;
 
 final class HealthReporterTest extends TestCase
 {
-    protected function setUp(): void
+    public function testHealthyCircuitReturnsSuccess(): void
     {
-        parent::setUp();
-        $this->setupWordPressMocks();
+        $status  = new CircuitBreakerStatus('closed', 0, 5, null, null);
+        $breaker = $this->createMock(CircuitBreaker::class);
+        $breaker->method('getStatus')->willReturn($status);
+
+        $reporter = new HealthReporter($breaker);
+        $result   = $reporter->get_health_status();
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('healthy', $result['data']['status']);
     }
 
-    public function testAjaxHealthCheckWithValidNonce(): void
+    public function testDegradedCircuitReturnsWarning(): void
     {
-        $_POST['nonce'] = 'test_nonce_' . md5('smartalloc_health_check' . 'salt');
-        $_POST['circuit_key'] = 'test';
+        $status  = new CircuitBreakerStatus('half-open', 2, 5, time() - 100, time() + 100);
+        $breaker = $this->createMock(CircuitBreaker::class);
+        $breaker->method('getStatus')->willReturn($status);
 
-        $reporter = new HealthReporter();
+        $reporter = new HealthReporter($breaker);
+        $result   = $reporter->get_health_status();
 
-        // Expect wp_send_json_success to be called
-        $this->expectOutputRegex('/{"success":true/');
-
-        $reporter->ajax_health_check();
-    }
-
-    public function testAjaxHealthCheckWithInvalidNonce(): void
-    {
-        $_POST['nonce'] = 'invalid_nonce';
-
-        $reporter = new HealthReporter();
-
-        // Expect wp_send_json_error to be called
-        $this->expectOutputRegex('/{"success":false/');
-
-        $reporter->ajax_health_check();
-    }
-
-    public function testHealthResponseFormat(): void
-    {
-        $reporter = new HealthReporter();
-        $health = $reporter->get_circuit_breaker_health('test');
-
-        $this->assertArrayHasKey('component', $health);
-        $this->assertArrayHasKey('status', $health);
-        $this->assertArrayHasKey('details', $health);
-        $this->assertArrayHasKey('timestamp', $health);
-
-        $this->assertEquals('circuit_breaker', $health['component']);
-        $this->assertContains($health['status'], ['healthy', 'degraded']);
+        $this->assertTrue($result['success']);
+        $this->assertSame('degraded', $result['data']['status']);
+        $this->assertSame(2, $result['data']['failure_count']);
     }
 }
-
