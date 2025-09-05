@@ -11,6 +11,9 @@
   <testsuite name="Services">
    <directory>tests/Services</directory>
   </testsuite>
+   <testsuite name="ValueObjects">
+   <directory>tests/ValueObjects</directory>
+  </testsuite>
  </testsuites>
  <php>
   <const name="WP_TESTS_DOMAIN" value="example.org" />

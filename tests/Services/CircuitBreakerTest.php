@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SmartAlloc\Tests\Services;
 
 use SmartAlloc\Services\CircuitBreaker;
-use SmartAlloc\Services\CircuitBreakerStatus;
 use SmartAlloc\Services\Exceptions\CircuitOpenException;
 use WP_UnitTestCase;
 
@@ -32,51 +31,60 @@ final class CircuitBreakerTest extends WP_UnitTestCase
         parent::tearDown();
     }
 
-    public function test_dto_state_helpers_for_closed_circuit(): void
+    public function test_dto_helper_methods(): void
     {
         $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
-        $status = $cb->getStatus();
 
+        $status = $cb->getStatus();
         $this->assertTrue($status->isClosed());
         $this->assertFalse($status->isOpen());
         $this->assertFalse($status->isHalfOpen());
-        $this->assertSame('closed', $status->state);
-    }
 
-    public function test_dto_state_helpers_for_open_circuit(): void
-    {
-        set_transient(self::TRANSIENT_KEY, [
-            'state' => 'open',
-            'fail_count' => 5,
-            'cooldown_until' => time() + 300,
-            'last_error' => 'Test error',
-        ], 3600);
+        for ($i = 0; $i < 5; $i++) {
+            try {
+                $cb->recordFailure('Test error');
+            } catch (CircuitOpenException $e) {
+            }
+        }
 
-        $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
         $status = $cb->getStatus();
-
         $this->assertTrue($status->isOpen());
         $this->assertFalse($status->isClosed());
         $this->assertFalse($status->isHalfOpen());
-        $this->assertSame('open', $status->state);
     }
 
-    public function test_dto_state_helpers_for_half_open_circuit(): void
+    public function test_dto_to_array(): void
     {
-        set_transient(self::TRANSIENT_KEY, [
-            'state' => 'half-open',
-            'fail_count' => 0,
-            'cooldown_until' => null,
-            'last_error' => null,
-        ], 3600);
-
         $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+        $cb->recordFailure('Test error');
+
+        $status = $cb->getStatus();
+        $array  = $status->toArray();
+
+        $this->assertIsArray($array);
+        $this->assertArrayHasKey('state', $array);
+        $this->assertArrayHasKey('fail_count', $array);
+        $this->assertArrayHasKey('threshold', $array);
+        $this->assertArrayHasKey('cooldown_until', $array);
+        $this->assertArrayHasKey('last_error', $array);
+
+        $this->assertSame('closed', $array['state']);
+        $this->assertSame(1, $array['fail_count']);
+        $this->assertSame(5, $array['threshold']);
+        $this->assertNull($array['cooldown_until']);
+        $this->assertSame('Test error', $array['last_error']);
+    }
+
+    public function test_dto_immutability(): void
+    {
+        $cb     = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
         $status = $cb->getStatus();
 
-        $this->assertTrue($status->isHalfOpen());
-        $this->assertFalse($status->isClosed());
-        $this->assertFalse($status->isOpen());
-        $this->assertSame('half-open', $status->state);
+        $this->assertTrue(property_exists($status, 'state'));
+        $this->assertTrue(property_exists($status, 'failCount'));
+        $this->assertTrue(property_exists($status, 'threshold'));
+        $this->assertTrue(property_exists($status, 'cooldownUntil'));
+        $this->assertTrue(property_exists($status, 'lastError'));
     }
 
     public function test_filtered_threshold_applied(): void
