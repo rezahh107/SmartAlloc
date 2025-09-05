@@ -12,6 +12,24 @@ use SmartAlloc\Services\Exceptions\CircuitOpenException;
  *
  * Provides fault tolerance by monitoring failure rates and temporarily
  * blocking operations when thresholds are exceeded.
+ *
+ * Available WordPress Filters:
+ * - smartalloc_cb_threshold: Modify failure threshold (default: 5)
+ *   Parameters: $threshold (int), $circuit_key (string)
+ * - smartalloc_cb_cooldown: Modify cooldown period in seconds (default: 300)
+ *   Parameters: $cooldown (int), $circuit_key (string)
+ *
+ * @example
+ * // Set custom threshold for API circuit
+ * add_filter('smartalloc_cb_threshold', function ($threshold, $key) {
+ *     return $key === 'api_calls' ? 10 : $threshold;
+ * }, 10, 2);
+ *
+ * @example
+ * // Set longer cooldown for database circuit
+ * add_filter('smartalloc_cb_cooldown', function ($cooldown, $key) {
+ *     return $key === 'database' ? 600 : $cooldown;
+ * }, 10, 2);
  */
 final class CircuitBreaker
 {
