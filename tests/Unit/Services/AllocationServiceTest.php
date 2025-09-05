@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile
 declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Unit\Services;
@@ -38,7 +38,7 @@ final class AllocationServiceTest extends BaseTestCase
                 }
                 return vsprintf($query, $args);
             }
-            public function get_var($query) {
+            public function get_var($query = null, $x = 0, $y = 0) {
                 if (preg_match('/FROM\s+(\w+)/', $query, $m)) {
                     $table = $m[1];
                 } else {
