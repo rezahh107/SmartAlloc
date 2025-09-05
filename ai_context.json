@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-05T04:53:56Z",
+  "last_update_utc": "2025-09-05T05:04:36Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "5b4ac16436578d2c3e8a67f7b6603be75cd9d656",
-    "commits_total": 960,
+    "default_branch": "codex/enhance-dlq-replay-error-logging",
+    "last_commit": "5ceb003cdb67fc01c10acf37f7873fd95b21ac14",
+    "commits_total": 963,
     "files_tracked": 733
   },
   "quality_gate": {
