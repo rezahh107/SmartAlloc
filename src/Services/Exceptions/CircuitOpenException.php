@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services\Exceptions;
 
+/**
+ * Exception thrown when a circuit breaker is open.
+ */
 final class CircuitOpenException extends \RuntimeException
 {
     private string $circuitKey;

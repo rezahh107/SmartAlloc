@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+/**
+ * Data transfer object representing circuit breaker status.
+ */
 final class CircuitBreakerStatus
 {
     private const ALLOWED_STATES = ['open', 'closed', 'half-open'];
@@ -14,6 +17,9 @@ final class CircuitBreakerStatus
     public readonly ?int $cooldownUntil;
     public readonly ?string $lastError;
 
+    /**
+     * @throws \InvalidArgumentException When state is invalid.
+     */
     public function __construct(
         string $state,
         int $failCount,
@@ -22,7 +28,7 @@ final class CircuitBreakerStatus
         ?string $lastError = null
     ) {
         if (!in_array($state, self::ALLOWED_STATES, true)) {
-            throw new \InvalidArgumentException(sprintf('Invalid state: %s', $state)); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \InvalidArgumentException(sprintf('Invalid state: %s', $state));
         }
 
         $this->state = $state;
