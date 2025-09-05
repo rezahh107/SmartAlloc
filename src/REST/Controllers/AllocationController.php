@@ -6,6 +6,7 @@ namespace SmartAlloc\REST\Controllers;
 
 use SmartAlloc\Contracts\AllocationServiceInterface;
 use SmartAlloc\Core\FormContext;
+use SmartAlloc\Security\RestValidator;
 use SmartAlloc\Services\Exceptions\DuplicateAllocationException;
 use SmartAlloc\Services\Exceptions\InsufficientCapacityException;
 use SmartAlloc\Services\Exceptions\InvalidFormContextException;
@@ -25,25 +26,12 @@ final class AllocationController
         $cb = function () {
             register_rest_route('smartalloc/v1', '/allocate/(?P<form_id>\d+)', [
                 'methods'             => 'POST',
-                'permission_callback' => static fn() => current_user_can('manage_smartalloc'),
+                'permission_callback' => fn() => RestValidator::check('manage_options', 'smartalloc_action'),
                 'callback'            => function (\WP_REST_Request $request) {
-                    if (!current_user_can('manage_smartalloc')) {
-                        return new \WP_REST_Response(['error' => 'forbidden'], 403);
-                    }
-
-                    $formRaw = filter_input(INPUT_POST, 'form_id', FILTER_SANITIZE_NUMBER_INT);
-                    $formRaw = $formRaw ?? $request->get_param('form_id');
-                    $formId  = absint(wp_unslash((string) $formRaw));
+                    $data   = RestValidator::sanitize($request->get_params(), ['form_id' => 'int']);
+                    $formId = $data['form_id'] ?? 0;
                     if ($formId <= 0) {
                         return new \WP_REST_Response(['error' => 'invalid_form_id'], 400);
-                    }
-
-                    $nonceRaw = filter_input(INPUT_POST, 'wpnonce', FILTER_DEFAULT);
-                    $nonceRaw = $nonceRaw ?? filter_input(INPUT_POST, '_wpnonce', FILTER_DEFAULT);
-                    $nonceRaw = $nonceRaw ?? $request->get_param('wpnonce') ?? $request->get_param('_wpnonce');
-                    $nonce    = sanitize_text_field(wp_unslash((string) $nonceRaw));
-                    if (!wp_verify_nonce($nonce, 'smartalloc_allocate_' . $formId)) {
-                        return new \WP_REST_Response(['error' => 'forbidden'], 403);
                     }
 
                     $payload = (array) $request->get_json_params();
