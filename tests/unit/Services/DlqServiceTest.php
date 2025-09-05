@@ -6,6 +6,7 @@ use SmartAlloc\Services\DlqService;
 use SmartAlloc\Tests\TestDoubles\SpyDlq;
 use Psr\Log\LoggerInterface;
 use SmartAlloc\Infrastructure\Contracts\DlqRepository;
+use SmartAlloc\Exceptions\RepositoryException;
 
 final class DlqServiceTest extends BaseTestCase
 {
@@ -210,6 +211,30 @@ final class DlqServiceTest extends BaseTestCase
         $svc = new DlqService($repo, $logger);
         $svc->push(['event_name' => 'Evt', 'payload' => []]);
         $svc->replay(1);
+    }
+
+    public function testPushLogsAndRethrowsOnRepositoryError(): void
+    {
+        $repo = $this->createMock(DlqRepository::class);
+        $repo->method('insert')->willThrowException(new \RuntimeException('db down'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('error')
+            ->with(
+                'dlq.push_failed',
+                $this->callback(static fn($ctx) => ($ctx['event_name'] ?? '') === 'Evt')
+            );
+
+        $svc = new DlqService($repo, $logger);
+
+        try {
+            $svc->push(['event_name' => 'Evt', 'payload' => []]);
+            $this->fail('Expected RepositoryException');
+        } catch (RepositoryException $e) {
+            $this->assertSame('dlq_push', $e->getOperation());
+            $this->assertSame('Evt', $e->getContext()['event_name']);
+        }
     }
 
 }

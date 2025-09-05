@@ -8,6 +8,7 @@ use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Infrastructure\WpDb\WpDlqRepository;
 use SmartAlloc\Perf\Stopwatch;
 use SmartAlloc\Exception\ReplayException;
+use SmartAlloc\Exceptions\RepositoryException;
 use DateTimeImmutable;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
@@ -36,11 +37,32 @@ final class DlqService
             $this->sortRecursive((array) ($entry['payload'] ?? []))
         );
         $payload['attempts'] = (int) ($entry['attempts'] ?? 0);
-        $this->repo->insert(
-            (string) ($entry['event_name'] ?? ''),
-            $payload,
-            new DateTimeImmutable('now', new DateTimeZone('UTC'))
-        );
+        try {
+            $this->repo->insert(
+                (string) ($entry['event_name'] ?? ''),
+                $payload,
+                new DateTimeImmutable('now', new DateTimeZone('UTC'))
+            );
+        } catch (Throwable $e) {
+            $context = [
+                'event_name'   => (string) ($entry['event_name'] ?? ''),
+                'payload_size' => strlen((function_exists('wp_json_encode') ? wp_json_encode($payload) : json_encode($payload))), // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+            ];
+            if ($this->logger) {
+                $this->logger->error('dlq.push_failed', $context + ['error' => $e->getMessage()]);
+            } else {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                error_log(
+                    sprintf(
+                        'SmartAlloc DLQ Error: Failed to push event "%s" - %s',
+                        $context['event_name'],
+                        $e->getMessage()
+                    )
+                );
+            }
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new RepositoryException('Failed to push notification to DLQ', 'dlq_push', $context, $e);
+        }
     }
 
     /**

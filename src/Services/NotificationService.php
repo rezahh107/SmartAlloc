@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Services;
 
 use SmartAlloc\Exceptions\ThrottleException;
+use SmartAlloc\Exceptions\RepositoryException;
 use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Support\CircuitBreaker as SafetyCircuitBreaker;
 use SmartAlloc\Contracts\LoggerInterface;
@@ -97,6 +98,7 @@ final class NotificationService
                         'error'        => $e->getMessage(),
                         'payload_type' => 'global_throttle',
                     ]);
+                    throw $e;
                 }
                 throw new ThrottleException("Global rate limit exceeded: {$globalLimit}/min");
             }
@@ -123,6 +125,10 @@ final class NotificationService
         } catch (\InvalidArgumentException $e) {
             $this->logger->error('notify.validation', ['error' => $e->getMessage(), 'payload' => $this->maskSensitiveData($payload)]);
             $this->metrics->inc('notify_failed_total');
+        } catch (RepositoryException $e) {
+            $this->logger->error('notify.send.error', ['error' => $e->getMessage(), 'payload' => $this->maskSensitiveData($payload)]);
+            $this->metrics->inc('notify_failed_total');
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->error('notify.send.error', ['error' => $e->getMessage(), 'payload' => $this->maskSensitiveData($payload)]);
             $this->metrics->inc('notify_failed_total');
