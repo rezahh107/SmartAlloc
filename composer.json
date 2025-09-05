@@ -35,7 +35,8 @@
     "phpstan/phpstan": "^1.11",
     "vimeo/psalm": "^5.18",
     "php-stubs/wordpress-stubs": "^6.6",
-    "giorgiosironi/eris": "^1.0"
+    "giorgiosironi/eris": "^1.0",
+    "wp-phpunit/wp-phpunit": "^6"
   },
   "autoload": {
     "psr-4": {
