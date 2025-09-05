@@ -112,6 +112,9 @@ final class DlqService
             } catch (ReplayException $e) {
                 $this->logReplayError($e, $row['id'] ?? 'unknown');
                 $fail++;
+            } catch (\Throwable $e) {
+                $this->logReplayError($e, $row['id'] ?? 'unknown');
+                $fail++;
             }
         }
         $depth = $this->count();
