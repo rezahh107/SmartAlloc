@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="tests/bootstrap-foundation.php" colors="true">
+<testsuites>
+<testsuite name="foundation">
+<directory>tests/Foundation</directory>
+</testsuite>
+</testsuites>
+</phpunit>

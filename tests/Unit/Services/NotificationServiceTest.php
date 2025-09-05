@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
@@ -8,22 +9,11 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, DlqService};
 use SmartAlloc\Exceptions\ThrottleException;
-use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Tests\TestDoubles\SpyDlq;
-use SmartAlloc\Services\Metrics;
+use SmartAlloc\Tests\Helpers\SpyMetrics;
 use SmartAlloc\ValueObjects\ThrottleConfig;
 
-final class SpyMetrics extends Metrics
-{
-    public array $counters = [];
-    public function __construct() {}
-    public function inc(string $key, float $value = 1.0, array $labels = []): void
-    {
-        $this->counters[$key] = (int) (($this->counters[$key] ?? 0) + $value);
-    }
-    public function observe(string $key, int $milliseconds, array $labels = []): void {}
-}
 
 if (!defined('SMARTALLOC_NOTIFY_MAX_TRIES')) {
     define('SMARTALLOC_NOTIFY_MAX_TRIES', 3);

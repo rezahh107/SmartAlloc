@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Unit\Services;
@@ -7,22 +8,13 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 use SmartAlloc\Exceptions\ThrottleException;
-use SmartAlloc\Services\{NotificationService, CircuitBreaker, DlqService, Metrics};
+use SmartAlloc\Services\{NotificationService, CircuitBreaker, DlqService};
 use SmartAlloc\ValueObjects\ThrottleConfig;
 use SmartAlloc\Tests\TestDoubles\SpyDlq;
 use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Contracts\LoggerInterface;
+use SmartAlloc\Tests\Helpers\SpyMetrics;
 
-final class SpyMetrics extends Metrics
-{
-    public array $counters = [];
-    public function __construct() {}
-    public function inc(string $key, float $value = 1.0, array $labels = []): void
-    {
-        $this->counters[$key] = (int) (($this->counters[$key] ?? 0) + $value);
-    }
-    public function observe(string $key, int $milliseconds, array $labels = []): void {}
-}
 
 final class FailingDlq implements DlqRepository
 {

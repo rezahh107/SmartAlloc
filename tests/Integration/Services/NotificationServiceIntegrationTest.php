@@ -9,17 +9,8 @@ namespace SmartAlloc\Services {
 }
 
 namespace {
-use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, Metrics, DlqService};
-class SpyMetrics extends Metrics {
-    public array $records = array();
-    public function __construct() {}
-    public function inc(string $key, float $value = 1.0, array $labels = array()): void {
-        global $wpdb; $wpdb->records[] = array('metric_key' => $key); $this->records[] = $key;
-    }
-    public function observe(string $key, int $milliseconds, array $labels = array()): void {
-        $this->inc($key, (float) $milliseconds, $labels);
-    }
-}
+use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, DlqService};
+use SmartAlloc\Tests\Helpers\SpyMetrics;
 use SmartAlloc\Exceptions\ThrottleException;
 use SmartAlloc\Http\Rest\HealthController;
 use SmartAlloc\Security\RateLimiter;
