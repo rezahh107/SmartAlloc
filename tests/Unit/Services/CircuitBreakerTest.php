@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Tests\Unit\Services;
 
 use SmartAlloc\Services\CircuitBreaker;
-use SmartAlloc\Services\CircuitBreakerStatus;
+use SmartAlloc\ValueObjects\CircuitBreakerStatus;
 use SmartAlloc\Tests\Unit\TestCase;
 use Brain\Monkey;
 

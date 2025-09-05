@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Health;
 
 use SmartAlloc\Services\CircuitBreaker;
-use SmartAlloc\Services\CircuitBreakerStatus;
+use SmartAlloc\ValueObjects\CircuitBreakerStatus;
 
 /**
  * Reports circuit breaker health via AJAX endpoints.

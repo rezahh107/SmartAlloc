@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\ValueObjects\CircuitBreakerStatus;
 use SmartAlloc\Services\Exceptions\CircuitOpenException;
 
 /**
