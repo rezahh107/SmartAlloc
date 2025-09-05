@@ -221,3 +221,7 @@ add_action('wp_ajax_smartalloc_manual_candidates', ['SmartAlloc\\Admin\\Actions\
 (new \SmartAlloc\Admin\OverrideUIController())->boot();
 
 add_action('gform_after_submission_150', [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
+
+add_action('init', function () {
+    (new \SmartAlloc\Health\HealthReporter())->register_hooks();
+});
