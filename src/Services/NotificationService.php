@@ -313,7 +313,19 @@ final class NotificationService
             'dlq_enabled' => true,
         ];
         $config = get_option('smartalloc_notify', $defaults);
-        $config['limit_per_minute'] = function_exists('apply_filters') ? apply_filters('smartalloc_notify_limit_per_min', $config['limit_per_minute']) : $config['limit_per_minute'];
+        /**
+         * Apply rate limiting filter for notifications per minute.
+         *
+         * Allows developers to customize the notification rate limit through a filter hook.
+         * The filter receives the current limit and notification type for context-aware limiting.
+         *
+         * @since 1.0.0
+         *
+         * @param int    $limit Default rate limit (60 notifications per minute)
+         * @param string $type  Notification type ('email', 'sms', 'push', etc.)
+         * @return int Modified rate limit value
+         */
+        $config['limit_per_minute'] = function_exists('apply_filters') ? apply_filters('smartalloc_notify_limit_per_min', $config['limit_per_minute'], 'notify') : $config['limit_per_minute'];
         if (isset($GLOBALS['filters']['smartalloc_notify_limit_per_min'])) {
             $config['limit_per_minute'] = $GLOBALS['filters']['smartalloc_notify_limit_per_min']($config['limit_per_minute']);
         }

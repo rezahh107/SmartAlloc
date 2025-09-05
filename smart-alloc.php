@@ -86,6 +86,21 @@ spl_autoload_register(function ($class) {
 // Activation hook
 register_activation_hook(__FILE__, function (bool $network_wide) {
     SmartAlloc\Bootstrap::activate($network_wide);
+
+    /**
+     * Fires when SmartAlloc plugin is activated.
+     *
+     * This action hook allows other plugins and themes to perform setup tasks
+     * when SmartAlloc is activated. Useful for creating dependent data structures,
+     * registering custom post types, or initializing integration settings.
+     *
+     * @since 1.0.0
+     *
+     * @param bool $network_wide Whether the plugin is being activated network-wide
+     *                           on a multisite installation. False for single-site
+     *                           or individual site activation.
+     */
+    do_action('smartalloc_activate', $network_wide);
 });
 
 // Load textdomain and initialize
