@@ -22,6 +22,7 @@
     "phpunit/phpunit": "^9.6",
     "yoast/phpunit-polyfills": "^2.0",
     "brain/monkey": "^2.6",
+    "mockery/mockery": "^1.4",
     "wp-coding-standards/wpcs": "^3.0",
     "automattic/vipwpcs": "^3.0",
     "phpcompatibility/php-compatibility": "^9.3",
@@ -73,10 +74,7 @@
   "autoload-dev": {
     "psr-4": {
       "SmartAlloc\\Tests\\": "tests/"
-    },
-    "files": [
-      "stubs/wp-stubs.php"
-    ]
+    }
   },
   "config": {
     "allow-plugins": {
