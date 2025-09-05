@@ -58,6 +58,31 @@ final class CircuitBreaker
         $this->saveState('closed', 0, null, null);
     }
 
+    public function guard(string $operation): void
+    {
+        $status = $this->getStatus();
+
+        if ($status->state === 'open') {
+            if ($status->cooldownUntil !== null && wp_date('U') < $status->cooldownUntil) {
+                throw new \RuntimeException('Circuit breaker open: ' . esc_html($operation));
+            }
+
+            $this->recordSuccess();
+        }
+    }
+
+    public function success(string $operation): void
+    {
+        unset($operation);
+        $this->recordSuccess();
+    }
+
+    public function failure(string $operation, \Throwable $e): void
+    {
+        unset($operation);
+        $this->recordFailure($e->getMessage());
+    }
+
     private function saveState(
         string $state,
         int $failCount,

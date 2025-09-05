@@ -23,6 +23,11 @@ namespace SmartAlloc\Services {
     {
         return time();
     }
+
+    function esc_html($text)
+    {
+        return $text;
+    }
 }
 
 namespace SmartAlloc\Tests\Unit\Services {
@@ -52,6 +57,28 @@ namespace SmartAlloc\Tests\Unit\Services {
             $status = $cb->getStatus();
 
             $this->assertInstanceOf(CircuitBreakerStatus::class, $status);
+            $this->assertSame('closed', $status->state);
+            $this->assertSame(0, $status->failCount);
+        }
+
+        public function testLegacyApiMethodsPreserved(): void
+        {
+            $cb = new CircuitBreaker('test');
+
+            for ($i = 0; $i < 10; $i++) {
+                $cb->failure('op', new \RuntimeException('fail'));
+            }
+
+            try {
+                $cb->guard('op');
+                $this->fail('Expected exception not thrown');
+            } catch (\RuntimeException $e) {
+                // Expected
+            }
+
+            $cb->success('op');
+            $status = $cb->getStatus();
+
             $this->assertSame('closed', $status->state);
             $this->assertSame(0, $status->failCount);
         }
