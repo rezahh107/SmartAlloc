@@ -7,7 +7,7 @@ namespace SmartAlloc\Tests\Unit\Services;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, DlqService};
-use SmartAlloc\Services\Exceptions\ThrottleException;
+use SmartAlloc\Exceptions\ThrottleException;
 use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Tests\TestDoubles\SpyDlq;
