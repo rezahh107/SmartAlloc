@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-05T09:59:49Z",
+  "last_update_utc": "2025-09-05T10:10:10Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "7c6034d822f78fae9cfff735b773ae911d19a93d",
-    "commits_total": 1030,
+    "default_branch": "codex/sanitize-and-truncate-exception-messages",
+    "last_commit": "0f21c69e25cbf7c05a564fcff7efc8886d11005b",
+    "commits_total": 1033,
     "files_tracked": 747
   },
   "quality_gate": {

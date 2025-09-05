@@ -166,7 +166,8 @@ final class CircuitBreaker
     public function failure(string $context, \Throwable $exception): void
     {
         unset($context);
-        $this->recordFailure($exception->getMessage());
+        $sanitized_message = $this->sanitizeMessage($exception->getMessage());
+        $this->recordFailure($sanitized_message);
     }
 
     /**
@@ -234,6 +235,14 @@ final class CircuitBreaker
         }
 
         return $data;
+    }
+
+    /**
+     * Sanitize and truncate message to prevent storage bloat.
+     */
+    private function sanitizeMessage(string $message): string
+    {
+        return substr($message, 0, 100);
     }
 
     /**

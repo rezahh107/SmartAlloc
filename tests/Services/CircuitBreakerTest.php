@@ -308,4 +308,61 @@ final class CircuitBreakerTest extends WP_UnitTestCase
         $this->assertGreaterThanOrEqual($start + 300, $state['cooldown_until']);
         $this->assertLessThanOrEqual($start + 305, $state['cooldown_until']);
     }
+
+    public function test_failure_method_sanitizes_exception_messages(): void
+    {
+        $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+
+        $long_message = str_repeat('X', 150);
+        $exception = new \Exception($long_message);
+
+        $cb->failure('test_context', $exception);
+
+        $status = $cb->getStatus();
+        $this->assertSame(100, strlen($status->lastError));
+        $this->assertSame(str_repeat('X', 100), $status->lastError);
+    }
+
+    public function test_failure_method_preserves_short_messages(): void
+    {
+        $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+
+        $short_message = 'Short error';
+        $exception = new \Exception($short_message);
+
+        $cb->failure('test_context', $exception);
+
+        $status = $cb->getStatus();
+        $this->assertSame($short_message, $status->lastError);
+    }
+
+    public function test_failure_method_handles_empty_messages(): void
+    {
+        $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+
+        $exception = new \Exception('');
+        $cb->failure('test_context', $exception);
+
+        $status = $cb->getStatus();
+        $this->assertSame('', $status->lastError);
+    }
+
+    public function test_failure_and_record_failure_sanitization_consistency(): void
+    {
+        $cb1 = new CircuitBreaker('circuit_1');
+        $cb2 = new CircuitBreaker('circuit_2');
+
+        $long_message = str_repeat('Y', 150);
+
+        $exception = new \Exception($long_message);
+        $cb1->failure('context', $exception);
+
+        $cb2->recordFailure($long_message);
+
+        $status1 = $cb1->getStatus();
+        $status2 = $cb2->getStatus();
+
+        $this->assertSame($status1->lastError, $status2->lastError);
+        $this->assertSame(str_repeat('Y', 100), $status1->lastError);
+    }
 }
