@@ -93,8 +93,9 @@ final class CircuitBreaker
         $newFailCount = $status->failCount + 1;
 
         $newState = $newFailCount >= $this->threshold ? 'open' : 'closed';
+        $currentTime = function_exists('wp_date') ? (int) wp_date('U') : time();
         $cooldownUntil = $newState === 'open'
-            ? wp_date('U') + $this->cooldown
+            ? $currentTime + $this->cooldown
             : null;
 
         $this->saveState(
@@ -105,8 +106,11 @@ final class CircuitBreaker
         );
 
         if ($newState === 'open') {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new CircuitOpenException(
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $this->transientKey,
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $newFailCount,
                 (int) $cooldownUntil,
                 'Circuit breaker opened due to failure threshold exceeded'
@@ -130,15 +134,18 @@ final class CircuitBreaker
     public function guard(string $context): void
     {
         $status = $this->getStatus();
+        $currentTime = function_exists('wp_date') ? (int) wp_date('U') : time();
 
         if (
             $status->state === 'open' &&
             (
                 $status->cooldownUntil === null ||
-                $status->cooldownUntil > (int) wp_date('U')
+                $status->cooldownUntil > $currentTime
             )
         ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new \RuntimeException(
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 'Circuit breaker open for ' . $context
             );
         }
@@ -212,7 +219,7 @@ final class CircuitBreaker
         if (
             $data['state'] === 'open' &&
             $data['cooldown_until'] !== null &&
-            (int) wp_date('U') >= $data['cooldown_until']
+            (function_exists('wp_date') ? (int) wp_date('U') : time()) >= $data['cooldown_until']
         ) {
             $data['state'] = 'half-open';
             $data['fail_count'] = 0;

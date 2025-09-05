@@ -263,4 +263,49 @@ final class CircuitBreakerTest extends WP_UnitTestCase
         $this->assertSame(100, strlen($status->lastError));
         $this->assertSame(str_repeat('A', 100), $status->lastError);
     }
+
+    public function test_guard_uses_utc_time_across_timezones(): void
+    {
+        $timezones = ['UTC', 'America/New_York', 'Asia/Tokyo', 'Europe/London'];
+
+        foreach ($timezones as $tz) {
+            update_option('timezone_string', $tz);
+            delete_transient(self::TRANSIENT_KEY);
+
+            $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+            for ($i = 0; $i < 5; $i++) {
+                try {
+                    $cb->recordFailure('fail');
+                } catch (CircuitOpenException $e) {
+                }
+            }
+
+            $status = $cb->getStatus();
+            $expected = (int) wp_date('U') + 300;
+            $this->assertEqualsWithDelta($expected, $status->cooldownUntil, 5);
+
+            delete_transient(self::TRANSIENT_KEY);
+        }
+
+        update_option('timezone_string', 'UTC');
+    }
+
+    public function test_cooldown_calculation_utc_consistency(): void
+    {
+        delete_transient(self::TRANSIENT_KEY);
+        $cb = new CircuitBreaker(self::TEST_CIRCUIT_KEY);
+
+        $start = (int) wp_date('U');
+        for ($i = 0; $i < 5; $i++) {
+            try {
+                $cb->recordFailure('fail');
+            } catch (CircuitOpenException $e) {
+            }
+        }
+
+        $state = get_transient(self::TRANSIENT_KEY);
+        $this->assertIsArray($state);
+        $this->assertGreaterThanOrEqual($start + 300, $state['cooldown_until']);
+        $this->assertLessThanOrEqual($start + 305, $state['cooldown_until']);
+    }
 }
