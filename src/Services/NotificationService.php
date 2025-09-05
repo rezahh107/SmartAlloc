@@ -7,7 +7,7 @@ namespace SmartAlloc\Services;
 use SmartAlloc\Exceptions\ThrottleException;
 use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Support\CircuitBreaker as SafetyCircuitBreaker;
-use SmartAlloc\Services\Logging;
+use SmartAlloc\Contracts\LoggerInterface;
 use SmartAlloc\Services\Metrics;
 use SmartAlloc\ValueObjects\ThrottleConfig;
 use SmartAlloc\Testing\FaultFlags;
@@ -44,7 +44,7 @@ final class NotificationService
 
     public function __construct(
         private CircuitBreaker $circuitBreaker,
-        private Logging $logger,
+        private LoggerInterface $logger,
         private Metrics $metrics,
         ?RetryService $retry = null,
         ?DlqService $dlq = null,
@@ -74,11 +74,17 @@ final class NotificationService
             $payload   = $this->validatePayload($payload);
             $recipient = (string) ($payload['recipient'] ?? '');
             if (!$this->checkRateLimit()) {
+                $globalLimit = $this->throttleConfig->burstLimit();
+                $this->logger->info('notify.throttle', ['global_limit' => $globalLimit]);
                 $this->metrics->inc('notify_throttled_total');
-                $this->metrics->inc('dlq_push_total');
                 $this->metrics->inc('notify_failed_total');
-                $sanitized = $this->maskSensitiveData($payload);
-                $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
+                $this->metrics->inc('dlq_push_total');
+                $sanitized                 = $this->maskSensitiveData($payload);
+                $sanitized['recipient']    = $this->maskEmail($recipient);
+                $sanitized['reason']       = 'global_rate_limit_exceeded';
+                $sanitized['limit']        = $globalLimit;
+                $sanitized['timestamp']    = time();
+                $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $sanitized['recipient']]);
                 try {
                     $this->dlq->push([
                         'event_name' => 'notify',
@@ -87,9 +93,12 @@ final class NotificationService
                         'error_text' => 'rate_limit',
                     ]);
                 } catch (\Throwable $e) {
-                    $this->logger->error('notify.dlq_push_failed', ['error' => $e->getMessage()]);
+                    $this->logger->error('dlq.push_failed', [
+                        'error'        => $e->getMessage(),
+                        'payload_type' => 'global_throttle',
+                    ]);
                 }
-                throw new ThrottleException('Rate limit exceeded for notification');
+                throw new ThrottleException("Global rate limit exceeded: {$globalLimit}/min");
             }
             if (!$this->throttler->canSend($recipient)) {
                 $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
