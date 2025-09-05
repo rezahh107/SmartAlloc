@@ -20,7 +20,7 @@ class SpyMetrics extends Metrics {
         $this->inc($key, (float) $milliseconds, $labels);
     }
 }
-use SmartAlloc\Services\Exceptions\ThrottleException;
+use SmartAlloc\Exceptions\ThrottleException;
 use SmartAlloc\Http\Rest\HealthController;
 use SmartAlloc\Security\RateLimiter;
 use PHPUnit\Framework\TestCase;

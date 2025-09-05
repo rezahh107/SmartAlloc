@@ -4,7 +4,7 @@ declare(strict_types=1);
 use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Services\{NotificationService,CircuitBreaker,Logging,DlqService,Metrics};
 use SmartAlloc\Tests\TestDoubles\SpyDlq;
-use SmartAlloc\Services\Exceptions\ThrottleException;
+use SmartAlloc\Exceptions\ThrottleException;
 
 if (!function_exists('add_action')) { function add_action($h,$c,$p=10,$a=1){} }
 if (!function_exists('apply_filters')) { function apply_filters($t,$v){ return $v; } }

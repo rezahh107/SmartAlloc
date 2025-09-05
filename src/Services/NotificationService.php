@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Exceptions\ThrottleException;
 use SmartAlloc\Services\CircuitBreaker;
 use SmartAlloc\Support\CircuitBreaker as SafetyCircuitBreaker;
 use SmartAlloc\Services\Logging;
@@ -88,7 +89,7 @@ final class NotificationService
                 } catch (\Throwable $e) {
                     $this->logger->error('notify.dlq_push_failed', ['error' => $e->getMessage()]);
                 }
-                throw new Exceptions\ThrottleException('Rate limit exceeded');
+                throw new ThrottleException('Rate limit exceeded for notification');
             }
             if (!$this->throttler->canSend($recipient)) {
                 $this->dlqMetrics->recordPush('notification_throttled', ['recipient' => $this->maskEmail($recipient)]);
@@ -102,13 +103,13 @@ final class NotificationService
                 $this->metrics->inc('dlq_push_total');
                 // count throttled notifications as failures
                 $this->metrics->inc('notify_failed_total');
-                throw new Exceptions\ThrottleException('Rate limit exceeded');
+                throw new ThrottleException('Rate limit exceeded for notification');
             }
             $payload['_attempt'] = (int) ($payload['_attempt'] ?? 1);
             $this->incrementRateCounter();
             $this->throttler->recordSend($recipient);
             $this->enqueue('smartalloc_notify', $payload, 0);
-        } catch (Exceptions\ThrottleException $e) {
+        } catch (ThrottleException $e) {
             throw $e;
         } catch (\InvalidArgumentException $e) {
             $this->logger->error('notify.validation', ['error' => $e->getMessage(), 'payload' => $this->maskSensitiveData($payload)]);
