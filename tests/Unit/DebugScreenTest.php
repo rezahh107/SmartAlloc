@@ -43,9 +43,9 @@ final class DebugScreenTest extends TestCase {
                 );
                 set_transient( 'smartalloc_health_status', $health_status, 30 );
 
-                ob_start();
-                $this->debug_screen->render_circuit_breaker_status();
-                $output = ob_get_clean();
+               ob_start();
+               DebugScreen::render_circuit_breaker_status();
+               $output = ob_get_clean();
 
                 $this->assertStringContainsString( 'Circuit Breaker Status', $output );
                 $this->assertStringContainsString( 'status-healthy', $output );

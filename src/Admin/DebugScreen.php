@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SmartAlloc\Admin;
 
 use SmartAlloc\Health\HealthReporter;
+use SmartAlloc\Services\CircuitBreaker;
 
 /**
  * Displays SmartAlloc diagnostic information.
@@ -36,36 +37,54 @@ final class DebugScreen {
 		 * Register admin hooks.
 		 */
 	public function register_hooks(): void {
-			add_action( 'admin_menu', array( $this, 'add_debug_menu' ) );
+					add_action( 'admin_menu', array( $this, 'add_debug_menu' ) );
 	}
 
 		/**
 		 * Add debug submenu.
 		 */
 	public function add_debug_menu(): void {
-			add_submenu_page(
-				'tools.php',
-				'SmartAlloc Debug',
-				'SmartAlloc Debug',
-				'manage_options',
-				'smartalloc-debug',
-				array( $this, 'render' )
-			);
+					add_submenu_page(
+						'tools.php',
+						'SmartAlloc Debug',
+						'SmartAlloc Debug',
+						'manage_options',
+						'smartalloc-debug',
+						array( self::class, 'render' )
+					);
 	}
 
 		/**
-		 * Render the debug screen.
+		 * Renders the debug screen statically for backward compatibility.
 		 */
-	public function render(): void {
-			echo '<div class="wrap">';
-			echo '<h1>SmartAlloc Debug Information</h1>';
+	public static function render(): void {
+			$screen = self::create_default();
+			$screen->render_screen();
+	}
 
-			$this->render_system_info();
-			$this->render_allocation_stats();
-			$this->render_circuit_breaker_status();
+	/**
+	 * Renders system details, allocation stats, and circuit breaker status.
+	 */
+	private function render_screen(): void {
+		echo '<div class="wrap">';
+		echo '<h1>SmartAlloc Debug Information</h1>';
 
-			echo '</div>';
-			$this->render_javascript();
+				$this->render_system_info();
+				$this->render_allocation_stats();
+				$this->render_circuit_breaker_status_internal();
+
+				echo '</div>';
+				$this->render_javascript();
+	}
+
+		/**
+		 * Create a DebugScreen with default dependencies.
+		 */
+	private static function create_default(): self {
+			$cb = new CircuitBreaker();
+			$hr = new HealthReporter( $cb );
+
+			return new self( $hr );
 	}
 
 		/**
@@ -97,9 +116,17 @@ final class DebugScreen {
 	}
 
 		/**
+		 * Render circuit breaker status with default dependencies.
+		 */
+	public static function render_circuit_breaker_status(): void {
+			$screen = self::create_default();
+			$screen->render_circuit_breaker_status_internal();
+	}
+
+		/**
 		 * Render circuit breaker status section.
 		 */
-	public function render_circuit_breaker_status(): void {
+	private function render_circuit_breaker_status_internal(): void {
 		try {
 			$health_status = $this->health_reporter->get_health_status();
 			$data          = $health_status['data'];
