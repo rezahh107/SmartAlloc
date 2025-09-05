@@ -55,5 +55,27 @@ namespace SmartAlloc\Tests\Unit\Services {
             $this->assertSame('closed', $status->state);
             $this->assertSame(0, $status->failCount);
         }
+
+        public function testLegacyApiDelegatesToNewMethods(): void
+        {
+            $cb = new CircuitBreaker('test');
+
+            for ($i = 0; $i < 10; $i++) {
+                $cb->failure('test', new \Exception('fail'));
+            }
+
+            try {
+                $cb->guard('test');
+                $this->fail('Expected exception not thrown');
+            } catch (\RuntimeException $e) {
+                $this->assertStringContainsString('Circuit breaker open', $e->getMessage());
+            }
+
+            $cb->success('test');
+
+            $status = $cb->getStatus();
+            $this->assertSame('closed', $status->state);
+            $this->assertSame(0, $status->failCount);
+        }
     }
 }
