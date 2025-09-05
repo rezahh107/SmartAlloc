@@ -111,7 +111,7 @@ final class DlqService
                 }
                 $ok++;
             } catch (ReplayException $e) {
-                $this->logReplayError($e, $row['id'] ?? 'unknown');
+                $this->logReplayError($e, $row);
                 $fail++;
             }
         }
@@ -122,28 +122,43 @@ final class DlqService
     /**
      * Log replay error with context.
      *
-     * @param Throwable $e     The caught exception
-     * @param mixed     $rowId The problematic row identifier
+     * @param Throwable             $e   The caught exception
+     * @param array<string,mixed>    $row The problematic row payload
      */
-    private function logReplayError(Throwable $e, $rowId): void
+    private function logReplayError(Throwable $e, array $row): void
     {
-        $prev    = $e->getPrevious();
-        $message = $prev?->getMessage() ?? $e->getMessage();
-        $trace   = $prev?->getTraceAsString() ?? $e->getTraceAsString();
-        $file    = $prev?->getFile() ?? $e->getFile();
-        $line    = $prev?->getLine() ?? $e->getLine();
+        $prev        = $e->getPrevious();
+        $message     = $prev?->getMessage() ?? $e->getMessage();
+        $exception   = $prev ? get_class($prev) : get_class($e);
+        $trace       = $prev?->getTraceAsString() ?? $e->getTraceAsString();
+        $file        = $prev?->getFile() ?? $e->getFile();
+        $line        = $prev?->getLine() ?? $e->getLine();
+        $logContext  = [
+            'method'            => __METHOD__,
+            'row_id'            => $row['id'] ?? 'unknown',
+            'event_name'        => $row['event_name'] ?? 'unknown',
+            'attempts'          => $row['payload']['attempts'] ?? 0,
+            'exception_message' => $message,
+            'exception_class'   => $exception,
+        ];
 
         if ($this->logger) {
-            $this->logger->error('DlqService::doReplay failed for row', [
-                'method'    => __METHOD__,
-                'row_id'    => $rowId,
-                'exception' => $message,
-                'trace'     => $trace,
-                'file'      => $file,
-                'line'      => $line,
+            $this->logger->error('dlq.replay_failed', $logContext + [
+                'trace' => $trace,
+                'file'  => $file,
+                'line'  => $line,
             ]);
         } else {
-            error_log('DlqService::doReplay: Row ID ' . $rowId . ' - ' . $message); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(
+                sprintf(
+                    'DLQ Replay Failed - Row ID: %s, Event: %s, Exception: %s (%s)',
+                    $logContext['row_id'],
+                    $logContext['event_name'],
+                    $message,
+                    $exception
+                )
+            );
         }
     }
 

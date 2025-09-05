@@ -37,8 +37,16 @@ final class DlqServiceTest extends BaseTestCase
         $logger->expects($this->once())
             ->method('error')
             ->with(
-                'DlqService::doReplay failed for row',
-                $this->callback(static fn($context) => isset($context['method'], $context['row_id'], $context['exception']))
+                'dlq.replay_failed',
+                $this->callback(static fn($context) => (
+                    isset(
+                        $context['row_id'],
+                        $context['event_name'],
+                        $context['attempts'],
+                        $context['exception_message'],
+                        $context['exception_class']
+                    )
+                ))
             );
 
         $repo = new class implements DlqRepository {
@@ -72,7 +80,7 @@ final class DlqServiceTest extends BaseTestCase
         };
 
         $svc = new DlqService($repo, $logger);
-        $svc->push(['event_name' => 'Evt', 'payload' => []]);
+        $svc->push(['event_name' => 'Evt', 'payload' => ['attempts' => 2]]);
         $svc->replay(1);
     }
 
@@ -116,8 +124,51 @@ final class DlqServiceTest extends BaseTestCase
         ini_set('error_log', $tmpLog);
         $svc->replay(1);
         ini_set('error_log', (string) $orig);
-        $this->assertStringContainsString('Row ID 1 - Fallback error', (string) file_get_contents($tmpLog));
+        $this->assertStringContainsString(
+            'DLQ Replay Failed - Row ID: 1, Event: Evt, Exception: Fallback error (Exception)',
+            (string) file_get_contents($tmpLog)
+        );
         @unlink($tmpLog);
+    }
+
+    public function testSuccessfulReplayDoesNotLogError(): void
+    {
+        $repo = new class implements DlqRepository {
+            public array $rows = [];
+            public function insert(string $topic, array $payload, \DateTimeImmutable $createdAtUtc): bool
+            {
+                $this->rows[] = ['id' => count($this->rows) + 1, 'event_name' => $topic, 'payload' => $payload];
+                return true;
+            }
+            public function listRecent(int $limit): array
+            {
+                return array_slice($this->rows, 0, $limit);
+            }
+            public function get(int $id): ?array
+            {
+                foreach ($this->rows as $row) {
+                    if ($row['id'] === $id) {
+                        return $row;
+                    }
+                }
+                return null;
+            }
+            public function delete(int $id): bool
+            {
+                return true;
+            }
+            public function count(): int
+            {
+                return count($this->rows);
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('error');
+
+        $svc = new DlqService($repo, $logger);
+        $svc->push(['event_name' => 'Evt', 'payload' => []]);
+        $svc->replay(1);
     }
 
     public function testReplayWarnsWhenIterationExceedsBudget(): void
