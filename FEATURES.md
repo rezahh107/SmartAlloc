@@ -1,6 +1,6 @@
 # Feature Status Dashboard
 
-## 📊 Current Project Score: 100/125 (80%)
+## 📊 Current Project Score: 85/125 (68%)
 
 ### **📊 Detailed Validation Score**
 🔒 **Security Score**: 25.00/25
@@ -9,17 +9,21 @@
 📖 **Readability Score**: 20.00/25
 🎯 **Goal Achievement**: 25.00/25
 
-**🏆 Total Score**: 100/125
+**🏆 Total Score**: 85/125
 **📈 Weighted Average**: 92.00%
 
 ### ⛔ Red Flags:
+- {
+  "message": "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Security/RestValidator.php:7",
+  "severity": 15
+}
 - {
   "message": "Unsanitized superglobal access /home/runner/work/SmartAlloc/SmartAlloc/src/Debug/ErrorCollector.php:80",
   "severity": 15
 }
 
 ---
-Last Updated (UTC): 2025-09-05T06:04:22Z
+Last Updated (UTC): 2025-09-05T06:44:50Z
 
 <!-- AUTO-GEN:RAG START -->
 | Feature | Status | Notes |
