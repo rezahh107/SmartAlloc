@@ -2,16 +2,32 @@
 
 declare(strict_types=1);
 
-// Composer autoload
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-// Define WordPress constants for testing
-if (!defined('ABSPATH')) {
-    define('ABSPATH', '/tmp/wordpress/');
+if (!defined('WP_TESTS_DOMAIN')) {
+    define('WP_TESTS_DOMAIN', 'example.org');
+}
+if (!defined('WP_TESTS_EMAIL')) {
+    define('WP_TESTS_EMAIL', 'admin@example.org');
+}
+if (!defined('WP_TESTS_TITLE')) {
+    define('WP_TESTS_TITLE', 'Test Blog');
+}
+if (!defined('WP_PHP_BINARY')) {
+    define('WP_PHP_BINARY', 'php');
 }
 
-if (!defined('WP_DEBUG')) {
-    define('WP_DEBUG', true);
+$_tests_dir = getenv('WP_TESTS_DIR');
+if (!$_tests_dir) {
+    $_tests_dir = dirname(__DIR__) . '/vendor/wp-phpunit/wp-phpunit';
 }
 
-// Brain Monkey is initialized in individual test cases
+require $_tests_dir . '/includes/functions.php';
+
+function _manually_load_plugin(): void {
+    require dirname(__DIR__) . '/smart-alloc.php';
+}
+
+tests_add_filter('muplugins_loaded', '_manually_load_plugin');
+
+require $_tests_dir . '/includes/bootstrap.php';
