@@ -1,0 +1,76 @@
+name: Patch Guard (branch-type caps)
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute stats (files & LoC, with exclusions)
+        id: stats
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          FILTER='^(vendor/|node_modules/|dist/|build/|assets/dist/|languages/.*\.(mo|po)$|.*\.min\.(js|css)$|.*\.bundle\.js$)'
+          FILES=$(git diff --name-only "$BASE..$HEAD" | grep -Ev "$FILTER" | wc -l | tr -d ' ')
+          LOC=$(git diff --numstat "$BASE..$HEAD" | grep -Ev "$FILTER" | awk '{add+=$1; del+=$2} END {print (add+del)}')
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "loc=$LOC" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce branch-type caps
+        id: enforce
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILES="${{ steps.stats.outputs.files }}"
+          LOC="${{ steps.stats.outputs.loc }}"
+          BRANCH="${{ steps.stats.outputs.branch }}"
+
+          max_files=10; max_loc=300
+          case "$BRANCH" in
+            hotfix/*)        max_files=5;  max_loc=150 ;;
+            bugfix/*)        max_files=8;  max_loc=200 ;;
+            feature/*)       max_files=20; max_loc=600 ;;
+            refactor/*)      max_files=15; max_loc=500 ;;
+            perf/*)          max_files=12; max_loc=350 ;;
+            security/*)      max_files=8;  max_loc=200 ;;
+            docs/*)          max_files=30; max_loc=800 ;;
+            tests/*|test/*)  max_files=25; max_loc=700 ;;
+            i18n/*)          max_files=50; max_loc=1000 ;;
+            migration/*)     max_files=15; max_loc=400 ;;
+            compatibility/*) max_files=10; max_loc=300 ;;
+          esac
+
+          echo "Caps → files:${max_files} loc:${max_loc}"
+          echo "PR   → files:${FILES} loc:${LOC}"
+
+          echo "## Patch Guard Result" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Files changed: **$FILES** / cap **$max_files**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- LoC (added+deleted): **$LOC** / cap **$max_loc**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Policy: \`PATCH_GUARD_STANDARDS_WordPress_2025-09-07.md\`" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$FILES" -le "$max_files" ] && [ "$LOC" -le "$max_loc" ]; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            echo "::error title=Patch Guard violation::files=$FILES (cap=$max_files), loc=$LOC (cap=$max_loc), branch=$BRANCH"
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
