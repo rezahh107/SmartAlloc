@@ -35,7 +35,7 @@ final class MultiFormIsolationTest extends BaseTestCase
                 }
                 return vsprintf($query, $args);
             }
-            public function get_var($query) {
+            public function get_var($query, $c = 0, $r = 0) {
                 if (preg_match('/FROM\s+(\w+)/', $query, $m)) {
                     $table = $m[1];
                 } else {

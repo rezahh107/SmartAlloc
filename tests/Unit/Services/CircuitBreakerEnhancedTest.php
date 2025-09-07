@@ -1,42 +1,26 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
-
-namespace SmartAlloc\Services {
-    function apply_filters($hook, $value, ...$args) {
-        return $value;
-    }
-    function get_transient($key) {
-        return $GLOBALS['t'][$key] ?? false;
-    }
-    function set_transient($key, $value, $ttl) {
-        $GLOBALS['t'][$key] = $value;
-        return true;
-    }
-    function wp_date($format) {
-        return time();
-    }
-}
 
 namespace SmartAlloc\Tests\Unit\Services {
     use PHPUnit\Framework\TestCase;
     use SmartAlloc\Services\CircuitBreaker;
     use SmartAlloc\Services\Exceptions\CircuitOpenException;
-    use function SmartAlloc\Services\set_transient;
 
     final class CircuitBreakerEnhancedTest extends TestCase
     {
         protected function setUp(): void
         {
             parent::setUp();
-            $GLOBALS['t'] = [];
+            $GLOBALS['_wp_transients'] = [];
         }
 
         public function testAutoRecoveryFromExpiredCooldown(): void
         {
             $cb = new CircuitBreaker('test');
             $expiredTime = time() - 100;
-            set_transient('smartalloc_circuit_breaker_test', [
+            \set_transient('smartalloc_circuit_breaker_test', [
                 'state' => 'open',
                 'fail_count' => 5,
                 'cooldown_until' => $expiredTime,
@@ -54,7 +38,7 @@ namespace SmartAlloc\Tests\Unit\Services {
         {
             $cb = new CircuitBreaker('test');
             $longError = str_repeat('A', 150);
-            set_transient('smartalloc_circuit_breaker_test', [
+            \set_transient('smartalloc_circuit_breaker_test', [
                 'state' => 'closed',
                 'fail_count' => 1,
                 'cooldown_until' => null,
