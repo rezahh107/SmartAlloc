@@ -19,10 +19,10 @@
     "maennchen/zipstream-php": ">=3.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.6",
+    "phpunit/phpunit": "^10.5",
     "yoast/phpunit-polyfills": "^2.0",
     "brain/monkey": "^2.6",
-    "mockery/mockery": "^1.4",
+    "mockery/mockery": "^1.6",
     "wp-coding-standards/wpcs": "^3.0",
     "automattic/vipwpcs": "^3.0",
     "phpcompatibility/php-compatibility": "^9.3",
@@ -41,7 +41,7 @@
   },
   "autoload": {
     "psr-4": {
-      "SmartAlloc\\": "src/"
+      "SmartAlloc\\": ["src/", "includes/"]
     },
     "files": ["src/Support/SafetyKit.php", "src/Infra/DbAbstraction.php"]
   },
