@@ -6,6 +6,18 @@
     "commits_total": 1084,
     "files_tracked": 779
   },
+  "branches": [
+    {
+      "name": "main",
+      "last_commit": "6fabc7569b52741daf8442021e2d4bfc109b5f77",
+      "last_update_utc": "2025-09-07T20:41:26Z"
+    },
+    {
+      "name": "feat/docs/add-agents-md",
+      "last_commit": "c4bab8cdca3280d8864cc64f497be6282ef73930",
+      "last_update_utc": "2025-09-07T20:41:26Z"
+    }
+  ],
   "quality_gate": {
     "weighted_threshold": 0.85,
     "security_min": 20,

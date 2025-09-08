@@ -145,10 +145,6 @@ if (!class_exists('WP_UnitTestCase')) {
             };
         }
 
-        public function name(): string
-        {
-            return $this->getName();
-        }
     }
 }
 
