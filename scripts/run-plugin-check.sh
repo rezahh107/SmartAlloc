@@ -12,7 +12,7 @@ source "$SCRIPT_DIR/setup-wp-test-db.sh"
 
 cleanup() {
   echo "Cleaning up temporary environment"
-  mysql -h"$DB_HOST" -u"$DB_USER" ${DB_PASS:+-p$DB_PASS} -e "DROP DATABASE IF EXISTS \`$WP_TEST_DB_NAME\`;" >/dev/null 2>&1 || true
+  mysql -h"$DB_HOST" -u"$DB_USER" ${DB_PASS:+-p"$DB_PASS"} -e "DROP DATABASE IF EXISTS \`$WP_TEST_DB_NAME\`;" >/dev/null 2>&1 || true
   rm -rf "$WP_TEST_DIR"
 }
 trap cleanup EXIT

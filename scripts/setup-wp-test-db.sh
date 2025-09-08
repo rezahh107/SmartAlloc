@@ -23,7 +23,7 @@ fi
 
 # Create a unique temporary database
 DB_NAME="wp_test_$(date +%s)_$RANDOM"
-mysql -h"$DB_HOST" -u"$DB_USER" ${DB_PASS:+-p$DB_PASS} -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;" || {
+mysql -h"$DB_HOST" -u"$DB_USER" ${DB_PASS:+-p"$DB_PASS"} -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;" || {
   echo "Unable to create database. Check MySQL credentials." >&2
   exit 1
 }
