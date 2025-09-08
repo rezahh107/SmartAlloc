@@ -1,62 +1,182 @@
 <?php
 
+/**
+ * CircuitBreaker Unit Tests
+ *
+ * @package SmartAlloc
+ */
+
 declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Unit\Services;
 
+use PHPUnit\Framework\TestCase;
 use SmartAlloc\Services\CircuitBreaker;
-use SmartAlloc\ValueObjects\CircuitBreakerStatus;
-use SmartAlloc\Tests\Unit\TestCase;
-use Brain\Monkey;
+use SmartAlloc\Exceptions\CircuitBreakerException;
 
-final class CircuitBreakerTest extends TestCase
+/**
+ * CircuitBreaker Test Class
+ */
+class CircuitBreakerTest extends TestCase
 {
-    private array $transientStorage;
-
-    protected function setUp(): void
+    /**
+     * Test circuit breaker initialization
+     *
+     * @return void
+     */
+    public function testInitialization(): void
     {
-        parent::setUp();
-        $this->transientStorage =& $this->setupWordPressMocks();
+        $circuitBreaker = new CircuitBreaker(5, 60);
+
+        $this->assertTrue($circuitBreaker->isClosed());
+        $this->assertFalse($circuitBreaker->isOpen());
+        $this->assertFalse($circuitBreaker->isHalfOpen());
+        $this->assertEquals(0, $circuitBreaker->getFailureCount());
+        $this->assertEquals(5, $circuitBreaker->getFailureThreshold());
     }
 
-    public function testFiltersApplied(): void
+    /**
+     * Test successful operation execution
+     *
+     * @return void
+     */
+    public function testSuccessfulOperation(): void
     {
-        Monkey\Functions\when('apply_filters')->alias(function ($hook, $value, ...$args) {
-            if ($hook === 'smartalloc_cb_threshold') {
-                return 10;
+        $circuitBreaker = new CircuitBreaker(3, 60);
+
+        $result = $circuitBreaker->execute(function ($value) {
+            return $value * 2;
+        }, 5);
+
+        $this->assertEquals(10, $result);
+        $this->assertTrue($circuitBreaker->isClosed());
+        $this->assertEquals(0, $circuitBreaker->getFailureCount());
+    }
+
+    /**
+     * Test circuit opening after threshold
+     *
+     * @return void
+     */
+    public function testCircuitOpensAfterThreshold(): void
+    {
+        $circuitBreaker = new CircuitBreaker(2, 60);
+
+        for ($i = 0; $i < 2; $i++) {
+            try {
+                $circuitBreaker->execute(function () {
+                    throw new \Exception('Test failure');
+                });
+            } catch (\Exception $e) {
+                // Expected
             }
-            if ($hook === 'smartalloc_cb_cooldown') {
-                return 600;
-            }
-            return $value;
+        }
+
+        $this->assertTrue($circuitBreaker->isOpen());
+        $this->assertEquals(2, $circuitBreaker->getFailureCount());
+    }
+
+    /**
+     * Test circuit breaker exception when open
+     *
+     * @return void
+     */
+    public function testExceptionWhenCircuitOpen(): void
+    {
+        $this->expectException(CircuitBreakerException::class);
+
+        $circuitBreaker = new CircuitBreaker(1, 60);
+
+        try {
+            $circuitBreaker->execute(function () {
+                throw new \Exception('Test failure');
+            });
+        } catch (\Exception $e) {
+            // Expected
+        }
+
+        $circuitBreaker->execute(function () {
+            return 'success';
         });
-
-        $cb = new CircuitBreaker('test');
-        $status = $cb->getStatus();
-
-        $this->assertSame(10, $status->threshold);
     }
 
-    public function testGetStatusReturnsStatusObject(): void
+    /**
+     * Test half-open callback execution
+     *
+     * @return void
+     */
+    public function testHalfOpenCallback(): void
     {
-        $cb = new CircuitBreaker('test');
-        $status = $cb->getStatus();
+        $callbackExecuted = false;
+        $callback         = function () use (&$callbackExecuted) {
+            $callbackExecuted = true;
+        };
 
-        $this->assertInstanceOf(CircuitBreakerStatus::class, $status);
-        $this->assertSame('closed', $status->state);
-        $this->assertSame(0, $status->failCount);
+        $circuitBreaker = new CircuitBreaker(1, 1, $callback);
+
+        try {
+            $circuitBreaker->execute(function () {
+                throw new \Exception('Test failure');
+            });
+        } catch (\Exception $e) {
+            // Expected
+        }
+
+        sleep(2);
+
+        try {
+            $circuitBreaker->execute(function () {
+                return 'success';
+            });
+        } catch (CircuitBreakerException $e) {
+            // This will trigger half-open transition
+        }
+
+        $this->assertTrue($callbackExecuted);
     }
 
-    public function testTransientPersistence(): void
+    /**
+     * Test statistics retrieval
+     *
+     * @return void
+     */
+    public function testStatistics(): void
     {
-        $cb = new CircuitBreaker('test');
-        $cb->recordFailure('Test error');
+        $circuitBreaker = new CircuitBreaker(3, 60);
 
-        // Verify transient was set
-        $this->assertArrayHasKey('smartalloc_circuit_breaker_test', $this->transientStorage);
-        $data = $this->transientStorage['smartalloc_circuit_breaker_test'];
-        $this->assertSame('closed', $data['state']);
-        $this->assertSame(1, $data['fail_count']);
+        $stats = $circuitBreaker->getStatistics();
+
+        $this->assertIsArray($stats);
+        $this->assertArrayHasKey('state', $stats);
+        $this->assertArrayHasKey('failure_count', $stats);
+        $this->assertArrayHasKey('failure_threshold', $stats);
+        $this->assertEquals('closed', $stats['state']);
+        $this->assertEquals(0, $stats['failure_count']);
+        $this->assertEquals(3, $stats['failure_threshold']);
+    }
+
+    /**
+     * Test circuit reset functionality
+     *
+     * @return void
+     */
+    public function testResetFunctionality(): void
+    {
+        $circuitBreaker = new CircuitBreaker(1, 60);
+
+        try {
+            $circuitBreaker->execute(function () {
+                throw new \Exception('Test failure');
+            });
+        } catch (\Exception $e) {
+            // Expected
+        }
+
+        $this->assertTrue($circuitBreaker->isOpen());
+
+        $circuitBreaker->reset();
+
+        $this->assertTrue($circuitBreaker->isClosed());
+        $this->assertEquals(0, $circuitBreaker->getFailureCount());
     }
 }
-
