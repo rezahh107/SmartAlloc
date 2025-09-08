@@ -16,6 +16,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Interfaces\CircuitBreakerInterface;
 use SmartAlloc\Exceptions\CircuitBreakerException;
+use SmartAlloc\ValueObjects\CircuitBreakerStatus;
+use Throwable;
 
 /**
  * Circuit Breaker implementation
@@ -68,6 +70,13 @@ class CircuitBreaker implements CircuitBreakerInterface
     private ?int $lastFailureTime;
 
     /**
+     * Last error message
+     *
+     * @var string|null
+     */
+    private ?string $lastError;
+
+    /**
      * Half-open state callback
      *
      * @var callable|null
@@ -110,6 +119,7 @@ class CircuitBreaker implements CircuitBreakerInterface
         $this->failureCount           = 0;
         $this->lastFailureTime        = null;
         $this->halfOpenSuccessCount   = 0;
+        $this->lastError              = null;
     }
 
     /**
@@ -137,8 +147,8 @@ class CircuitBreaker implements CircuitBreakerInterface
             $result = $operation(...$args);
             $this->onSuccess();
             return $result;
-        } catch (\Throwable $exception) {
-            $this->onFailure();
+        } catch (Throwable $exception) {
+            $this->onFailure($exception);
             throw $exception;
         }
     }
@@ -181,6 +191,68 @@ class CircuitBreaker implements CircuitBreakerInterface
     public function getState(): string
     {
         return $this->state;
+    }
+
+    /**
+     * Check circuit breaker before executing an operation.
+     *
+     * @param string $key Operation identifier.
+     *
+     * @throws CircuitBreakerException When circuit is open.
+     */
+    public function guard(string $key): void
+    {
+        if ($this->isOpen()) {
+            if ($this->shouldAttemptReset()) {
+                $this->transitionToHalfOpen();
+            } else {
+                throw new CircuitBreakerException('Circuit breaker is open. Operation blocked.');
+            }
+        }
+    }
+
+    /**
+     * Record a successful operation.
+     *
+     * @param string $key Operation identifier.
+     */
+    public function success(string $key): void
+    {
+        $this->onSuccess();
+    }
+
+    /**
+     * Record a failed operation.
+     *
+     * @param string    $key       Operation identifier.
+     * @param Throwable $exception Failure exception.
+     */
+    public function failure(string $key, Throwable $exception): void
+    {
+        $this->onFailure($exception);
+    }
+
+    /**
+     * Retrieve circuit breaker status information.
+     *
+     * @return CircuitBreakerStatus Status snapshot.
+     */
+    public function getStatus(): CircuitBreakerStatus
+    {
+        $cooldownUntil = null;
+        if ($this->lastFailureTime !== null) {
+            $cooldownUntil = $this->lastFailureTime + $this->recoveryTimeout;
+        }
+
+        $state = $this->state === self::STATE_HALF_OPEN ? 'half-open' : $this->state;
+
+        return new CircuitBreakerStatus(
+            $state,
+            $this->failureCount,
+            $this->failureThreshold,
+            $cooldownUntil,
+            $this->lastError
+        );
     }
 
     /**
@@ -249,10 +321,13 @@ class CircuitBreaker implements CircuitBreakerInterface
      *
      * @return void
      */
-    private function onFailure(): void
+    private function onFailure(?Throwable $exception = null): void
     {
         $this->failureCount++;
         $this->lastFailureTime = time();
+        if ($exception !== null) {
+            $this->lastError = $exception->getMessage();
+        }
 
         if ($this->failureCount >= $this->failureThreshold) {
             $this->transitionToOpen();
