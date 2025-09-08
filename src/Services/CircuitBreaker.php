@@ -17,6 +17,7 @@ use SmartAlloc\Exceptions\CircuitBreakerCallbackException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Circuit Breaker implementation providing fault tolerance.
@@ -27,58 +28,91 @@ class CircuitBreaker implements CircuitBreakerInterface
     private const STATE_OPEN = 'open';
     private const STATE_HALF_OPEN = 'half_open';
 
+    /** Current circuit state. */
     private string $state = self::STATE_CLOSED;
+
+    /** Number of failures required to open circuit. */
     private int $failureThreshold;
+
+    /** Seconds to wait before attempting recovery. */
     private int $recoveryTimeout;
+
+    /** Consecutive failure count. */
     private int $failureCount = 0;
+
+    /** Timestamp of last failure. */
     private ?int $lastFailureTime = null;
-    /**
-     * Half-open state callback.
-     *
-     * @var callable|null
-     */
+
+    /** Callback executed when entering half-open state. */
     private $halfOpenCallback;
+
+    /** Successful operations in half-open state. */
     private int $halfOpenSuccessCount = 0;
+
+    /** Required successes to close circuit from half-open. */
     private int $halfOpenSuccessThreshold;
+
+    /** Logger instance. */
     private LoggerInterface $logger;
+
+    /** Human-readable name. */
     private string $name;
+
+    /** Failure metadata collection. */
+    private array $failureMetadata = [];
 
     public function __construct(
         int $failureThreshold = 5,
         int $recoveryTimeout = 60,
-        $halfOpenCallback = null,
+        ?callable $halfOpenCallback = null,
         int $halfOpenSuccessThreshold = 3,
         ?LoggerInterface $logger = null,
         string $name = 'default'
     ) {
         $this->validateCallbackParameter($halfOpenCallback, 'halfOpenCallback');
+        $this->validatePositiveInteger($failureThreshold, 'failureThreshold');
+        $this->validatePositiveInteger($recoveryTimeout, 'recoveryTimeout');
+        $this->validatePositiveInteger($halfOpenSuccessThreshold, 'halfOpenSuccessThreshold');
 
         $this->failureThreshold = $failureThreshold;
         $this->recoveryTimeout = $recoveryTimeout;
         $this->halfOpenCallback = $halfOpenCallback;
         $this->halfOpenSuccessThreshold = $halfOpenSuccessThreshold;
         $this->logger = $logger ?? new NullLogger();
-        $this->name = $name;
+        $this->name = $this->sanitizeName($name);
+
+        $this->logger->info('Circuit breaker initialized', [
+            'circuit_breaker' => $this->name,
+            'failure_threshold' => $this->failureThreshold,
+            'recovery_timeout' => $this->recoveryTimeout,
+        ]);
     }
 
     /**
      * Update circuit breaker configuration.
      */
-    public function updateConfig(int $failureThreshold, int $recoveryTimeout, $callback = null): void
-    {
+    public function updateConfig(
+        int $failureThreshold,
+        int $recoveryTimeout,
+        ?callable $callback = null
+    ): void {
         $this->validateCallbackParameter($callback, 'callback');
+        $this->validatePositiveInteger($failureThreshold, 'failureThreshold');
+        $this->validatePositiveInteger($recoveryTimeout, 'recoveryTimeout');
 
         $this->failureThreshold = $failureThreshold;
         $this->recoveryTimeout = $recoveryTimeout;
         $this->halfOpenCallback = $callback;
 
-        $this->logger->info('Circuit breaker configuration updated');
+        $this->logger->info('Circuit breaker configuration updated', [
+            'circuit_breaker' => $this->name,
+        ]);
     }
 
     /**
      * Set half-open callback with validation.
      */
-    public function setHalfOpenCallback($callback): void
+    public function setHalfOpenCallback(?callable $callback): void
     {
         $this->validateCallbackParameter($callback, 'callback');
 
@@ -193,6 +227,30 @@ class CircuitBreaker implements CircuitBreakerInterface
     }
 
     /**
+     * Ensure integer parameter is positive.
+     */
+    private function validatePositiveInteger(int $value, string $parameterName): void
+    {
+        if ($value <= 0) {
+            throw new InvalidArgumentException(
+                sprintf('Parameter "%s" must be positive integer, %d given.', $parameterName, $value)
+            );
+        }
+    }
+
+    /**
+     * Sanitize circuit breaker name.
+     */
+    private function sanitizeName(string $name): string
+    {
+        $sanitized = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $name);
+        if ($sanitized === '') {
+            $sanitized = 'unnamed_circuit';
+        }
+        return substr($sanitized, 0, 50);
+    }
+
+    /**
      * Check if callback can be invoked safely.
      */
     private function isCallbackInvokable(callable $callback): bool
@@ -270,13 +328,13 @@ class CircuitBreaker implements CircuitBreakerInterface
      * @return mixed
      * @throws CircuitBreakerException When circuit is open.
      */
-    public function execute(callable $operation, ...$args)
+    public function execute(callable $operation, ...$args): mixed
     {
         if ($this->isOpen()) {
             if ($this->shouldAttemptReset()) {
                 $this->transitionToHalfOpen();
             } else {
-                throw new CircuitBreakerException('Circuit breaker is open. Operation blocked.');
+                $this->throwCircuitOpenException();
             }
         }
 
@@ -284,8 +342,8 @@ class CircuitBreaker implements CircuitBreakerInterface
             $result = $operation(...$args);
             $this->onSuccess();
             return $result;
-        } catch (\Throwable $exception) {
-            $this->onFailure();
+        } catch (Throwable $exception) {
+            $this->onFailure($exception);
             throw $exception;
         }
     }
@@ -339,6 +397,22 @@ class CircuitBreaker implements CircuitBreakerInterface
     }
 
     /**
+     * Get recovery timeout.
+     */
+    public function getRecoveryTimeout(): int
+    {
+        return $this->recoveryTimeout;
+    }
+
+    /**
+     * Get circuit breaker name.
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
      * Reset breaker to closed state.
      */
     public function reset(): void
@@ -370,12 +444,43 @@ class CircuitBreaker implements CircuitBreakerInterface
         }
     }
 
-    private function onFailure(): void
+    private function onFailure(Throwable $exception): void
     {
         $this->failureCount++;
         $this->lastFailureTime = time();
+        $this->recordFailureMetadata($exception);
+
+        $this->logger->warning('Circuit breaker recorded failure', [
+            'circuit_breaker' => $this->name,
+            'failure_count' => $this->failureCount,
+            'failure_threshold' => $this->failureThreshold,
+            'exception_type' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+        ]);
+
         if ($this->failureCount >= $this->failureThreshold) {
             $this->transitionToOpen();
+        }
+    }
+
+    /**
+     * Record failure metadata and keep last 50 entries.
+     */
+    private function recordFailureMetadata(Throwable $exception): void
+    {
+        $key = 'failure_' . time() . '_' . uniqid();
+
+        $this->failureMetadata[$key] = [
+            'timestamp' => time(),
+            'exception_type' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+            'exception_code' => $exception->getCode(),
+            'failure_count' => $this->failureCount,
+        ];
+
+        if (count($this->failureMetadata) > 50) {
+            $oldestKey = array_key_first($this->failureMetadata);
+            unset($this->failureMetadata[$oldestKey]);
         }
     }
 
@@ -397,6 +502,22 @@ class CircuitBreaker implements CircuitBreakerInterface
     {
         $this->state = self::STATE_OPEN;
         $this->halfOpenSuccessCount = 0;
+    }
+
+    /**
+     * Throw exception when circuit is open.
+     */
+    private function throwCircuitOpenException(): void
+    {
+        throw new CircuitBreakerException(
+            sprintf(
+                'Circuit breaker "%s" is open. Operation blocked. Last failure: %s seconds ago. '
+                . 'Recovery timeout: %s seconds.',
+                $this->name,
+                $this->lastFailureTime !== null ? time() - $this->lastFailureTime : 'unknown',
+                $this->recoveryTimeout
+            )
+        );
     }
 
     /**
@@ -439,6 +560,7 @@ class CircuitBreaker implements CircuitBreakerInterface
             'half_open_success_count' => $this->halfOpenSuccessCount,
             'half_open_success_threshold' => $this->halfOpenSuccessThreshold,
             'has_callback' => $this->halfOpenCallback !== null,
+            'failure_metadata_count' => count($this->failureMetadata),
         ];
 
         if ($this->halfOpenCallback !== null) {
@@ -448,7 +570,21 @@ class CircuitBreaker implements CircuitBreakerInterface
             ];
         }
 
+        if ($this->lastFailureTime !== null) {
+            $stats['time_since_last_failure'] = time() - $this->lastFailureTime;
+        }
+
         return $stats;
+    }
+
+    /**
+     * Get failure metadata.
+     *
+     * @return array<string, mixed>
+     */
+    public function getFailureMetadata(): array
+    {
+        return $this->failureMetadata;
     }
 
     /**
