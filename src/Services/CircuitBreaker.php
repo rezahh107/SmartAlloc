@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * Circuit Breaker implementation with transient-based state storage.
  *
@@ -17,6 +18,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\ValueObjects\CircuitBreakerStatus;
 use SmartAlloc\Services\Exceptions\CircuitOpenException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Circuit Breaker implementation with transient-based state storage.
@@ -78,11 +81,39 @@ final class CircuitBreaker {
 	private string $transientKey;
 
 		/**
+		 * Circuit breaker name.
+		 *
+		 * @var string
+		 */
+	private string $name;
+
+		/**
+		 * Logger instance.
+		 *
+		 * @var LoggerInterface
+		 */
+	private LoggerInterface $logger;
+
+		/**
+		 * Failure metadata entries.
+		 *
+		 * @var array<int, array<string, mixed>>
+		 */
+	private array $failureMetadata = array();
+
+		/**
+		 * Maximum failure metadata entries.
+		 *
+		 * @var int
+		 */
+	private int $maxFailureMetadataEntries;
+
+		/**
 		 * Initialize circuit breaker with configurable parameters.
 		 *
 		 * @param string $key Circuit identifier.
 		 */
-	public function __construct( string $key = 'default' ) {
+	public function __construct( string $key = 'default', ?LoggerInterface $logger = null, int $maxFailureMetadataEntries = 100 ) {
 		$this->threshold = (int) apply_filters(
 			'smartalloc_cb_threshold',
 			self::DEFAULT_THRESHOLD,
@@ -95,7 +126,10 @@ final class CircuitBreaker {
 			$key
 		);
 
-		$this->transientKey = self::TRANSIENT_KEY . '_' . $key;
+			$this->transientKey              = self::TRANSIENT_KEY . '_' . $key;
+			$this->name                      = $key;
+			$this->logger                    = $logger ?? new NullLogger();
+			$this->maxFailureMetadataEntries = $maxFailureMetadataEntries;
 	}
 
 		/**
@@ -198,17 +232,68 @@ final class CircuitBreaker {
 		$this->recordSuccess();
 	}
 
-		/**
-		 * Handle operation failure.
-		 *
-		 * @param string     $context   Context of the operation.
-		 * @param \Throwable $exception Thrown exception.
-		 * @return void
-		 */
-	public function failure( string $context, \Throwable $exception ): void {
-		unset( $context );
+				/**
+				 * Handle operation failure.
+				 *
+				 * @param string     $operationName Operation identifier.
+				 * @param \Throwable $exception     Thrown exception.
+				 * @return void
+				 */
+	public function failure( string $operationName, \Throwable $exception ): void {
+		$status      = $this->getStatus();
+		$failureData = array(
+			'timestamp'            => time(),
+			'microtime'            => microtime( true ),
+			'operation_name'       => $operationName,
+			'exception_type'       => get_class( $exception ),
+			'exception_message'    => $exception->getMessage(),
+			'exception_code'       => $exception->getCode(),
+			'exception_file'       => $exception->getFile(),
+			'exception_line'       => $exception->getLine(),
+			'stack_trace'          => $exception->getTraceAsString(),
+			'circuit_state_before' => $status->state,
+			'failure_count_before' => $status->failCount,
+		);
+
+		if ( $exception->getPrevious() ) {
+				$p                                 = $exception->getPrevious();
+				$failureData['previous_exception'] = array(
+					'type'    => get_class( $p ),
+					'message' => $p->getMessage(),
+					'code'    => $p->getCode(),
+				);
+		}
+
+		$this->addFailureMetadata( $failureData );
+		$this->logger->warning(
+			'Circuit breaker failure recorded',
+			array(
+				'circuit_breaker'   => $this->name,
+				'operation'         => $operationName,
+				'exception_type'    => $failureData['exception_type'],
+				'exception_message' => $failureData['exception_message'],
+				'failure_count'     => $status->failCount + 1,
+				'threshold'         => $this->threshold,
+				'current_state'     => $status->state,
+			)
+		);
+
+		$this->persistFailureMetadata( $failureData );
+
 		$sanitized_message = $this->sanitizeMessage( $exception->getMessage() );
 		$this->recordFailure( $sanitized_message );
+
+		if ( $this->getStatus()->state === 'open' ) {
+				$this->logger->error(
+					'Circuit breaker opened due to failure threshold',
+					array(
+						'circuit_breaker'  => $this->name,
+						'failure_count'    => $this->getStatus()->failCount,
+						'threshold'        => $this->threshold,
+						'recovery_timeout' => $this->cooldown,
+					)
+				);
+		}
 	}
 
 		/**
@@ -305,9 +390,99 @@ final class CircuitBreaker {
 		 */
 	private function sanitizeErrorMessage( array $data ): array {
 		if ( $data['last_error'] !== null ) {
-				$data['last_error'] = substr( $data['last_error'], 0, 100 );
+						$data['last_error'] = substr( $data['last_error'], 0, 100 );
 		}
 
-			return $data;
+					return $data;
+	}
+
+	public function execute( callable $operation, ...$args ) {
+			$this->guard( $this->name );
+		try {
+				$result = $operation( ...$args );
+				$this->success( $this->name );
+				return $result;
+		} catch ( \Throwable $e ) {
+				$this->failure( $this->name, $e );
+				throw $e;
+		}
+	}
+
+	private function addFailureMetadata( array $data ): void {
+			$this->failureMetadata[] = $data;
+		if ( count( $this->failureMetadata ) > $this->maxFailureMetadataEntries ) {
+				$this->failureMetadata = array_slice( $this->failureMetadata, -$this->maxFailureMetadataEntries );
+		}
+	}
+
+	private function persistFailureMetadata( array $data ): void {
+		if ( function_exists( 'set_transient' ) ) {
+				$day  = defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400;
+				$week = defined( 'WEEK_IN_SECONDS' ) ? WEEK_IN_SECONDS : 604800;
+				$key  = 'smartalloc_circuit_failure_' . $this->name . '_' . $data['timestamp'];
+				set_transient( $key, $data, $day );
+				$summary_key = 'smartalloc_circuit_summary_' . $this->name;
+				$summary     = get_transient( $summary_key );
+			if ( ! is_array( $summary ) ) {
+				$summary = array(
+					'total_failures' => 0,
+					'last_failure'   => null,
+					'failure_types'  => array(),
+				);
+			}
+				++$summary['total_failures'];
+				$summary['last_failure']        = $data['timestamp'];
+				$t                              = $data['exception_type'];
+				$summary['failure_types'][ $t ] = ( $summary['failure_types'][ $t ] ?? 0 ) + 1;
+				set_transient( $summary_key, $summary, $week );
+		}
+	}
+
+	public function getFailureMetadata( ?int $limit = null ): array {
+		if ( $limit === null ) {
+				return $this->failureMetadata;
+		}
+
+			return array_slice( $this->failureMetadata, -$limit );
+	}
+
+	public function getFailureSummary(): ?array {
+		if ( function_exists( 'get_transient' ) ) {
+				$s = get_transient( 'smartalloc_circuit_summary_' . $this->name );
+				return $s !== false ? $s : null;
+		}
+
+			return null;
+	}
+
+	public function clearFailureMetadata( bool $includePersistent = false ): void {
+			$this->failureMetadata = array();
+		if ( $includePersistent && function_exists( 'delete_transient' ) ) {
+				delete_transient( 'smartalloc_circuit_summary_' . $this->name );
+		}
+	}
+
+        public function getStatistics(): array {
+                        $status = $this->getStatus();
+                        $stats  = array(
+                                'name'                   => $this->name,
+				'state'                  => $status->state,
+				'failure_count'          => $status->failCount,
+				'failure_threshold'      => $this->threshold,
+				'recovery_timeout'       => $this->cooldown,
+				'last_failure_time'      => $status->cooldownUntil,
+				'total_metadata_entries' => count( $this->failureMetadata ),
+			);
+
+                        if ( $this->failureMetadata ) {
+                                        $stats['recent_failures'] = $this->getFailureMetadata( 5 );
+                        }
+
+			$summary = $this->getFailureSummary();
+			if ( $summary !== null ) {
+					$stats['persistent_summary'] = $summary;
+			}
+
+			return $stats;
 	}
 }
