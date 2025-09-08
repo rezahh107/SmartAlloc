@@ -4,59 +4,52 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Tests\Unit\Services;
 
+use PHPUnit\Framework\TestCase;
 use SmartAlloc\Services\CircuitBreaker;
-use SmartAlloc\ValueObjects\CircuitBreakerStatus;
-use SmartAlloc\Tests\Unit\TestCase;
-use Brain\Monkey;
+use SmartAlloc\Exceptions\CircuitBreakerException;
 
-final class CircuitBreakerTest extends TestCase
+class CircuitBreakerTest extends TestCase
 {
-    private array $transientStorage;
-
-    protected function setUp(): void
+    public function testInitialization(): void
     {
-        parent::setUp();
-        $this->transientStorage =& $this->setupWordPressMocks();
+        $cb = new CircuitBreaker(5, 60);
+        $this->assertTrue($cb->isClosed());
+        $this->assertEquals(0, $cb->getFailureCount());
+        $this->assertEquals(5, $cb->getFailureThreshold());
     }
 
-    public function testFiltersApplied(): void
+    public function testSuccessfulOperation(): void
     {
-        Monkey\Functions\when('apply_filters')->alias(function ($hook, $value, ...$args) {
-            if ($hook === 'smartalloc_cb_threshold') {
-                return 10;
-            }
-            if ($hook === 'smartalloc_cb_cooldown') {
-                return 600;
-            }
-            return $value;
-        });
-
-        $cb = new CircuitBreaker('test');
-        $status = $cb->getStatus();
-
-        $this->assertSame(10, $status->threshold);
+        $cb = new CircuitBreaker();
+        $result = $cb->execute(fn ($v) => $v * 2, 5);
+        $this->assertEquals(10, $result);
+        $this->assertTrue($cb->isClosed());
     }
 
-    public function testGetStatusReturnsStatusObject(): void
+    public function testCircuitOpensAfterThreshold(): void
     {
-        $cb = new CircuitBreaker('test');
-        $status = $cb->getStatus();
-
-        $this->assertInstanceOf(CircuitBreakerStatus::class, $status);
-        $this->assertSame('closed', $status->state);
-        $this->assertSame(0, $status->failCount);
+        $cb = new CircuitBreaker(1, 60);
+        try {
+            $cb->execute(function (): void {
+                throw new \Exception('fail');
+            });
+        } catch (\Exception $e) {
+        }
+        $this->expectException(CircuitBreakerException::class);
+        $cb->execute(fn () => 'success');
     }
 
-    public function testTransientPersistence(): void
+    public function testResetFunctionality(): void
     {
-        $cb = new CircuitBreaker('test');
-        $cb->recordFailure('Test error');
-
-        // Verify transient was set
-        $this->assertArrayHasKey('smartalloc_circuit_breaker_test', $this->transientStorage);
-        $data = $this->transientStorage['smartalloc_circuit_breaker_test'];
-        $this->assertSame('closed', $data['state']);
-        $this->assertSame(1, $data['fail_count']);
+        $cb = new CircuitBreaker(1, 60);
+        try {
+            $cb->execute(function (): void {
+                throw new \Exception('fail');
+            });
+        } catch (\Exception $e) {
+        }
+        $this->assertTrue($cb->isOpen());
+        $cb->reset();
+        $this->assertTrue($cb->isClosed());
     }
 }
-
