@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
@@ -19,6 +20,16 @@ namespace {
             }
         }
     }
+
+    if (!function_exists('wp_upload_dir')) {
+        function wp_upload_dir(): array { return ['basedir' => sys_get_temp_dir()]; }
+    }
+    if (!function_exists('wp_mkdir_p')) {
+        function wp_mkdir_p($dir): bool { return @mkdir($dir, 0777, true); }
+    }
+    if (!defined('OBJECT')) {
+        define('OBJECT', 'OBJECT');
+    }
 }
 
 namespace SmartAlloc\Tests\Unit\Services {
@@ -27,7 +38,7 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use SmartAlloc\Core\FormContext;
 use SmartAlloc\Infra\DB\TableResolver;
-use SmartAlloc\Services\ExportService;
+use SmartAlloc\Services\{ExportService, Logging};
 use SmartAlloc\Tests\BaseTestCase;
 
 final class ExportServiceTest extends BaseTestCase
@@ -35,8 +46,15 @@ final class ExportServiceTest extends BaseTestCase
     /** @test */
     public function writes_three_sheets_with_string_codes(): void
     {
-        global $wpdb;
-        $svc = new ExportService(new TableResolver($wpdb));
+        $wpdbStub = new class extends \wpdb {
+            public string $prefix = 'wp_';
+            public int $insert_id = 1;
+            public function get_results($q, $type = OBJECT): array { return []; }
+            public function prepare($q, ...$a): string { $args = is_array($a[0] ?? null) ? $a[0] : $a; return vsprintf($q, $args); }
+        };
+        $GLOBALS['wpdb'] = $wpdbStub;
+        $tableResolverStub = new TableResolver($wpdbStub);
+        $svc = new ExportService($tableResolverStub, config: null, logger: new Logging());
         $res = $svc->export(new FormContext(1));
         $this->assertTrue($res['ok']);
         $book = IOFactory::load($res['file']);
@@ -52,8 +70,15 @@ final class ExportServiceTest extends BaseTestCase
     /** @test */
     public function stream_export_outputs_xlsx(): void
     {
-        $GLOBALS['wpdb'] = new \wpdb();
-        $svc = new ExportService(new TableResolver($GLOBALS['wpdb']));
+        $wpdbStub = new class extends \wpdb {
+            public string $prefix = 'wp_';
+            public int $insert_id = 1;
+            public function get_results($q, $type = OBJECT): array { return [(object)['id'=>1,'national_id'=>'1','mobile'=>'2','postal'=>'3']]; }
+            public function prepare($q, ...$a): string { $args = is_array($a[0] ?? null) ? $a[0] : $a; return vsprintf($q, $args); }
+        };
+        $GLOBALS['wpdb'] = $wpdbStub;
+        $tableResolverStub = new TableResolver($wpdbStub);
+        $svc = new ExportService($tableResolverStub, config: null, logger: new Logging());
         ob_start();
         $svc->streamExport(['limit' => '2']);
         $data = ob_get_clean();
