@@ -556,3 +556,15 @@ $env:GH_TOKEN="ghp_xxx"
 .\run_ci_dispatch.ps1
 ```
 
+## Circuit Breaker Usage Guide
+
+SmartAlloc provides two circuit breaker implementations for different needs:
+
+| Feature | Services\CircuitBreaker | Support\SimpleCircuitBreaker |
+| --- | --- | --- |
+| Persistence | ✅ | ❌ |
+| Half-open callbacks | ✅ | ❌ |
+| WordPress helpers | ✅ | ✅ |
+
+Use `Services\CircuitBreaker` for persistent, robust workflows. For lightweight, in-memory protection, create a `SimpleCircuitBreaker` via `SafetyKit::createSimpleCircuitBreaker()` or call operations with `SafetyKit::safeExecute()`.
+

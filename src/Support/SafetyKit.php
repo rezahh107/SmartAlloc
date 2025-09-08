@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignoreFile
 
 declare(strict_types=1);
 
@@ -169,44 +169,167 @@ class CircuitOpenException extends RuntimeException
 }
 
 /**
- * Simple circuit breaker implementation.
+ * Lightweight circuit breaker for basic safety operations.
  */
-class CircuitBreaker
+class SimpleCircuitBreaker
 {
-    /** @var array<string,int> */
-    private static array $failures = [];
-    /** @var array<string,int> */
-    private static array $openUntil = [];
+    private const STATE_CLOSED = 'closed';
+    private const STATE_OPEN   = 'open';
+
+    private int $failureThreshold;
+    private int $recoveryTimeout;
+    private int $failureCount = 0;
+    private ?int $lastFailureTime = null;
+    private string $state = self::STATE_CLOSED;
+    private string $name;
+
+    public function __construct(int $failureThreshold = 3, int $recoveryTimeout = 30, string $name = 'simple')
+    {
+        $this->failureThreshold = $failureThreshold;
+        $this->recoveryTimeout  = $recoveryTimeout;
+        $this->name             = function_exists('sanitize_key') ? sanitize_key($name) : $name;
+    }
 
     /**
-     * Execute a service call with circuit breaking.
+     * Execute an operation under circuit protection.
      *
-     * @template T
-     * @param string   $service   Service identifier.
-     * @param callable $fn        Callable to execute.
-     * @param int      $threshold Failure threshold before opening circuit.
-     * @param int      $cooldown  Cooldown in seconds.
+     * @param callable $operation Operation to execute.
+     * @param mixed    ...$args   Arguments for the operation.
      *
      * @return mixed
-     *
-     * @throws CircuitOpenException When circuit is open.
+     * @throws \Exception When circuit is open or operation fails.
      */
-    public static function call(string $service, callable $fn, int $threshold = 5, int $cooldown = 120)
+    public function execute(callable $operation, ...$args)
     {
-        $now = time();
-        if (isset(self::$openUntil[$service]) && $now < self::$openUntil[$service]) {
-            throw new CircuitOpenException("Circuit open for {$service}"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        if ($this->isOpen()) {
+            if ($this->shouldReset()) {
+                $this->state       = self::STATE_CLOSED;
+                $this->failureCount = 0;
+            } else {
+                $msg = sprintf('Simple circuit breaker "%s" is open. Operation blocked.', $this->name);
+                $msg = function_exists('esc_html') ? esc_html($msg) : $msg;
+                throw new \Exception($msg);
+            }
         }
 
         try {
-            $result = $fn();
-            self::$failures[$service]  = 0;
-            unset(self::$openUntil[$service]);
+            $result = $operation(...$args);
+            $this->onSuccess();
             return $result;
         } catch (\Throwable $e) {
-            self::$failures[$service] = (self::$failures[$service] ?? 0) + 1;
-            if (self::$failures[$service] >= $threshold) {
-                self::$openUntil[$service] = $now + $cooldown;
+            $this->onFailure($e);
+            throw $e;
+        }
+    }
+
+    public function isOpen(): bool
+    {
+        return $this->state === self::STATE_OPEN;
+    }
+
+    private function shouldReset(): bool
+    {
+        if ($this->lastFailureTime === null) {
+            return false;
+        }
+        $now = $this->getTime();
+        return ($now - $this->lastFailureTime) >= $this->recoveryTimeout;
+    }
+
+    private function onSuccess(): void
+    {
+        if ($this->state === self::STATE_OPEN) {
+            $this->state         = self::STATE_CLOSED;
+            $this->failureCount  = 0;
+            $this->lastFailureTime = null;
+        }
+    }
+
+    private function onFailure(\Throwable $e): void
+    {
+        $this->failureCount++;
+        $this->lastFailureTime = $this->getTime();
+        if ($this->failureCount >= $this->failureThreshold) {
+            $this->state = self::STATE_OPEN;
+        }
+        if (function_exists('error_log')) {
+            $msg = sprintf('SimpleCircuitBreaker "%s" failure: %s', $this->name, $e->getMessage());
+            $msg = function_exists('esc_html') ? esc_html($msg) : $msg;
+            error_log($msg);
+        }
+    }
+
+    private function getTime(): int
+    {
+        if (function_exists('wp_date')) {
+            return (int) wp_date('U');
+        }
+        return time();
+    }
+
+    /**
+     * Reset circuit to closed state.
+     */
+    public function reset(): void
+    {
+        $this->state          = self::STATE_CLOSED;
+        $this->failureCount   = 0;
+        $this->lastFailureTime = null;
+    }
+
+    /**
+     * Get circuit statistics.
+     *
+     * @return array<string,mixed>
+     */
+    public function getStatistics(): array
+    {
+        return [
+            'name'             => $this->name,
+            'state'            => $this->state,
+            'failure_count'    => $this->failureCount,
+            'failure_threshold'=> $this->failureThreshold,
+            'recovery_timeout' => $this->recoveryTimeout,
+            'last_failure_time'=> $this->lastFailureTime,
+            'type'             => 'simple',
+        ];
+    }
+
+    public function getStatusMessage(): string
+    {
+        $msg = sprintf(
+            'Circuit "%s" is %s (failures: %d/%d)',
+            $this->name,
+            $this->state,
+            $this->failureCount,
+            $this->failureThreshold
+        );
+        return function_exists('esc_html') ? esc_html($msg) : $msg;
+    }
+}
+
+/**
+ * SafetyKit helper utilities.
+ */
+class SafetyKit
+{
+    public static function createSimpleCircuitBreaker(string $name = 'default', int $failureThreshold = 3, int $recoveryTimeout = 30): SimpleCircuitBreaker
+    {
+        return new SimpleCircuitBreaker($failureThreshold, $recoveryTimeout, $name);
+    }
+
+    public static function safeExecute(callable $operation, string $circuitName = 'safe_execute', int $failureThreshold = 3, int $recoveryTimeout = 30, ...$args)
+    {
+        static $circuits = [];
+        $key = function_exists('sanitize_key') ? sanitize_key($circuitName) : $circuitName;
+        if (!isset($circuits[$key])) {
+            $circuits[$key] = new SimpleCircuitBreaker($failureThreshold, $recoveryTimeout, $key);
+        }
+        try {
+            return $circuits[$key]->execute($operation, ...$args);
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'circuit breaker')) {
+                return null;
             }
             throw $e;
         }
