@@ -1,0 +1,8 @@
+{
+  "instructions": ".codex/instructions.md",
+  "test_commands": [
+    "composer run quality:selective",
+    "php baseline-check --current-phase=FOUNDATION",
+    "./scripts/patch-guard-check.sh"
+  ]
+}
