@@ -238,11 +238,11 @@ class SimpleCircuitBreaker
 
     private function onSuccess(): void
     {
-        if ($this->state === self::STATE_OPEN) {
-            $this->state         = self::STATE_CLOSED;
-            $this->failureCount  = 0;
-            $this->lastFailureTime = null;
-        }
+        // Reset failure tracking on every successful call to ensure the
+        // breaker only trips after consecutive failures.
+        $this->state            = self::STATE_CLOSED;
+        $this->failureCount     = 0;
+        $this->lastFailureTime  = null;
     }
 
     private function onFailure(\Throwable $e): void
