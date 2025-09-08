@@ -85,18 +85,12 @@
     ],
     "baseline:expansion": "php scripts/baseline-check.php --current-phase=expansion",
     "baseline:polish": "php scripts/baseline-check.php --current-phase=polish",
-    "lint:strict": "vendor/bin/phpcs --standard=WordPress --extensions=php src tests || true",
-    "analyze:strict": "phpstan || true",
+    "lint:strict": "php scripts/selective-quality-gates.php lint",
+    "analyze:strict": "php scripts/selective-quality-gates.php analyze",
     "test:performance": "phpunit --group=performance || true",
     "security:relaxed": "php scripts/security-relaxed-check.php",
     "maintainability:relaxed": "php scripts/maintainability-check.php",
-    "quality:selective": [
-      "@lint:strict",
-      "@analyze:strict",
-      "@test:performance",
-      "@security:relaxed",
-      "@maintainability:relaxed"
-    ]
+    "quality:selective": "php scripts/selective-quality-gates.php"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
