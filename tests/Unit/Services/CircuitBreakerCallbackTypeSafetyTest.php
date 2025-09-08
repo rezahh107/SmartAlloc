@@ -63,7 +63,7 @@ class CircuitBreakerCallbackTypeSafetyTest extends TestCase {
         $this->logger = new SimpleTestLogger();
     }
 
-    public function validCallbacksProvider(): array {
+    public static function validCallbacksProvider(): array {
         $instance = new TestCallbackClass();
         return [
             'null' => [null],
@@ -84,7 +84,7 @@ class CircuitBreakerCallbackTypeSafetyTest extends TestCase {
         $this->assertSame($callback, $cb->getHalfOpenCallback());
     }
 
-    public function invalidCallbacksProvider(): array {
+    public static function invalidCallbacksProvider(): array {
         return [
             ['non_existent_function', 'string'],
             [123, 'integer'],
