@@ -18,6 +18,7 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\ValueObjects\CircuitBreakerStatus;
 use SmartAlloc\Services\Exceptions\CircuitOpenException;
+use SmartAlloc\Exceptions\CircuitBreakerCallbackException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -106,14 +107,18 @@ final class CircuitBreaker {
 		 *
 		 * @var int
 		 */
-	private int $maxFailureMetadataEntries;
+        private int $maxFailureMetadataEntries;
+        /** @var callable|null */
+        private $halfOpenCallback;
+        private int $halfOpenSuccessThreshold;
+        private int $halfOpenSuccessCount = 0;
 
 		/**
 		 * Initialize circuit breaker with configurable parameters.
 		 *
 		 * @param string $key Circuit identifier.
 		 */
-	public function __construct( string $key = 'default', ?LoggerInterface $logger = null, int $maxFailureMetadataEntries = 100 ) {
+        public function __construct( string $key = 'default', ?LoggerInterface $logger = null, int $maxFailureMetadataEntries = 100, ?callable $halfOpenCallback = null, int $halfOpenSuccessThreshold = 1 ) {
 		$this->threshold = (int) apply_filters(
 			'smartalloc_cb_threshold',
 			self::DEFAULT_THRESHOLD,
@@ -126,10 +131,12 @@ final class CircuitBreaker {
 			$key
 		);
 
-			$this->transientKey              = self::TRANSIENT_KEY . '_' . $key;
-			$this->name                      = $key;
-			$this->logger                    = $logger ?? new NullLogger();
-			$this->maxFailureMetadataEntries = $maxFailureMetadataEntries;
+                        $this->transientKey              = self::TRANSIENT_KEY . '_' . $key;
+                        $this->name                      = $key;
+                        $this->logger                    = $logger ?? new NullLogger();
+                        $this->maxFailureMetadataEntries = $maxFailureMetadataEntries;
+                        $this->halfOpenCallback          = $halfOpenCallback;
+                        $this->halfOpenSuccessThreshold  = $halfOpenSuccessThreshold;
 	}
 
 		/**
@@ -227,10 +234,18 @@ final class CircuitBreaker {
 		 * @param string $context Context for the successful operation.
 		 * @return void
 		 */
-	public function success( string $context ): void {
-		unset( $context );
-		$this->recordSuccess();
-	}
+        public function success( string $context ): void {
+                unset( $context );
+                $status = $this->getStatus();
+                if ( $status->state === 'half-open' ) {
+                        ++$this->halfOpenSuccessCount;
+                        if ( $this->halfOpenSuccessCount >= $this->halfOpenSuccessThreshold ) {
+                                $this->recordSuccess();
+                        }
+                } else {
+                        $this->recordSuccess();
+                }
+        }
 
 				/**
 				 * Handle operation failure.
@@ -239,8 +254,9 @@ final class CircuitBreaker {
 				 * @param \Throwable $exception     Thrown exception.
 				 * @return void
 				 */
-	public function failure( string $operationName, \Throwable $exception ): void {
-		$status      = $this->getStatus();
+        public function failure( string $operationName, \Throwable $exception ): void {
+                $this->halfOpenSuccessCount = 0;
+                $status      = $this->getStatus();
 		$failureData = array(
 			'timestamp'            => time(),
 			'microtime'            => microtime( true ),
@@ -351,26 +367,17 @@ final class CircuitBreaker {
 		 * @param array $data Circuit data.
 		 * @return array Updated circuit data.
 		 */
-	private function autoRecoverIfExpired( array $data ): array {
-		if (
-		$data['state'] === 'open' &&
-		$data['cooldown_until'] !== null &&
-		( function_exists( 'wp_date' ) ? (int) wp_date( 'U' ) : time() ) >= $data['cooldown_until']
-		) {
-			$data['state']          = 'half-open';
-			$data['fail_count']     = 0;
-			$data['cooldown_until'] = null;
+        private function autoRecoverIfExpired( array $data ): array {
+                if (
+                $data['state'] === 'open' &&
+                $data['cooldown_until'] !== null &&
+                ( function_exists( 'wp_date' ) ? (int) wp_date( 'U' ) : time() ) >= $data['cooldown_until']
+                ) {
+                        $data = $this->transitionToHalfOpen( $data );
+                }
 
-			$this->saveState(
-				$data['state'],
-				$data['fail_count'],
-				$data['cooldown_until'],
-				$data['last_error']
-			);
-		}
-
-		return $data;
-	}
+                return $data;
+        }
 
 		/**
 		 * Sanitize and truncate message to prevent storage bloat.
@@ -388,13 +395,50 @@ final class CircuitBreaker {
 		 * @param array $data Circuit data.
 		 * @return array Circuit data with sanitized error message.
 		 */
-	private function sanitizeErrorMessage( array $data ): array {
-		if ( $data['last_error'] !== null ) {
-						$data['last_error'] = substr( $data['last_error'], 0, 100 );
-		}
+        private function sanitizeErrorMessage( array $data ): array {
+                if ( $data['last_error'] !== null ) {
+                                               $data['last_error'] = substr( $data['last_error'], 0, 100 );
+                }
 
-					return $data;
-	}
+                                       return $data;
+        }
+
+        private function transitionToHalfOpen( array $data ): array {
+                $data['state'] = 'half-open';
+                $data['fail_count'] = 0;
+                $data['cooldown_until'] = null;
+                $this->halfOpenSuccessCount = 0;
+                $this->saveState( $data['state'], $data['fail_count'], $data['cooldown_until'], $data['last_error'] );
+                $this->logger->info( 'Circuit breaker transitioning to half-open', array( 'circuit_breaker' => $this->name ) );
+                if ( $this->halfOpenCallback ) {
+                        $this->executeCallback( $this->halfOpenCallback, 'half_open' );
+                }
+                return $data;
+        }
+
+        private function executeCallback( callable $cb, string $type ) {
+                try {
+                        $this->logger->debug( 'Executing circuit breaker callback', array( 'circuit_breaker' => $this->name, 'callback_type' => $type ) );
+                        $r = $cb();
+                        $this->logger->debug( 'Circuit breaker callback executed successfully', array( 'circuit_breaker' => $this->name, 'callback_type' => $type ) );
+                        return $r;
+                } catch ( \Throwable $e ) {
+                        $this->logger->error( 'Circuit breaker callback failed', array( 'circuit_breaker' => $this->name, 'callback_type' => $type, 'exception_type' => get_class( $e ), 'exception_message' => $e->getMessage(), 'exception_file' => $e->getFile(), 'exception_line' => $e->getLine() ) );
+                        $this->recordCallbackFailure( $type, $e );
+                        throw new CircuitBreakerCallbackException( sprintf( 'Circuit breaker "%s" callback "%s" failed: %s', $this->name, $type, $e->getMessage() ), $type, $this->name, $e, $e->getCode(), $e );
+                }
+        }
+
+        private function recordCallbackFailure( string $type, \Throwable $e ): void {
+                $d = array( 'timestamp' => time(), 'microtime' => microtime( true ), 'failure_type' => 'callback', 'callback_type' => $type, 'circuit_name' => $this->name, 'exception_type' => get_class( $e ), 'exception_message' => $e->getMessage(), 'exception_code' => $e->getCode(), 'exception_file' => $e->getFile(), 'exception_line' => $e->getLine(), 'stack_trace' => $e->getTraceAsString() );
+                if ( property_exists( $this, 'failureMetadata' ) ) {
+                        $this->addFailureMetadata( $d );
+                }
+                if ( function_exists( 'set_transient' ) ) {
+                        $day = defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400;
+                        set_transient( sprintf( 'smartalloc_circuit_callback_failure_%s_%d', $this->name, $d['timestamp'] ), $d, $day );
+                }
+        }
 
 	public function execute( callable $operation, ...$args ) {
 			$this->guard( $this->name );
