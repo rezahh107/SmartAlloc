@@ -15,7 +15,8 @@ use SmartAlloc\Interfaces\CircuitBreakerInterface;
 use SmartAlloc\Exceptions\CircuitBreakerException;
 use SmartAlloc\Exceptions\CircuitBreakerCallbackException;
 use Psr\Log\LoggerInterface;
-use Closure;
+use Psr\Log\NullLogger;
+use InvalidArgumentException;
 
 /**
  * Circuit Breaker implementation providing fault tolerance.
@@ -31,26 +32,234 @@ class CircuitBreaker implements CircuitBreakerInterface
     private int $recoveryTimeout;
     private int $failureCount = 0;
     private ?int $lastFailureTime = null;
-    private ?Closure $halfOpenCallback;
+    /**
+     * Half-open state callback.
+     *
+     * @var callable|null
+     */
+    private $halfOpenCallback;
     private int $halfOpenSuccessCount = 0;
     private int $halfOpenSuccessThreshold;
-    private ?LoggerInterface $logger;
-    private ?string $name;
+    private LoggerInterface $logger;
+    private string $name;
 
     public function __construct(
         int $failureThreshold = 5,
         int $recoveryTimeout = 60,
-        ?Closure $halfOpenCallback = null,
+        $halfOpenCallback = null,
         int $halfOpenSuccessThreshold = 3,
         ?LoggerInterface $logger = null,
-        ?string $name = null
+        string $name = 'default'
     ) {
+        $this->validateCallbackParameter($halfOpenCallback, 'halfOpenCallback');
+
         $this->failureThreshold = $failureThreshold;
         $this->recoveryTimeout = $recoveryTimeout;
         $this->halfOpenCallback = $halfOpenCallback;
         $this->halfOpenSuccessThreshold = $halfOpenSuccessThreshold;
-        $this->logger = $logger;
+        $this->logger = $logger ?? new NullLogger();
         $this->name = $name;
+    }
+
+    /**
+     * Update circuit breaker configuration.
+     */
+    public function updateConfig(int $failureThreshold, int $recoveryTimeout, $callback = null): void
+    {
+        $this->validateCallbackParameter($callback, 'callback');
+
+        $this->failureThreshold = $failureThreshold;
+        $this->recoveryTimeout = $recoveryTimeout;
+        $this->halfOpenCallback = $callback;
+
+        $this->logger->info('Circuit breaker configuration updated');
+    }
+
+    /**
+     * Set half-open callback with validation.
+     */
+    public function setHalfOpenCallback($callback): void
+    {
+        $this->validateCallbackParameter($callback, 'callback');
+
+        $this->halfOpenCallback = $callback;
+    }
+
+    /**
+     * Get current half-open callback.
+     */
+    public function getHalfOpenCallback(): ?callable
+    {
+        return $this->halfOpenCallback;
+    }
+
+    /**
+     * Validate callback parameter with detailed error messages.
+     *
+     * @param mixed  $callback
+     * @param string $parameterName
+     */
+    private function validateCallbackParameter($callback, string $parameterName): void
+    {
+        if ($callback === null) {
+            return;
+        }
+
+        if (is_array($callback)) {
+            if (count($callback) !== 2) {
+                throw new InvalidArgumentException(
+                    sprintf(
+                        'Parameter "%s" array must contain exactly 2 elements [object/class, method], %d given.',
+                        $parameterName,
+                        count($callback)
+                    )
+                );
+            }
+
+            [$classOrObject, $method] = $callback;
+
+            if (!is_string($method)) {
+                throw new InvalidArgumentException(
+                    sprintf(
+                        'Parameter "%s" array method name must be string, %s given.',
+                        $parameterName,
+                        gettype($method)
+                    )
+                );
+            }
+
+            if (is_object($classOrObject)) {
+                if (!is_callable([$classOrObject, $method])) {
+                    throw new InvalidArgumentException(
+                        sprintf(
+                            'Parameter "%s" method "%s" does not exist on object of class "%s".',
+                            $parameterName,
+                            $method,
+                            get_class($classOrObject)
+                        )
+                    );
+                }
+            } elseif (is_string($classOrObject)) {
+                if (!class_exists($classOrObject)) {
+                    throw new InvalidArgumentException(
+                        sprintf(
+                            'Parameter "%s" class "%s" does not exist.',
+                            $parameterName,
+                            $classOrObject
+                        )
+                    );
+                }
+
+                if (!is_callable([$classOrObject, $method])) {
+                    throw new InvalidArgumentException(
+                        sprintf(
+                            'Parameter "%s" static method "%s" does not exist on class "%s".',
+                            $parameterName,
+                            $method,
+                            $classOrObject
+                        )
+                    );
+                }
+            } else {
+                throw new InvalidArgumentException(
+                    sprintf(
+                        'Parameter "%s" array first element must be object or class name (string), %s given.',
+                        $parameterName,
+                        gettype($classOrObject)
+                    )
+                );
+            }
+        }
+
+        if (!is_callable($callback)) {
+            $type = gettype($callback);
+            if ($type === 'object') {
+                $type = get_class($callback);
+            }
+            if ($type === 'array') {
+                $type = 'array';
+            }
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Parameter "%s" must be callable or null, %s given. '
+                    . 'Valid callable types: function name (string), closure, '
+                    . 'array [object, method], array [class, static_method], '
+                    . 'invokable object, or null.',
+                    $parameterName,
+                    $type
+                )
+            );
+        }
+    }
+
+    /**
+     * Check if callback can be invoked safely.
+     */
+    private function isCallbackInvokable(callable $callback): bool
+    {
+        try {
+            if (is_array($callback)) {
+                $reflection = new \ReflectionMethod($callback[0], $callback[1]);
+                return $reflection->isPublic();
+            }
+
+            if (is_string($callback)) {
+                if (function_exists($callback)) {
+                    return true;
+                }
+                if (strpos($callback, '::') !== false) {
+                    [$class, $method] = explode('::', $callback, 2);
+                    if (class_exists($class) && method_exists($class, $method)) {
+                        $ref = new \ReflectionMethod($class, $method);
+                        return $ref->isStatic() && $ref->isPublic();
+                    }
+                }
+                return false;
+            }
+
+            if (is_object($callback)) {
+                if ($callback instanceof \Closure) {
+                    return true;
+                }
+                return method_exists($callback, '__invoke');
+            }
+            return false;
+        } catch (\ReflectionException $e) {
+            $this->logger->warning('Callback reflection failed', [
+                'circuit_breaker' => $this->name,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Execute a callback with exception handling.
+     *
+     * @throws CircuitBreakerCallbackException
+     */
+    private function executeCallback(callable $callback, string $callbackType)
+    {
+        try {
+            return $callback();
+        } catch (\Throwable $exception) {
+            $this->logger->error('Circuit breaker callback failed', [
+                'callback_type' => $callbackType,
+                'exception' => get_class($exception),
+            ]);
+
+            throw new CircuitBreakerCallbackException(
+                sprintf(
+                    'Circuit breaker "%s" callback "%s" failed: %s',
+                    $this->name,
+                    $callbackType,
+                    $exception->getMessage()
+                ),
+                $exception,
+                0,
+                $exception
+            );
+        }
     }
 
     /**
@@ -191,45 +400,25 @@ class CircuitBreaker implements CircuitBreakerInterface
     }
 
     /**
-     * Transition to half-open state
-     *
-     * @return void
-     * @throws CircuitBreakerCallbackException When callback fails.
+     * Transition to half-open state.
      */
     private function transitionToHalfOpen(): void
     {
         $this->state = self::STATE_HALF_OPEN;
         $this->halfOpenSuccessCount = 0;
 
-        if ($this->halfOpenCallback !== null) {
-            try {
-                if (property_exists($this, 'logger') && $this->logger !== null) {
-                    $this->logger->debug(
-                        'Executing half-open callback',
-                        ['circuit_breaker' => $this->name ?? 'default']
-                    );
-                }
+        $this->logger->info('Circuit breaker transitioning to half-open');
 
-                ($this->halfOpenCallback)();
-            } catch (\Throwable $exception) {
-                if (property_exists($this, 'logger') && $this->logger !== null) {
-                    $this->logger->error(
-                        'Circuit breaker callback failed',
-                        [
-                            'circuit_breaker' => $this->name ?? 'default',
-                            'exception_type' => get_class($exception),
-                            'exception_message' => $exception->getMessage(),
-                        ]
-                    );
-                }
+        if ($this->halfOpenCallback !== null) {
+            if (!$this->isCallbackInvokable($this->halfOpenCallback)) {
+                $this->logger->error('Half-open callback is not invokable at runtime');
 
                 throw new CircuitBreakerCallbackException(
-                    'Circuit breaker half-open callback failed: ' . $exception->getMessage(),
-                    $exception,
-                    0,
-                    $exception
+                    sprintf('Circuit breaker "%s" half-open callback is not invokable', $this->name)
                 );
             }
+
+            $this->executeCallback($this->halfOpenCallback, 'half_open');
         }
     }
 
@@ -240,7 +429,8 @@ class CircuitBreaker implements CircuitBreakerInterface
      */
     public function getStatistics(): array
     {
-        return [
+        $stats = [
+            'name' => $this->name,
             'state' => $this->state,
             'failure_count' => $this->failureCount,
             'failure_threshold' => $this->failureThreshold,
@@ -248,6 +438,36 @@ class CircuitBreaker implements CircuitBreakerInterface
             'last_failure_time' => $this->lastFailureTime,
             'half_open_success_count' => $this->halfOpenSuccessCount,
             'half_open_success_threshold' => $this->halfOpenSuccessThreshold,
+            'has_callback' => $this->halfOpenCallback !== null,
         ];
+
+        if ($this->halfOpenCallback !== null) {
+            $stats['callback_info'] = [
+                'type' => $this->getCallbackTypeDescription($this->halfOpenCallback),
+                'is_invokable' => $this->isCallbackInvokable($this->halfOpenCallback),
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Describe callback type.
+     */
+    private function getCallbackTypeDescription(callable $callback): string
+    {
+        if ($callback instanceof \Closure) {
+            return 'closure';
+        }
+        if (is_string($callback)) {
+            return strpos($callback, '::') !== false ? 'static_method_string' : 'function_string';
+        }
+        if (is_array($callback)) {
+            return is_object($callback[0]) ? 'instance_method_array' : 'static_method_array';
+        }
+        if (is_object($callback)) {
+            return 'invokable_object';
+        }
+        return 'unknown';
     }
 }
