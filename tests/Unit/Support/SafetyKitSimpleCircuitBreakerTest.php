@@ -44,6 +44,18 @@ final class SafetyKitSimpleCircuitBreakerTest extends TestCase
         $c->execute(fn() => 'nope');
     }
 
+    public function testFailureCountResetsAfterSuccess(): void
+    {
+        $c = new SimpleCircuitBreaker(2, 10, 't');
+        try { $c->execute(fn() => throw new \Exception('fail')); } catch (\Exception $e) {}
+        $this->assertFalse($c->isOpen());
+        $c->execute(fn() => 'ok'); // success should reset failure count
+        try { $c->execute(fn() => throw new \Exception('fail')); } catch (\Exception $e) {}
+        $this->assertFalse($c->isOpen());
+        try { $c->execute(fn() => throw new \Exception('fail')); } catch (\Exception $e) {}
+        $this->assertTrue($c->isOpen());
+    }
+
     public function testFactoryMethod(): void
     {
         $c = SafetyKit::createSimpleCircuitBreaker('f', 3, 30);
