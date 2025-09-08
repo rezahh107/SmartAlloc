@@ -35,28 +35,57 @@ final class CircuitBreakerFailureMetadataTest extends TestCase {
 	private CircuitBreaker $cb;
 	private ArrayLogger $logger;
 
-	protected function setUp(): void {
-		$this->logger = new ArrayLogger();
-		$this->cb     = new CircuitBreaker( 'test', $this->logger, 5 );
-	}
+        protected function setUp(): void {
+                $this->logger = new ArrayLogger();
+                $this->cb     = new CircuitBreaker(
+                        failureThreshold: 5,
+                        logger: $this->logger,
+                        name: 'test'
+                );
+        }
 
-	public function testFailureRecordsMetadataAndLogging(): void {
-		$e = new \RuntimeException( 'fail', 123 );
-		$this->cb->failure( 'op', $e );
-		$m = $this->cb->getFailureMetadata();
-		$this->assertCount( 1, $m );
-		$this->assertSame( 'op', $m[0]['operation_name'] );
-		$this->assertTrue( $this->logger->hasWarning( 'Circuit breaker failure recorded' ) );
-	}
-
-        public function testMetadataSizeLimit(): void {
-                $cb = new CircuitBreaker( 'limit', $this->logger, 2 );
-                for ( $i = 0; $i < 4; $i++ ) {
-                        $cb->failure( 'o' . $i, new \RuntimeException( (string) $i ) );
+        public function testFailureRecordsMetadataAndLogging(): void {
+                try {
+                        $this->cb->execute(
+                                function (): void {
+                                        throw new \RuntimeException('fail', 123);
+                                }
+                        );
+                } catch ( \RuntimeException $e ) { // @phpstan-ignore catch.neverThrown
+                        // expected
                 }
-		$m = $cb->getFailureMetadata();
-		$this->assertCount( 2, $m );
-		$this->assertSame( '3', $m[1]['exception_message'] );
-	}
+
+                $metadata = $this->cb->getFailureMetadata();
+                $this->assertCount( 1, $metadata );
+                $first = reset( $metadata );
+                $this->assertSame( 'RuntimeException', $first['exception_type'] );
+                $this->assertTrue( $this->logger->hasWarning( 'Circuit breaker recorded failure' ) );
+        }
+
+        public function testMetadataStorageLimit(): void {
+                $cb = new CircuitBreaker(
+                        failureThreshold: 100,
+                        logger: $this->logger,
+                        name: 'limit'
+                );
+
+                for ( $i = 0; $i < 60; $i++ ) {
+                        try {
+                                $cb->execute(
+                                        function () use ( $i ): void {
+                                                throw new \RuntimeException( "Failure {$i}" );
+                                        }
+                                );
+                        } catch ( \RuntimeException $e ) { // @phpstan-ignore catch.neverThrown
+                                // expected
+                        }
+                }
+
+                $metadata = $cb->getFailureMetadata();
+                $this->assertLessThanOrEqual( 50, count( $metadata ) );
+                $messages = array_column( $metadata, 'exception_message' );
+                $this->assertContains( 'Failure 59', $messages );
+                $this->assertNotContains( 'Failure 0', $messages );
+        }
 
 }
