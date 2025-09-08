@@ -13,6 +13,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Interfaces\CircuitBreakerInterface;
 use SmartAlloc\Exceptions\CircuitBreakerException;
+use SmartAlloc\Exceptions\CircuitBreakerCallbackException;
+use Psr\Log\LoggerInterface;
 use Closure;
 
 /**
@@ -32,17 +34,23 @@ class CircuitBreaker implements CircuitBreakerInterface
     private ?Closure $halfOpenCallback;
     private int $halfOpenSuccessCount = 0;
     private int $halfOpenSuccessThreshold;
+    private ?LoggerInterface $logger;
+    private ?string $name;
 
     public function __construct(
         int $failureThreshold = 5,
         int $recoveryTimeout = 60,
         ?Closure $halfOpenCallback = null,
-        int $halfOpenSuccessThreshold = 3
+        int $halfOpenSuccessThreshold = 3,
+        ?LoggerInterface $logger = null,
+        ?string $name = null
     ) {
         $this->failureThreshold = $failureThreshold;
         $this->recoveryTimeout = $recoveryTimeout;
         $this->halfOpenCallback = $halfOpenCallback;
         $this->halfOpenSuccessThreshold = $halfOpenSuccessThreshold;
+        $this->logger = $logger;
+        $this->name = $name;
     }
 
     /**
@@ -182,12 +190,46 @@ class CircuitBreaker implements CircuitBreakerInterface
         $this->halfOpenSuccessCount = 0;
     }
 
+    /**
+     * Transition to half-open state
+     *
+     * @return void
+     * @throws CircuitBreakerCallbackException When callback fails.
+     */
     private function transitionToHalfOpen(): void
     {
         $this->state = self::STATE_HALF_OPEN;
         $this->halfOpenSuccessCount = 0;
+
         if ($this->halfOpenCallback !== null) {
-            ($this->halfOpenCallback)();
+            try {
+                if (property_exists($this, 'logger') && $this->logger !== null) {
+                    $this->logger->debug(
+                        'Executing half-open callback',
+                        ['circuit_breaker' => $this->name ?? 'default']
+                    );
+                }
+
+                ($this->halfOpenCallback)();
+            } catch (\Throwable $exception) {
+                if (property_exists($this, 'logger') && $this->logger !== null) {
+                    $this->logger->error(
+                        'Circuit breaker callback failed',
+                        [
+                            'circuit_breaker' => $this->name ?? 'default',
+                            'exception_type' => get_class($exception),
+                            'exception_message' => $exception->getMessage(),
+                        ]
+                    );
+                }
+
+                throw new CircuitBreakerCallbackException(
+                    'Circuit breaker half-open callback failed: ' . $exception->getMessage(),
+                    $exception,
+                    0,
+                    $exception
+                );
+            }
         }
     }
 
