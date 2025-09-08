@@ -17,11 +17,11 @@ if ( ! defined( 'PHPUNIT_RUNNING' ) ) {
         define( 'PHPUNIT_RUNNING', true );
 }
 class WP_REST_Request_Ext extends \WP_REST_Request implements \ArrayAccess {
-        private array $params = array();
-        public function set_param( string $key, $value ): void { $this->params[ $key ] = $value; }
-        public function get_param( string $key ) { return $this->params[ $key ] ?? null; }
+        protected $params = array();
+        public function set_param( $key, $value ): void { $this->params[ $key ] = $value; }
+        public function get_param( $key ) { return $this->params[ $key ] ?? null; }
         public function offsetExists( $offset ): bool { return isset( $this->params[ $offset ] ); }
-        public function offsetGet( $offset ) { return $this->params[ $offset ] ?? null; }
+        public function offsetGet( $offset ): mixed { return $this->params[ $offset ] ?? null; }
         public function offsetSet( $offset, $value ): void { $this->params[ $offset ] = $value; }
         public function offsetUnset( $offset ): void { unset( $this->params[ $offset ] ); }
 }
@@ -67,6 +67,7 @@ final class OverrideEndpointTest extends BaseTestCase {
                 );
                 $this->controller->register();
                 $key      = 'smartalloc/v1 /allocations/(?P<id>\\d+)/override';
+                /** @phpstan-ignore-next-line */
                 $this->cb = $GLOBALS['sa_rest_routes'][ $key ]['callback'];
         }
 
