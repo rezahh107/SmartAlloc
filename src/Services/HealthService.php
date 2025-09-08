@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Services;
 
+use SmartAlloc\Support\UtcTimeHelper;
+
 /**
  * Health monitoring service
  */
@@ -12,7 +14,8 @@ final class HealthService
     public function __construct(
         private Db $db,
         private Cache $cache
-    ) {}
+    ) {
+    }
 
     /**
      * Get system health status
@@ -22,7 +25,7 @@ final class HealthService
         $dbOk = true;
         $cacheOk = true;
         $notes = [];
-        
+
         // Check database
         try {
             $this->db->query('SELECT 1');
@@ -30,17 +33,17 @@ final class HealthService
             $dbOk = false;
             $notes[] = $e->getMessage();
         }
-        
+
         // Check cache
         $this->cache->l1Set('health.test', 'ok', 5);
         $cacheOk = ($this->cache->l1Get('health.test') === 'ok');
-        
+
         return [
             'db' => $dbOk,
             'cache' => $cacheOk,
             'notes' => $notes,
-            'time' => current_time('mysql'),
-            'version' => SMARTALLOC_VERSION
+            'time' => UtcTimeHelper::getCurrentUtcDatetime(),
+            'version' => defined('SMARTALLOC_VERSION') ? SMARTALLOC_VERSION : 'dev',
         ];
     }
-} 
+}
