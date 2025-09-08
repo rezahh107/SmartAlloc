@@ -1,42 +1,86 @@
-#!/usr/bin/env bash
-# scripts/fix-remotes.sh - رفع مشکل remote برای Patch Guard
+#!/bin/bash
+# scripts/fix-remotes.sh - Enhanced remote configuration for Patch Guard
+
 set -euo pipefail
 
-echo "🔧 Fixing remote repository configuration..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
-# بررسی وضعیت فعلی remotes
-echo "Current remotes:"
-git remote -v
+main() {
+    local mode="${1:-}"
+    info "🔧 SmartAlloc Remote Configuration Fix v2.0"
 
-# اضافه کردن origin اگر وجود ندارد
-if ! git remote get-url origin >/dev/null 2>&1; then
-    echo "Adding origin remote..."
-    REPO_URL=${1:-}
-    if [[ -z "$REPO_URL" ]]; then
-        read -p "Enter repository URL: " REPO_URL
+    validate_git_repository
+
+    if [[ "$mode" == "--validate-only" ]]; then
+        verify_patch_guard_readiness
+        return 0
     fi
-    git remote add origin "$REPO_URL"
-fi
 
-# fetch کردن شاخه‌های اصلی
-echo "Fetching main branches..."
-git fetch origin main develop 2>/dev/null || {
-    echo "Warning: Could not fetch develop branch, trying main only..."
-    git fetch origin main || {
-        echo "Error: Could not fetch any branches. Please check repository access."
-        exit 1
-    }
+    fix_remote_configuration
+    setup_branch_tracking
+    verify_patch_guard_readiness
+
+    success "Remote configuration completed successfully!"
 }
 
-# تنظیم upstream tracking برای شاخه‌های محلی
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "develop" ]]; then
-    echo "Setting up upstream tracking..."
-    if git show-ref --verify --quiet refs/remotes/origin/develop; then
-        git branch --set-upstream-to=origin/develop "$CURRENT_BRANCH" 2>/dev/null || true
-    else
-        git branch --set-upstream-to=origin/main "$CURRENT_BRANCH" 2>/dev/null || true
+validate_git_repository() {
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+        error "Not a git repository. Please run from project root."
     fi
-fi
+    info "Git repository validated"
+}
 
-echo "✅ Remote configuration fixed!"
+fix_remote_configuration() {
+    info "Checking remote configuration..."
+
+    if ! git remote get-url origin >/dev/null 2>&1; then
+        read -p "Enter repository URL: " REPO_URL
+        validate_url "$REPO_URL"
+        git remote add origin "$REPO_URL"
+        success "Origin remote added: $REPO_URL"
+    else
+        success "Origin remote already configured"
+    fi
+
+    if ! git fetch origin 2>/dev/null; then
+        warning "Could not fetch from origin. Checking connectivity..."
+        if ! curl -s --head "$REPO_URL" >/dev/null; then
+            error "Repository not accessible. Please check URL and permissions."
+        fi
+    fi
+}
+
+setup_branch_tracking() {
+    info "Setting up branch tracking..."
+    local current_branch="$(git rev-parse --abbrev-ref HEAD)"
+    local target_branch="main"
+
+    if git show-ref --verify --quiet refs/remotes/origin/develop; then
+        target_branch="develop"
+    elif git show-ref --verify --quiet refs/remotes/origin/main; then
+        target_branch="main"
+    else
+        error "No suitable upstream branch found"
+    fi
+
+    git branch --set-upstream-to="origin/$target_branch" "$current_branch"
+    success "Upstream tracking: $current_branch -> origin/$target_branch"
+}
+
+verify_patch_guard_readiness() {
+    info "Verifying remote setup..."
+    if ! git remote get-url origin >/dev/null 2>&1; then
+        error "Origin remote not configured"
+    fi
+
+    git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1 || \
+        warning "No upstream tracking configured"
+
+    git fetch origin --dry-run >/dev/null 2>&1 || \
+        error "Cannot fetch from origin"
+
+    success "Remote configuration looks good"
+}
+
+main "$@"
