@@ -42,12 +42,21 @@
   },
   "autoload": {
     "psr-4": {
-      "SmartAlloc\\": ["src/", "includes/"]
+      "SmartAlloc\\": [
+        "src/",
+        "includes/"
+      ]
     },
-    "files": ["src/Support/SafetyKit.php", "src/Infra/DbAbstraction.php"]
+    "files": [
+      "src/Support/SafetyKit.php",
+      "src/Infra/DbAbstraction.php"
+    ]
   },
   "scripts": {
-    "score:5d": ["@phpcbf", "bash scripts/update_state.sh"],
+    "score:5d": [
+      "@phpcbf",
+      "bash scripts/update_state.sh"
+    ],
     "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
     "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "lint:php": "php -l $(git ls-files '*.php')",
@@ -90,7 +99,8 @@
     "test:performance": "phpunit --group=performance || true",
     "security:relaxed": "php scripts/security-relaxed-check.php",
     "maintainability:relaxed": "php scripts/maintainability-check.php",
-    "quality:selective": "php scripts/selective-quality-gates.php"
+    "quality:selective": "php scripts/selective-quality-gates.php",
+    "plugin:check": "bash scripts/run-plugin-check.sh"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
