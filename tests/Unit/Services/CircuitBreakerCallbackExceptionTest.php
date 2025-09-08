@@ -24,7 +24,7 @@ final class CircuitBreakerCallbackExceptionTest extends TestCase{
         $cb=new CircuitBreaker('t',$this->logger,5,function(){throw new \RuntimeException('cb');});
         \set_transient('smartalloc_circuit_breaker_t',['state'=>'open','fail_count'=>1,'cooldown_until'=>time()-1,'last_error'=>'x'],3600);
         $this->expectException(CircuitBreakerCallbackException::class);
-        try{$cb->execute(fn()=> 'ok');}catch(CircuitBreakerCallbackException $e){$m=$cb->getFailureMetadata();$this->assertSame('callback',$m[0]['failure_type']);$this->assertTrue($this->logger->hasError('Circuit breaker callback failed'));throw $e;}}
+        try{$cb->execute(fn()=> 'ok');}catch(CircuitBreakerCallbackException $e){$m=$cb->getFailureMetadata();$st=$cb->getStatus();$this->assertSame('callback',$m[0]['failure_type']);$this->assertTrue($this->logger->hasError('Circuit breaker callback failed'));$this->assertSame('open',$st->state);$this->assertGreaterThan(time(),$st->cooldownUntil);$this->assertSame(5,$st->failCount);throw $e;}}
 
     public function test_callback_exception_context():void{
         $orig=new \InvalidArgumentException('bad',4);

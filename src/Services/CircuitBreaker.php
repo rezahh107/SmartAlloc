@@ -410,11 +410,22 @@ final class CircuitBreaker {
                 $this->halfOpenSuccessCount = 0;
                 $this->saveState( $data['state'], $data['fail_count'], $data['cooldown_until'], $data['last_error'] );
                 $this->logger->info( 'Circuit breaker transitioning to half-open', array( 'circuit_breaker' => $this->name ) );
-                if ( $this->halfOpenCallback ) {
-                        $this->executeCallback( $this->halfOpenCallback, 'half_open' );
-                }
-                return $data;
-        }
+               if ( $this->halfOpenCallback ) {
+                       try {
+                               $this->executeCallback( $this->halfOpenCallback, 'half_open' );
+                       } catch ( CircuitBreakerCallbackException $e ) {
+                               $data['state']          = 'open';
+                               $data['fail_count']     = $this->threshold;
+                               $currentTime            = function_exists( 'wp_date' ) ? (int) wp_date( 'U' ) : time();
+                               $data['cooldown_until'] = $currentTime + $this->cooldown;
+                               $data['last_error']     = $this->sanitizeMessage( $e->getMessage() );
+                               $this->saveState( $data['state'], $data['fail_count'], $data['cooldown_until'], $data['last_error'] );
+                               $this->logger->warning( 'Half-open callback failed; reopening circuit', array( 'circuit_breaker' => $this->name ) );
+                               throw $e;
+                       }
+               }
+               return $data;
+       }
 
         private function executeCallback( callable $cb, string $type ) {
                 try {
