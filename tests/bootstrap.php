@@ -22,8 +22,9 @@ if ( ! class_exists( '\WP_Mock' ) ) {
 require_once __DIR__ . '/Helpers/TestHelpers.php';
 require_once __DIR__ . '/Mocks/MockWpdb.php';
 if ( ! class_exists( 'wpdb' ) ) {
-	class wpdb extends SmartAlloc\Tests\Mocks\MockWpdb {}
+        class wpdb extends SmartAlloc\Tests\Mocks\MockWpdb {}
 }
+require_once __DIR__ . '/Helpers/TestWpdb.php';
 global $wpdb;
 $wpdb = new wpdb();
 foreach ( [ 'OBJECT', 'ARRAY_A', 'ARRAY_N' ] as $c ) if ( ! defined( $c ) ) define( $c, $c );
