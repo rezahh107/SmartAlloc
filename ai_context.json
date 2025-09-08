@@ -1,9 +1,9 @@
 {
-  "last_update_utc": "2025-09-08T11:46:39Z",
+  "last_update_utc": "2025-09-08T12:15:15Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "fcb1f09253298f34769d360c477c0de239b87406",
-    "commits_total": 1152,
+    "default_branch": "codex/update-deprecated-phpunit-assertions",
+    "last_commit": "fe0ca36d1d8d686b0b92e6d1c0086814df705527",
+    "commits_total": 1154,
     "files_tracked": 810
   },
   "quality_gate": {
