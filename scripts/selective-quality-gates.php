@@ -43,8 +43,10 @@ if ($mode === 'analyze' || $mode === 'all') {
     echo "Running PHPStan on staged files...\n";
     $tmpConfig = tempnam(sys_get_temp_dir(), 'phpstan') . '.neon';
     file_put_contents($tmpConfig, "parameters:\n    bootstrapFiles: []\n");
-    $cfgArg = escapeshellarg($tmpConfig);
-    passthru("vendor/bin/phpstan analyze --level=5 -c $cfgArg $files", $stanCode);
+    $cfgArg   = escapeshellarg($tmpConfig);
+    $autoload = escapeshellarg(__DIR__ . '/../vendor/php-stubs/wordpress-stubs/wordpress-stubs.php');
+    $cmd      = "vendor/bin/phpstan analyze --level=5 --memory-limit=512M --autoload-file=$autoload -c $cfgArg $files";
+    passthru($cmd, $stanCode);
     unlink($tmpConfig);
     $exit = max($exit, $stanCode);
 }
