@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace SmartAlloc\Interfaces;
 
 use SmartAlloc\Exceptions\CircuitBreakerException;
+use SmartAlloc\Services\CircuitBreakerStatus;
+use Throwable;
 
 /**
  * Circuit Breaker Interface
@@ -53,9 +55,58 @@ interface CircuitBreakerInterface
     public function getState(): string;
 
     /**
-     * Reset circuit breaker to closed state
+     * Reset circuit breaker to closed state.
+     */
+    public function reset(): void;
+
+    /**
+     * Retrieve detailed circuit breaker status
+     *
+     * @return CircuitBreakerStatus Status value object.
+     */
+    public function getStatus(): CircuitBreakerStatus;
+
+    /**
+     * Record a failure with optional error message
+     *
+     * @param string $error Error message.
      *
      * @return void
      */
-    public function reset(): void;
+    public function recordFailure(string $error): void;
+
+    /**
+     * Record a successful operation
+     *
+     * @return void
+     */
+    public function recordSuccess(): void;
+
+    /**
+     * Guard an operation and throw when circuit is open
+     *
+     * @param string $context Context identifier for the operation.
+     *
+     * @return void
+     */
+    public function guard(string $context): void;
+
+    /**
+     * Mark an operation as successful
+     *
+     * @param string $context Context identifier for the operation.
+     *
+     * @return void
+     */
+    public function success(string $context): void;
+
+    /**
+     * Mark an operation as failed
+     *
+     * @param string    $context   Context identifier for the operation.
+     * @param Throwable $exception Exception that occurred.
+     *
+     * @return void
+     */
+    public function failure(string $context, Throwable $exception): void;
 }

@@ -16,6 +16,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Interfaces\CircuitBreakerInterface;
 use SmartAlloc\Exceptions\CircuitBreakerException;
+use RuntimeException;
+use Throwable;
 
 /**
  * Circuit Breaker implementation
@@ -97,19 +99,26 @@ class CircuitBreaker implements CircuitBreakerInterface
      * @param int           $halfOpenSuccessThreshold Required successes to close circuit.
      */
     public function __construct(
-        int $failureThreshold = 5,
+        $failureThreshold = 5,
         int $recoveryTimeout = 60,
         ?callable $halfOpenCallback = null,
         int $halfOpenSuccessThreshold = 3
     ) {
-        $this->failureThreshold       = $failureThreshold;
-        $this->recoveryTimeout        = $recoveryTimeout;
-        $this->halfOpenCallback       = $halfOpenCallback;
+        if (is_string($failureThreshold)) {
+            $key                   = $failureThreshold;
+            $this->failureThreshold = (int) apply_filters('smartalloc_cb_threshold', 5, $key);
+            $this->recoveryTimeout  = (int) apply_filters('smartalloc_cb_cooldown', 60, $key);
+        } else {
+            $this->failureThreshold = (int) $failureThreshold;
+            $this->recoveryTimeout  = $recoveryTimeout;
+        }
+
+        $this->halfOpenCallback         = $halfOpenCallback;
         $this->halfOpenSuccessThreshold = $halfOpenSuccessThreshold;
-        $this->state                  = self::STATE_CLOSED;
-        $this->failureCount           = 0;
-        $this->lastFailureTime        = null;
-        $this->halfOpenSuccessCount   = 0;
+        $this->state                    = self::STATE_CLOSED;
+        $this->failureCount             = 0;
+        $this->lastFailureTime          = null;
+        $this->halfOpenSuccessCount     = 0;
     }
 
     /**
@@ -214,6 +223,51 @@ class CircuitBreaker implements CircuitBreakerInterface
         $this->failureCount         = 0;
         $this->lastFailureTime      = null;
         $this->halfOpenSuccessCount = 0;
+    }
+
+    public function getStatus(): CircuitBreakerStatus
+    {
+        $cooldownUntil = $this->lastFailureTime !== null
+            ? $this->lastFailureTime + $this->recoveryTimeout
+            : null;
+
+        return new CircuitBreakerStatus(
+            $this->state,
+            $this->failureCount,
+            $this->failureThreshold,
+            $cooldownUntil,
+            null
+        );
+    }
+
+    public function recordFailure(string $error): void
+    {
+        unset($error);
+        $this->onFailure();
+    }
+
+    public function recordSuccess(): void
+    {
+        $this->onSuccess();
+    }
+
+    public function guard(string $context): void
+    {
+        if ($this->isOpen()) {
+            throw new RuntimeException('Circuit breaker open for ' . $context);
+        }
+    }
+
+    public function success(string $context): void
+    {
+        unset($context);
+        $this->onSuccess();
+    }
+
+    public function failure(string $context, Throwable $exception): void
+    {
+        unset($context);
+        $this->recordFailure($exception->getMessage());
     }
 
     /**
