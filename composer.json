@@ -83,7 +83,10 @@
       "echo '🎉 Foundation baseline 100% complete - Ready for expansion phase'"
     ],
     "baseline:expansion": "php scripts/baseline-check.php --current-phase=expansion",
-    "baseline:polish": "php scripts/baseline-check.php --current-phase=polish"
+    "baseline:polish": "php scripts/baseline-check.php --current-phase=polish",
+    "lint:strict": "php scripts/selective-quality-gates.php lint",
+    "analyze:strict": "php scripts/selective-quality-gates.php analyze",
+    "quality:selective": "php scripts/selective-quality-gates.php"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",

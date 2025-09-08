@@ -1,0 +1,24 @@
+{
+  "instructions_files": [
+    ".codex/instructions.md",
+    "AGENTS.md"
+  ],
+  "context_files": [
+    "composer.json",
+    "phpcs.xml.dist",
+    "phpstan.neon",
+    "scripts/selective-quality-gates.php"
+  ],
+  "ignore_patterns": [
+    "vendor/",
+    "node_modules/",
+    "*.min.*",
+    "coverage/",
+    "*.log"
+  ],
+  "quality_gates": {
+    "enforce_patch_guard": true,
+    "selective_quality": true,
+    "baseline_compliance": true
+  }
+}
