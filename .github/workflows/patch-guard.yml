@@ -18,6 +18,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate Remote Configuration
+        run: |
+          chmod +x scripts/fix-remotes.sh
+          ./scripts/fix-remotes.sh --validate-only
+
+      - name: Run Remote Tests
+        run: |
+          chmod +x tests/run-remote-tests.sh
+          ./tests/run-remote-tests.sh
+
       - name: Compute stats (files & LoC, with exclusions)
         id: stats
         shell: bash
