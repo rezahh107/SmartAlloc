@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-09-08T12:16:39Z",
+  "last_update_utc": "2025-09-08T13:27:31Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "2d1e6224374152bc7316e96112536d91cb51f964",
-    "commits_total": 1158,
-    "files_tracked": 810
+    "default_branch": "codex/update-exportsmoketest-to-use-stubs-0fvs9m",
+    "last_commit": "6386cbc5607048c94fba0e9660f3dfe749b71342",
+    "commits_total": 1160,
+    "files_tracked": 811
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
