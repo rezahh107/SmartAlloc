@@ -1,0 +1,26 @@
+name: Emergency Recovery Test
+on:
+  push:
+    paths:
+      - 'scripts/emergency-fix.sh'
+      - 'scripts/lib/recovery-manager.sh'
+
+jobs:
+  test-emergency-recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          
+      - name: Test Emergency Recovery
+        run: |
+          chmod +x scripts/emergency-fix.sh
+          ./scripts/emergency-fix.sh
+          
+      - name: Verify Recovery
+        run: |
+          ./tests/integration/test-emergency-integration.sh
