@@ -1,10 +1,33 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use SmartAlloc\Services\{Logging, Metrics, ExportService};
+use SmartAlloc\Core\FormContext;
+use SmartAlloc\Infra\DB\TableResolver;
+use SmartAlloc\Services\{Logging, ExportService};
 use SmartAlloc\Tests\BaseTestCase;
+use SmartAlloc\Tests\Helpers\TestWpdb;
+
+if (!function_exists('wp_upload_dir')) {
+    function wp_upload_dir(): array { return ['basedir' => sys_get_temp_dir()]; }
+}
+if (!function_exists('wp_mkdir_p')) {
+    function wp_mkdir_p($dir): bool { return @mkdir($dir, 0777, true); }
+}
+if (!function_exists('esc_html')) {
+    function esc_html($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); }
+}
+if (!function_exists('wp_die')) {
+    function wp_die($m = '') { echo $m; }
+}
+if (!function_exists('wp_send_json_error')) {
+    function wp_send_json_error($d = null, $s = null) { return ['success' => false, 'data' => $d]; }
+}
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
 
 final class ExportSmokeTest extends BaseTestCase
 {
@@ -16,14 +39,7 @@ final class ExportSmokeTest extends BaseTestCase
         parent::setUp();
         global $wpdb;
         $this->oldWpdb = $wpdb;
-        $wpdb = new class {
-            public $prefix = 'wp_';
-            public $insert_id = 1;
-            public function insert($table, $data) { return true; }
-            public function get_results($q, $type) { return []; }
-            public function prepare($q, ...$a) { return $q; }
-            public function query($q) { return true; }
-        };
+        $wpdb = new TestWpdb();
         $this->oldUploadDir = $GLOBALS['wp_upload_dir_basedir'] ?? null;
         $GLOBALS['wp_upload_dir_basedir'] = sys_get_temp_dir();
     }
@@ -41,14 +57,16 @@ final class ExportSmokeTest extends BaseTestCase
     }
     public function test_export_creates_file_and_sheets(): void
     {
-        $service = new ExportService(new Logging(), new Metrics());
-        $file = $service->exportSabt([
-            ['first_name' => 'A', 'last_name' => 'B']
-        ]);
+        $tableResolver = new TableResolver($GLOBALS['wpdb']);
+
+        $service = new ExportService($tableResolver, config: null, logger: new Logging());
+        $res = $service->export(new FormContext(1));
+        $file = $res['file'];
         $this->assertMatchesRegularExpression('/SabtExport-ALLOCATED-\d{4}_\d{2}_\d{2}-\d{4}-B\d{3}\.xlsx$/', basename($file));
         $spreadsheet = IOFactory::load($file);
-        $this->assertNotNull($spreadsheet->getSheetByName('Summary'));
-        $this->assertNotNull($spreadsheet->getSheetByName('Errors'));
+        $this->assertNotNull($spreadsheet->getSheetByName('Sheet2'));
+        $this->assertNotNull($spreadsheet->getSheetByName('Sheet5'));
+        $this->assertNotNull($spreadsheet->getSheetByName('9394'));
         @unlink($file);
     }
 }

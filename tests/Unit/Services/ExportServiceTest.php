@@ -1,23 +1,26 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
 namespace {
-    if (!class_exists('wpdb')) {
-        class wpdb {
-            public string $prefix = 'wp_';
-            public string $last_query = '';
-            public array $results = [];
-            public function query($sql): void { $this->last_query = $sql; }
-            public function prepare($sql, ...$args): string {
-                $this->last_query = vsprintf($sql, $args);
-                return $this->last_query;
-            }
-            public function get_results($sql): array {
-                $this->last_query = $sql;
-                return $this->results;
-            }
-        }
+    if (!function_exists('wp_upload_dir')) {
+        function wp_upload_dir(): array { return ['basedir' => sys_get_temp_dir()]; }
+    }
+    if (!function_exists('wp_mkdir_p')) {
+        function wp_mkdir_p($dir): bool { return @mkdir($dir, 0777, true); }
+    }
+    if (!function_exists('esc_html')) {
+        function esc_html($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); }
+    }
+    if (!function_exists('wp_die')) {
+        function wp_die($m = '') { echo $m; }
+    }
+    if (!function_exists('wp_send_json_error')) {
+        function wp_send_json_error($d = null, $s = null) { return ['success' => false, 'data' => $d]; }
+    }
+    if (!defined('OBJECT')) {
+        define('OBJECT', 'OBJECT');
     }
 }
 
@@ -27,16 +30,19 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use SmartAlloc\Core\FormContext;
 use SmartAlloc\Infra\DB\TableResolver;
-use SmartAlloc\Services\ExportService;
+use SmartAlloc\Services\{ExportService, Logging};
 use SmartAlloc\Tests\BaseTestCase;
+use SmartAlloc\Tests\Helpers\TestWpdb;
 
 final class ExportServiceTest extends BaseTestCase
 {
     /** @test */
     public function writes_three_sheets_with_string_codes(): void
     {
-        global $wpdb;
-        $svc = new ExportService(new TableResolver($wpdb));
+        $wpdbStub = new TestWpdb();
+        $GLOBALS['wpdb'] = $wpdbStub;
+        $tableResolver = new TableResolver($wpdbStub);
+        $svc = new ExportService($tableResolver, config: null, logger: new Logging());
         $res = $svc->export(new FormContext(1));
         $this->assertTrue($res['ok']);
         $book = IOFactory::load($res['file']);
@@ -52,8 +58,11 @@ final class ExportServiceTest extends BaseTestCase
     /** @test */
     public function stream_export_outputs_xlsx(): void
     {
-        $GLOBALS['wpdb'] = new \wpdb();
-        $svc = new ExportService(new TableResolver($GLOBALS['wpdb']));
+        $wpdbStub = new TestWpdb();
+        $wpdbStub->results = [(object)['id' => 1, 'national_id' => '1', 'mobile' => '2', 'postal' => '3']];
+        $GLOBALS['wpdb'] = $wpdbStub;
+        $tableResolver = new TableResolver($wpdbStub);
+        $svc = new ExportService($tableResolver, config: null, logger: new Logging());
         ob_start();
         $svc->streamExport(['limit' => '2']);
         $data = ob_get_clean();
