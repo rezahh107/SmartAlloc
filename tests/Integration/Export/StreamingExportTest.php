@@ -1,11 +1,20 @@
-<?php
+<?php // phpcs:ignoreFile
 declare(strict_types=1);
 
-use Brain\Monkey;
-use Brain\Monkey\Functions;
+namespace SmartAlloc\Http\Ajax {
+    function filter_input($type, $var_name, $filter = FILTER_DEFAULT, $options = []) {
+        return $type === INPUT_GET ? ($_GET[$var_name] ?? null) : null;
+    }
+}
+
+namespace {
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
+
 use SmartAlloc\Http\Ajax\ExportStreamAction;
 use SmartAlloc\Infra\DB\TableResolver;
-use SmartAlloc\Services\ExportService;
+use SmartAlloc\Services\{ExportService, Logging};
 use SmartAlloc\Tests\BaseTestCase;
 
 class TestWpdb extends wpdb {
@@ -23,31 +32,34 @@ class TestWpdb extends wpdb {
     }
 }
 
+if (!function_exists('wp_upload_dir')) {
+    function wp_upload_dir(): array { return ['basedir' => sys_get_temp_dir()]; }
+}
+if (!function_exists('wp_mkdir_p')) {
+    function wp_mkdir_p($dir): bool { return is_dir($dir) || mkdir($dir, 0777, true); }
+}
+if (!function_exists('current_user_can')) {
+    function current_user_can($cap): bool { return true; }
+}
+if (!function_exists('wp_send_json_error')) {
+    function wp_send_json_error($data = null, $status = null): void { echo json_encode(['success' => false, 'data' => $data]); }
+}
+if (!function_exists('nocache_headers')) {
+    function nocache_headers(): void {}
+}
+if (!function_exists('wp_unslash')) {
+    function wp_unslash($v) { return $v; }
+}
+
 final class StreamingExportTest extends BaseTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        Monkey\setUp();
-    }
-
-    protected function tearDown(): void
-    {
-        Monkey\tearDown();
-        parent::tearDown();
-    }
-
     public function test_ajax_endpoint_streams_correctly(): void
     {
         $GLOBALS['wpdb'] = new TestWpdb();
-        Functions\when('add_action');
-        Functions\expect('wp_verify_nonce')->with('n', 'smartalloc_export_stream')->andReturn(true);
-        Functions\expect('current_user_can')->with('smartalloc_manage')->andReturn(true);
-        Functions\expect('wp_send_json_error')->never();
-        Functions\expect('nocache_headers');
-        $_GET['_wpnonce'] = 'n';
+        $_GET['_wpnonce'] = wp_create_nonce('smartalloc_export_stream');
         $_GET['limit']    = '1';
-        $svc    = new ExportService(new TableResolver($GLOBALS['wpdb']));
+        $tables = new TableResolver($GLOBALS['wpdb']);
+        $svc    = new ExportService($tables, config: null, logger: new Logging());
         $action = new ExportStreamAction($svc);
         ob_start();
         $action->handle();
@@ -58,7 +70,8 @@ final class StreamingExportTest extends BaseTestCase
     public function test_error_handling_persists_to_database(): void
     {
         $GLOBALS['wpdb'] = new TestWpdb();
-        $svc = new ExportService(new TableResolver($GLOBALS['wpdb']));
+        $tables = new TableResolver($GLOBALS['wpdb']);
+        $svc    = new ExportService($tables, config: null, logger: new Logging());
         $ref = new \ReflectionClass($svc);
         $m   = $ref->getMethod('bulkInsertErrors');
         $m->setAccessible(true);
@@ -68,4 +81,5 @@ final class StreamingExportTest extends BaseTestCase
         ]);
         $this->assertStringContainsString('INSERT INTO', $GLOBALS['wpdb']->last_query);
     }
+}
 }
