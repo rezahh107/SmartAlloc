@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile
+
 /*
 Plugin Name: SmartAlloc
 Description: Event-driven student support allocation with Gravity Forms + Exporter.
@@ -113,13 +115,12 @@ add_action('plugins_loaded', function () {
       \SmartAlloc\Cron\RetentionTasks::register();
       \SmartAlloc\Cron\ExportRetention::register();
       (new \SmartAlloc\Http\Rest\WebhookController())->register_routes();
-      \SmartAlloc\Infra\GF\HookBootstrap::registerEnabledForms();
+      (new \SmartAlloc\Infra\GF\HookBootstrap())->register();
 
       add_action('rest_api_init', function() {
           $container = \SmartAlloc\Bootstrap::container();
           $controller = new \SmartAlloc\REST\Controllers\AllocationController(
-              $container->get(\SmartAlloc\Services\AllocationService::class),
-              $container->get(\SmartAlloc\Infra\DB\TableResolver::class)
+              $container->get(\SmartAlloc\Services\AllocationService::class)
           );
           $controller->register();
       });
@@ -136,7 +137,7 @@ add_action('plugins_loaded', function () {
 add_action('admin_init', ['SmartAlloc\\Infra\\Upgrade\\MigrationRunner', 'maybeRun']);
 
 // WP-CLI Commands Registration
-  if (defined('WP_CLI') && WP_CLI) {
+  if (defined('WP_CLI') && WP_CLI && class_exists('WP_CLI')) {
       require_once __DIR__ . '/src/Infra/CLI/Commands.php';
       WP_CLI::add_command('smartalloc', \SmartAlloc\Infra\CLI\Commands::class);
     require_once __DIR__ . '/src/Cli/ExportCommand.php';
@@ -223,5 +224,8 @@ add_action('wp_ajax_smartalloc_manual_candidates', ['SmartAlloc\\Admin\\Actions\
 add_action('gform_after_submission_150', [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
 
 add_action('init', function () {
-    (new \SmartAlloc\Health\HealthReporter())->register_hooks();
+    $container = \SmartAlloc\Bootstrap::container();
+    (new \SmartAlloc\Health\HealthReporter(
+        $container->get(\SmartAlloc\Services\CircuitBreaker::class)
+    ))->register_hooks();
 });

@@ -88,7 +88,7 @@ final class Bootstrap
 
         // Create upload directory
         $upload = wp_upload_dir();
-        $upload_dir = trailingslashit($upload['basedir']) . SMARTALLOC_UPLOAD_DIR; // @phpstan-ignore-line
+        $upload_dir = trailingslashit($upload['basedir']) . SMARTALLOC_UPLOAD_DIR;
         wp_mkdir_p($upload_dir);
 
         // Set default options
@@ -225,7 +225,7 @@ final class Bootstrap
         $as->register();
 
         // Gravity Forms integration
-        (new GravityForms($c, $c->get(EventBus::class), $c->get(LoggerInterface::class)))->register();
+        (new GravityForms($c->get(LoggerInterface::class)))->register();
     }
 
     /**
