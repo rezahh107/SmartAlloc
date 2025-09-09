@@ -16,7 +16,7 @@ public function insert($t,$d,$f=null){$this->last_query="INSERT INTO $t";$this->
 public function update($t,$d,$w,$f=null,$wf=null){$this->last_query="UPDATE $t";$this->rows_affected=1;return 1;}
 public function delete($t,$w,$wf=null){$this->last_query="DELETE FROM $t";$this->rows_affected=1;return 1;}
 public function replace($t,$d,$f=null){return $this->insert($t,$d,$f);}
-public function prepare(string $q,...$a): string{return $a?vsprintf(str_replace('%s','\'%s\'',$q),$a):$q;}
+public function prepare(string $q,...$a): string{if(isset($a[0]) && is_array($a[0]))$a=$a[0];return $a?vsprintf(str_replace('%s','\'%s\'',$q),$a):$q;}
 public function esc_like($t){return addcslashes($t,'_%\\');}
 public function print_error($s=''){if($this->show_errors)echo"WordPress database error: $s\n";}
 public function hide_errors(){ $this->show_errors=false;}
