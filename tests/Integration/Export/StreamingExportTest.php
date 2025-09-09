@@ -56,7 +56,9 @@ final class StreamingExportTest extends BaseTestCase
         $GLOBALS['wpdb'] = $db;
         Functions\when('add_action');
         Functions\expect('nocache_headers');
-        Functions\when('filter_input')->alias(fn($type, $var) => $_GET[$var] ?? null);
+        Functions\when('filter_input')->alias(
+            fn(int $type, string $var, int $filter = FILTER_DEFAULT, $options = null) => $_GET[$var] ?? null
+        );
         $_GET['_wpnonce'] = 'valid_nonce_smartalloc_export_stream';
         $_GET['limit']    = '1';
         $tableResolver = new TableResolver($db);
