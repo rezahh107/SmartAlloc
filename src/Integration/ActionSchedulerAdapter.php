@@ -84,7 +84,7 @@ final class ActionSchedulerAdapter
                 'event_name' => $eventName,
                 'payload' => $payload,
                 'priority' => $priority,
-                'timestamp' => current_time('mysql')
+                'timestamp' => current_time('mysql', true)
             ];
 
             if (class_exists('\ActionScheduler')) {
@@ -171,7 +171,7 @@ final class ActionSchedulerAdapter
             $eventName = $args['event_name'] ?? 'unknown';
             $payload = $args['payload'] ?? [];
             $priority = $args['priority'] ?? 10;
-            $timestamp = $args['timestamp'] ?? current_time('mysql');
+            $timestamp = $args['timestamp'] ?? current_time('mysql', true);
 
             $this->logger->info('action_scheduler.processing', [
                 'event_name' => $eventName,

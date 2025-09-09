@@ -118,7 +118,7 @@ class ExporterService
                     'rows'       => $rowCount,
                     'checksum'   => $checksum ?: null,
                     'status'     => 'Valid',
-                    'created_at' => current_time('mysql'),
+                    'created_at' => current_time('mysql', true),
                 ));
 
                 $url = str_replace(trailingslashit($upload['basedir']), trailingslashit($upload['baseurl']), $path);

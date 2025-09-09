@@ -62,7 +62,7 @@ final class Commands
         }
         
         update_option('smartalloc_form_id', $formId);
-        update_option('smartalloc_form_id_updated_at', current_time('mysql'));
+        update_option('smartalloc_form_id_updated_at', current_time('mysql', true));
         
         \WP_CLI::success("Gravity Forms ID set to: $formId");
     }
