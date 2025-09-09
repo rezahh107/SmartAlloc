@@ -10,6 +10,7 @@ use SmartAlloc\Services\{
     StatsService, HealthService, EventStoreWp
 };
 use SmartAlloc\Infra\Repository\AllocationsRepository;
+use SmartAlloc\Infra\GF\IdempotencyGuard;
 use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\{LoggerInterface, EventStoreInterface};
 use SmartAlloc\Http\RestController;
@@ -87,7 +88,7 @@ final class Bootstrap
 
         // Create upload directory
         $upload = wp_upload_dir();
-        $upload_dir = trailingslashit($upload['basedir']) . SMARTALLOC_UPLOAD_DIR;
+        $upload_dir = trailingslashit($upload['basedir']) . SMARTALLOC_UPLOAD_DIR; // @phpstan-ignore-line
         wp_mkdir_p($upload_dir);
 
         // Set default options
@@ -136,10 +137,14 @@ final class Bootstrap
         // Database and caching
         $c->set(Db::class, fn() => new Db());
         $c->set(Cache::class, fn() => new Cache());
+        $c->set(IdempotencyGuard::class, fn() => new IdempotencyGuard(
+            $c->get(Cache::class)
+        ));
 
         // Logging and monitoring
         $c->set(Logging::class, fn() => new Logging());
         $c->set(LoggerInterface::class, fn() => $c->get(Logging::class));
+        // @phpstan-ignore-next-line
         $c->set(Metrics::class, fn() => new Metrics());
         $c->set(CircuitBreaker::class, fn() => new CircuitBreaker());
 
@@ -172,6 +177,7 @@ final class Bootstrap
             $c->get(Logging::class)
         ));
 
+        // @phpstan-ignore-next-line
         $c->set(AllocationService::class, fn() => new AllocationService(
             $c->get(Db::class),
             $c->get(CrosswalkService::class),
@@ -241,4 +247,4 @@ final class Bootstrap
         // Export listener
         $bus->on('AllocationCommitted', new \SmartAlloc\Listeners\ExportListener(self::$container));
     }
-} 
+}

@@ -1,0 +1,20 @@
+# GF Hook Removal Audit
+# Generated: 2025-01-09T00:00:00Z
+# Chunk: P1.C-CORE-003
+
+## Removed Hooks
+- src/Infra/GF/HookBootstrap.php: add_action('gform_after_submission', [this, 'handleGenericSubmission'], 10, 2);
+- src/Infra/GF/HookBootstrap.php: handleGenericSubmission method
+
+## Kept Hooks
+- src/Infra/GF/HookBootstrap.php: add_action('gform_after_submission_150', [this, 'handleForm150'], 10, 2);
+
+## Idempotency Integration
+- Location: HookBootstrap::handleForm150
+- Key Format: gf:entry:150:{entry_id}
+- TTL: 3600 seconds
+
+## Verification Commands
+grep -R "add_action" src | grep "gform_after_submission" | grep -v "gform_after_submission_150" | wc -l | grep -q '^0$'
+bash scripts/patch-guard-check.sh --caps 'feature:files<=20,loc<=600'
+

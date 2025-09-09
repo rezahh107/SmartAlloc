@@ -1,0 +1,3 @@
+src/Integration/GravityForms.php:34:        add_action('gform_after_submission', [$this, 'handleFormSubmission'], 10, 2);
+src/Infra/GF/HookBootstrap.php:19:            add_action("gform_after_submission_{$f}", [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
+src/Integration/GravityForms/Form150.php:107:            add_action('gform_after_submission_150', static function(array $entry): void {

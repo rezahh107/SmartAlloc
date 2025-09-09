@@ -56,7 +56,9 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: none
+          coverage: pcov
+          extensions: pcov
+          ini-values: pcov.enabled=1, pcov.directory=src, pcov.exclude="~vendor~"
       - name: 🗃️ Composer cache (PHP-scoped)
         uses: actions/cache@v4
         with:
@@ -76,6 +78,9 @@ jobs:
         run: bash scripts/check_phase_transition.sh
       - name: 📥 Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: ✅ Unit tests with coverage
+        run: vendor/bin/phpunit --configuration phpunit-unit.xml --coverage-text
       - name: Install Playwright deps
         run: npx playwright install --with-deps
       - name: 🎨 PHPCBF (soft)

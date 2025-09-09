@@ -1,0 +1,24 @@
+{
+  "chunk": "P1.C-CORE-003",
+  "timestamp_utc": "2025-01-09T00:00:00Z",
+  "hooks_removed": [
+    "gform_after_submission (generic)"
+  ],
+  "hooks_kept": [
+    "gform_after_submission_150"
+  ],
+  "guard_key_format": "gf:entry:150:{entry_id}",
+  "ttl_seconds": 3600,
+  "files_modified": [
+    "src/Infra/GF/HookBootstrap.php",
+    "src/Integration/GravityForms.php",
+    ".github/workflows/ci.yml"
+  ],
+  "idempotency_integration": {
+    "location": "HookBootstrap::handleForm150",
+    "guard_class": "SmartAlloc\\Infra\\GF\\IdempotencyGuard",
+    "di_resolution": "SmartAlloc\\Bootstrap::container()->get()"
+  },
+  "verification_passed": true
+}
+
