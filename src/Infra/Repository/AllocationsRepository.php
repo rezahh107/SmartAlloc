@@ -45,8 +45,8 @@ final class AllocationsRepository
             'status' => $status,
             'mentor_id' => $mentorId,
             'candidates' => $candidatesJson,
-            'created_at' => current_time('mysql'),
-            'updated_at' => current_time('mysql'),
+            'created_at' => current_time('mysql', true),
+            'updated_at' => current_time('mysql', true),
         ]);
 
         if ($this->wpdb->last_error && str_contains(strtolower($this->wpdb->last_error), 'duplicate')) {

@@ -1,0 +1,15 @@
+UTC SWEEP DRY RUN - PHASE 2A PLANNING
+=====================================
+
+This planning phase identifies all current_time('mysql') usage without modifying application code.
+
+NEXT PHASE (2B) WILL:
+- Replace write operations with gmdate('Y-m-d H:i:s')
+- Keep read operations unchanged (display context)
+- Add UTC comment markers for clarity
+
+EXAMPLE TRANSFORMATIONS:
+Before: $wpdb->insert('table', ['created_at' => current_time('mysql')]);
+After:  $wpdb->insert('table', ['created_at' => gmdate('Y-m-d H:i:s')]); // UTC
+
+NO CHANGES IN THIS PHASE - PLANNING ONLY
