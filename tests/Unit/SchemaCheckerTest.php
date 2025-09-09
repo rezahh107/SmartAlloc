@@ -44,6 +44,7 @@ class SchemaCheckerTest extends TestCase
         mkdir($this->dir . '/smartalloc/artifacts', 0755, true);
         Functions\when('wp_upload_dir')->justReturn(['basedir' => $this->dir]);
         Functions\when('__')->returnArg();
+        Functions\when('esc_html__')->returnArg();
         $this->createSpec();
         $this->checker = new SchemaChecker();
     }

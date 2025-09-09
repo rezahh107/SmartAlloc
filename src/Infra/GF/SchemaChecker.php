@@ -20,26 +20,32 @@ class SchemaChecker
         $specPath = wp_upload_dir()['basedir'] . '/smartalloc/artifacts/SCHEMA_SPEC.json';
 
         if (!file_exists($specPath)) {
-            throw new \RuntimeException(__('Schema specification file not found', 'smartalloc'));
+            throw new \RuntimeException(esc_html__('Schema specification file not found', 'smartalloc'));
         }
 
+        /* phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown */
         $content = file_get_contents($specPath);
         $this->schemaSpec = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException(__('Invalid schema specification JSON', 'smartalloc'));
+            throw new \RuntimeException(esc_html__('Invalid schema specification JSON', 'smartalloc'));
         }
     }
 
     public function checkForm(int $formId): array
     {
         if ($formId !== 150) {
-            throw new \InvalidArgumentException(__('Only form ID 150 is supported', 'smartalloc'));
+            throw new \InvalidArgumentException(esc_html__('Only form ID 150 is supported', 'smartalloc'));
         }
 
         $form = GFAPI::get_form($formId);
         if (!$form || !is_array($form)) {
-            throw new \RuntimeException(sprintf(__('Form %d not found or invalid', 'smartalloc'), $formId));
+            throw new \RuntimeException(
+                sprintf(
+                    esc_html__('Form %d not found or invalid', 'smartalloc'),
+                    absint($formId)
+                )
+            );
         }
 
         return $this->validateFormStructure($form);
