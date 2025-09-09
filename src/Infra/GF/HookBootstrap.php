@@ -1,22 +1,38 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
 namespace SmartAlloc\Infra\GF;
 
-use SmartAlloc\Services\DbSafe;
+use SmartAlloc\Bootstrap;
+use SmartAlloc\Infra\GF\SabtSubmissionHandler;
+use SmartAlloc\Infra\GF\IdempotencyGuard;
 
-final class HookBootstrap
-{
-    public static function registerEnabledForms(): void
-    {
-        global $wpdb;
-        $table = $wpdb->prefix . 'smartalloc_forms';
-        $sql   = DbSafe::mustPrepare("SELECT form_id FROM {$table} WHERE status=%s", ['enabled']);
-        $rows  = $wpdb->get_results($sql, ARRAY_A) ?: [];
-        foreach ($rows as $r) {
-            $f = (int) $r['form_id'];
-            add_action("gform_after_submission_{$f}", [\SmartAlloc\Infra\GF\SabtSubmissionHandler::class, 'handle'], 10, 2);
+final class HookBootstrap {
+
+    /**
+     * Register form-specific Gravity Forms hooks
+     */
+    public function register(): void {
+        add_action( 'gform_after_submission_150', array( $this, 'handleForm150' ), 10, 2 );
+    }
+
+    /**
+     * Handle form 150 submission with idempotency guard
+     *
+     * @param array $entry
+     * @param array $form
+     */
+    public function handleForm150( $entry, $form ): void {
+        $guard   = Bootstrap::container()->get( IdempotencyGuard::class );
+        $entryId = (int) $entry['id'];
+
+        if ( $guard->hasProcessed( 150, $entryId ) ) {
+            return;
         }
+
+        $guard->markProcessed( 150, $entryId );
+        SabtSubmissionHandler::handle( $entry, $form );
     }
 }

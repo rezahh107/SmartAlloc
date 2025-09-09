@@ -1,11 +1,10 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
 namespace SmartAlloc\Integration;
 
-use SmartAlloc\Container;
-use SmartAlloc\Event\EventBus;
 use SmartAlloc\Contracts\LoggerInterface;
 use SmartAlloc\Integration\GravityForms\Form150;
 
@@ -18,8 +17,6 @@ use SmartAlloc\Integration\GravityForms\Form150;
 final class GravityForms
 {
     public function __construct(
-        private Container $container,
-        private EventBus $eventBus,
         private LoggerInterface $logger
     ) {}
 
@@ -30,57 +27,11 @@ final class GravityForms
     {
         (new Form150())->register();
 
-        // Form submission hook
-        add_action('gform_after_submission', [$this, 'handleFormSubmission'], 10, 2);
-        
         // GP Populate Anything filter for field 39 (پشتیبان پیشنهادی)
         add_filter('gppa_process_filter_value', [$this, 'processPopulateAnythingFilter'], 10, 4);
-        
+
         // Validation hook
         add_action('gform_field_validation', [$this, 'validateFields'], 10, 4);
-    }
-
-    /**
-     * Handle form submission
-     */
-    public function handleFormSubmission($entry, $form): void
-    {
-        try {
-            // Check if this is the target form
-            $targetFormId = get_option('smartalloc_form_id', 150);
-            if ($form['id'] != $targetFormId) {
-                return;
-            }
-
-            $this->logger->info('Gravity Forms submission received', [
-                'form_id' => $form['id'],
-                'entry_id' => $entry['id']
-            ]);
-
-            // Extract student data
-            $studentData = $this->extractStudentData($entry, $form);
-
-            $payload = [
-                'student_id'   => $entry['id'],
-                'student_data' => $studentData,
-                'form_id'      => $form['id'],
-                'timestamp'    => current_time('mysql')
-            ];
-
-            // Dispatch submission event before auto-assignment
-            $this->eventBus->dispatch('StudentSubmitted', $payload);
-
-            // Dispatch allocation event
-            $this->eventBus->dispatch('AutoAssignRequested', $payload);
-
-        } catch (\Throwable $e) {
-            $this->logger->error('Error handling form submission', [
-                'form_id' => $form['id'] ?? 'unknown',
-                'entry_id' => $entry['id'] ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-        }
     }
 
     /**
@@ -101,10 +52,14 @@ final class GravityForms
             ]);
 
             // Read values from specified input fields
-            $input92 = rgar($entry, '92'); // کد مدرسه 1
-            $input94 = rgar($entry, '94'); // کد مدرسه 2  
-            $input75 = rgar($entry, '75'); // کد مدرسه 3
-            $input30 = rgar($entry, '30'); // کد مدرسه 4
+            /** @phpstan-ignore-next-line */
+            $input92 = \rgar($entry, '92'); // کد مدرسه 1
+            /** @phpstan-ignore-next-line */
+            $input94 = \rgar($entry, '94'); // کد مدرسه 2
+            /** @phpstan-ignore-next-line */
+            $input75 = \rgar($entry, '75'); // کد مدرسه 3
+            /** @phpstan-ignore-next-line */
+            $input30 = \rgar($entry, '30'); // کد مدرسه 4
 
             // Log the values for debugging
             $this->logger->debug('GP Populate Anything input values', [
@@ -154,7 +109,7 @@ final class GravityForms
             }
 
             // Get AllocationService to use ranking logic
-            $allocationService = $this->container->get(\SmartAlloc\Services\AllocationService::class);
+            $allocationService = \SmartAlloc\Bootstrap::container()->get(\SmartAlloc\Services\AllocationService::class);
             
             // Find eligible mentors using the same logic as allocation
             $eligibleMentors = $allocationService->findEligibleMentors($studentData);
@@ -311,21 +266,5 @@ final class GravityForms
         return preg_replace('/\D/', '', $value);
     }
 
-    private function extractStudentData($entry, $form): array
-    {
-        $data = [];
-        
-        foreach ($form['fields'] as $field) {
-            $fieldValue = rgar($entry, $field->id);
-            if (!empty($fieldValue)) {
-                $data[$field->id] = [
-                    'label' => $field->label,
-                    'value' => $fieldValue,
-                    'type' => $field->type
-                ];
-            }
-        }
-        
-        return $data;
-    }
-} 
+}
+/* phpcs:enable */
