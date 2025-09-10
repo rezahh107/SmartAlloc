@@ -70,7 +70,13 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           PR_URL: ${{ steps.pr.outputs.url }}
           PAYLOAD: ${{ toJson(github.event.client_payload) }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if [ -z "$WEBHOOK_URL" ] || [ -z "$WEBHOOK_TOKEN" ]; then
+            echo "warning: webhook secrets missing" >&2
+            gh issue create --title "Missing webhook secrets" --body "SMARTALLOC_WEBHOOK_URL and/or SMARTALLOC_WEBHOOK_TOKEN not set" --label "infra/secrets" || true
+            exit 0
+          fi
           jq -n \
             --arg pr_number "$PR_NUMBER" \
             --arg pr_url "$PR_URL" \
