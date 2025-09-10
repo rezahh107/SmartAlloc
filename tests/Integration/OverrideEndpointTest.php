@@ -1,7 +1,8 @@
 <?php
-// phpcs:ignoreFile
-
 declare(strict_types=1);
+// phpcs:ignoreFile
+// phpstan:ignoreFile
+
 
 namespace SmartAlloc\Tests\Integration;
 
@@ -10,9 +11,6 @@ use Brain\Monkey\Functions;
 use SmartAlloc\REST\Controllers\OverrideController;
 use SmartAlloc\Tests\BaseTestCase;
 
-if ( ! defined( 'SMARTALLOC_CAP' ) ) {
-        define( 'SMARTALLOC_CAP', 'manage_options' );
-}
 if ( ! defined( 'PHPUNIT_RUNNING' ) ) {
         define( 'PHPUNIT_RUNNING', true );
 }

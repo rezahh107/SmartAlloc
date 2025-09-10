@@ -62,6 +62,40 @@ class CircuitBreaker implements CircuitBreakerInterface
     }
 
     /**
+     * Guard an operation.
+     *
+     * @throws CircuitBreakerException When circuit is open.
+     */
+    public function guard(string $name): void
+    {
+        if ($this->state === self::STATE_OPEN) {
+            throw new CircuitBreakerException("Circuit '{$name}' is open");
+        }
+    }
+
+    /**
+     * Record a successful call.
+     */
+    public function success(string $name): void
+    {
+        $this->failureCount = 0;
+        $this->state        = self::STATE_CLOSED;
+    }
+
+    /**
+     * Record a failure and maybe open the circuit.
+     */
+    public function failure(string $name, \Throwable $e): void
+    {
+        $this->failureCount++;
+        $this->lastFailureTime = time();
+        if ($this->failureCount >= $this->failureThreshold) {
+            $this->state = self::STATE_OPEN;
+        }
+        $this->logger->warning('Circuit failure', ['name' => $name, 'error' => $e->getMessage()]);
+    }
+
+    /**
      * Update circuit breaker configuration.
      */
     public function updateConfig(int $failureThreshold, int $recoveryTimeout, $callback = null): void
