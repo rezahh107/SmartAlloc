@@ -24,6 +24,7 @@ if ( ! class_exists( '\WP_Mock' ) ) {
 \WP_Mock::bootstrap();
 
 require_once __DIR__ . '/Helpers/TestHelpers.php';
+require_once __DIR__ . '/Helpers/NonceHelpers.php';
 require_once __DIR__ . '/Mocks/MockWpdb.php';
 if ( ! class_exists( 'wpdb' ) ) {
 	class wpdb extends SmartAlloc\Tests\Mocks\MockWpdb {}
