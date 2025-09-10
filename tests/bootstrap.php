@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace {
+define('SMARTALLOC_CAP', 'manage_smartalloc');
 foreach(['WP_TESTS_DOMAIN'=>'example.org','WP_TESTS_EMAIL'=>'admin@example.org','WP_TESTS_TITLE'=>'Test Blog','ABSPATH'=>'/tmp/wordpress/','WP_DEBUG'=>true,'WP_CONTENT_DIR'=>'/tmp/wordpress/wp-content','WP_PLUGIN_DIR'=>'/tmp/wordpress/wp-content/plugins','WPINC'=>'wp-includes','DB_NAME'=>'wordpress_test','DB_USER'=>'root','DB_PASSWORD'=>'','DB_HOST'=>'localhost','DB_CHARSET'=>'utf8','DB_COLLATE'=>''] as $k=>$v) if(!defined($k)) define($k,$v);
 $table_prefix='wp_';
 require_once dirname(__DIR__).'/vendor/autoload.php';
