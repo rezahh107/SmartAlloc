@@ -1,0 +1,82 @@
+name: Auto PR
+
+on:
+  repository_dispatch:
+    types: [codex-pass]
+
+jobs:
+  auto-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract dispatch payload
+        id: payload
+        run: |
+          echo "base=${{ github.event.client_payload.base }}" >> "$GITHUB_OUTPUT"
+          echo "head=${{ github.event.client_payload.pr_branch }}" >> "$GITHUB_OUTPUT"
+          echo "title=${{ github.event.client_payload.pr_title }}" >> "$GITHUB_OUTPUT"
+          echo "body=${{ github.event.client_payload.pr_body }}" >> "$GITHUB_OUTPUT"
+          echo "auto_merge=${{ github.event.client_payload.auto_merge }}" >> "$GITHUB_OUTPUT"
+          echo "commit_ref=${{ github.event.client_payload.commit_ref }}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare branch
+        id: branch
+        env:
+          HEAD: ${{ steps.payload.outputs.head }}
+          COMMIT_REF: ${{ steps.payload.outputs.commit_ref }}
+        run: |
+          if [ -n "$HEAD" ]; then
+            echo "pr_branch=$HEAD" >> "$GITHUB_OUTPUT"
+          else
+            BRANCH="release/$COMMIT_REF"
+            git checkout -b "$BRANCH" "$COMMIT_REF"
+            git push origin "$BRANCH"
+            echo "pr_branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE: ${{ steps.payload.outputs.base }}
+          TITLE: ${{ steps.payload.outputs.title }}
+          BODY: ${{ steps.payload.outputs.body }}
+          HEAD: ${{ steps.branch.outputs.pr_branch }}
+        run: |
+          pr_url=$(gh pr create --base "$BASE" --head "$HEAD" --title "$TITLE" --body "$BODY")
+          pr_number=$(gh pr view "$pr_url" --json number -q .number)
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+
+      - name: Auto merge
+        if: steps.payload.outputs.auto_merge == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: gh pr merge "$PR_NUMBER" --merge --delete-branch --admin
+
+      - name: Notify WordPress
+        env:
+          WEBHOOK_URL: ${{ secrets.SMARTALLOC_WEBHOOK_URL }}
+          WEBHOOK_TOKEN: ${{ secrets.SMARTALLOC_WEBHOOK_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          jq -n \
+            --arg pr_number "$PR_NUMBER" \
+            --arg pr_url "$PR_URL" \
+            --argjson payload "$PAYLOAD" \
+            '{pr_number:$pr_number, pr_url:$pr_url, payload:$payload}' \
+            | curl -s -X POST "$WEBHOOK_URL" \
+                -H "Authorization: Bearer $WEBHOOK_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d @-
