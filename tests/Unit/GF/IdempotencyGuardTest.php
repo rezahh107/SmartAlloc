@@ -12,15 +12,15 @@ final class IdempotencyGuardTest extends TestCase
 {
     public function testMarksAndChecksEntries(): void
     {
-        $cache = new Cache();
-        $guard = new IdempotencyGuard($cache);
-        $formId = 150;
-        $entryId = 123;
+        $cache    = new Cache();
+        $guard    = new IdempotencyGuard($cache);
+        $form_id  = 150;
+        $entry_id = 123;
 
-        $this->assertFalse($guard->hasProcessed($formId, $entryId));
-        $guard->markProcessed($formId, $entryId);
-        $this->assertTrue($guard->hasProcessed($formId, $entryId));
+        $this->assertFalse($guard->has_processed($form_id, $entry_id));
+        $guard->mark_processed($form_id, $entry_id);
+        $this->assertTrue($guard->has_processed($form_id, $entry_id));
 
-        $cache->l1Del("gf:entry:{$formId}:{$entryId}");
+        $cache->l1Del("gf:entry:{$form_id}:{$entry_id}");
     }
 }
