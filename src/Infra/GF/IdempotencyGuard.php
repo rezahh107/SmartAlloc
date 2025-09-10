@@ -63,4 +63,34 @@ final class IdempotencyGuard {
     public function mark_processed( int $form_id, int $entry_id ): void {
         $this->cache->l1Set( $this->key( $form_id, $entry_id ), 1, self::TTL );
     }
+
+    /**
+     * Check if the entry has already been processed.
+     *
+     * CamelCase wrapper for {@see has_processed()} to maintain backwards
+     * compatibility.
+     *
+     * @deprecated Use has_processed().
+     * @param int $form_id  Form ID.
+     * @param int $entry_id Entry ID.
+     * @return bool True if processed.
+     */
+    public function hasProcessed( int $form_id, int $entry_id ): bool {
+        return $this->has_processed( $form_id, $entry_id );
+    }
+
+    /**
+     * Mark the entry as processed.
+     *
+     * CamelCase wrapper for {@see mark_processed()} to maintain backwards
+     * compatibility.
+     *
+     * @deprecated Use mark_processed().
+     * @param int $form_id  Form ID.
+     * @param int $entry_id Entry ID.
+     * @return void
+     */
+    public function markProcessed( int $form_id, int $entry_id ): void {
+        $this->mark_processed( $form_id, $entry_id );
+    }
 }
