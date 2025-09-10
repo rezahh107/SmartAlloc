@@ -1,0 +1,23 @@
+{
+  "pattern": "Port/Adapter",
+  "port": {
+    "interface": "SmartAlloc\\Infra\\GF\\GFClientInterface",
+    "file": "src/Infra/GF/GFClientInterface.php",
+    "methods": ["get_form(int): ?array"]
+  },
+  "adapters": [
+    {
+      "name": "Production",
+      "class": "SmartAlloc\\Infra\\GF\\GFClientGravity",
+      "file": "src/Infra/GF/GFClientGravity.php",
+      "purpose": "Wraps the live Gravity Forms API."
+    }
+  ],
+  "consumers": [
+    {
+      "class": "SmartAlloc\\Infra\\GF\\SchemaChecker",
+      "injection_method": "Constructor"
+    }
+  ],
+  "wiring_note": "The production adapter (GFClientGravity) should be injected into SchemaChecker in the application's dependency injection container or bootstrap process."
+}
