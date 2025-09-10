@@ -1,17 +1,33 @@
 <?php
+// phpcs:ignoreFile
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\Unit\TestCase as BaseTestCase;
 use SmartAlloc\Services\NotificationThrottler;
+use Brain\Monkey\Functions;
 
-if (!function_exists('get_transient')) { function get_transient($k){ global $t; return $t[$k] ?? false; } }
-if (!function_exists('set_transient')) { function set_transient($k,$v,$e){ global $t; $t[$k] = $v; } }
-
-final class NotificationThrottlerTest extends TestCase
+final class NotificationThrottlerTest extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!defined('SMARTALLOC_CAP')) {
+            define('SMARTALLOC_CAP', 'manage_smartalloc');
+        }
+
+        $this->mockTransients();
+        Functions\when('get_option')->alias(function ($k, $d = false) { global $o; return $o[$k] ?? $d; });
+        Functions\when('update_option')->alias(function ($k, $v) { global $o; $o[$k] = $v; });
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+    }
+
     public function test_allows_and_blocks_by_limit(): void
     {
-        global $t; $t = [];
         $GLOBALS['sa_options'] = [];
         $thr = new NotificationThrottler();
         $this->assertTrue($thr->canSend('a'));    

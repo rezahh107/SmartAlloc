@@ -1,14 +1,30 @@
 <?php
+// phpcs:ignoreFile
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+use SmartAlloc\Tests\Unit\TestCase as BaseTestCase;
 use SmartAlloc\Services\DLQMetrics;
+use Brain\Monkey\Functions;
 
-if (!function_exists('get_option')) { function get_option($k,$d=false){ global $o; return $o[$k] ?? $d; } }
-if (!function_exists('update_option')) { function update_option($k,$v){ global $o; $o[$k]=$v; } }
-
-final class DLQMetricsTest extends TestCase
+final class DLQMetricsTest extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!defined('SMARTALLOC_CAP')) {
+            define('SMARTALLOC_CAP', 'manage_smartalloc');
+        }
+
+        Functions\when('get_option')->alias(function ($k, $d = false) { global $o; return $o[$k] ?? $d; });
+        Functions\when('update_option')->alias(function ($k, $v) { global $o; $o[$k] = $v; });
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+    }
+
     public function test_records_metrics_and_event(): void
     {
         global $o, $actions; $o = $actions = [];
