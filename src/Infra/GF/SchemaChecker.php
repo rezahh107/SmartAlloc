@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SmartAlloc\Infra\GF;
 
-use GFAPI;
-
 class SchemaChecker
 {
     private array $schemaSpec;
+    private GFClientInterface $gfClient;
 
-    public function __construct()
+    public function __construct(GFClientInterface $gfClient)
     {
+        $this->gfClient = $gfClient;
         $this->loadSchemaSpec();
     }
 
@@ -38,12 +38,12 @@ class SchemaChecker
             throw new \InvalidArgumentException(esc_html__('Only form ID 150 is supported', 'smartalloc'));
         }
 
-        $form = GFAPI::get_form($formId);
+        $form = $this->gfClient->get_form($formId);
         if (!$form || !is_array($form)) {
             throw new \RuntimeException(
                 sprintf(
                     esc_html__('Form %d not found or invalid', 'smartalloc'),
-                    absint($formId)
+                    esc_html((string) $formId)
                 )
             );
         }
