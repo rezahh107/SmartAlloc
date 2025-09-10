@@ -64,6 +64,7 @@ jobs:
         run: gh pr merge "$PR_NUMBER" --merge --delete-branch --admin
 
       - name: Notify WordPress
+        if: ${{ secrets.SMARTALLOC_WEBHOOK_URL != '' && secrets.SMARTALLOC_WEBHOOK_TOKEN != '' }}
         env:
           WEBHOOK_URL: ${{ secrets.SMARTALLOC_WEBHOOK_URL }}
           WEBHOOK_TOKEN: ${{ secrets.SMARTALLOC_WEBHOOK_TOKEN }}
@@ -80,3 +81,10 @@ jobs:
                 -H "Authorization: Bearer $WEBHOOK_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d @-
+
+      - name: Missing webhook secrets
+        if: ${{ secrets.SMARTALLOC_WEBHOOK_URL == '' || secrets.SMARTALLOC_WEBHOOK_TOKEN == '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create --title "Missing webhook secrets" --body "Need SMARTALLOC_WEBHOOK_URL and SMARTALLOC_WEBHOOK_TOKEN secrets" --label infra/secrets || true

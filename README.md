@@ -25,6 +25,8 @@ SmartAlloc is a comprehensive WordPress plugin designed for automatic mentor all
 
 For cross-session handoffs, see [Session Continuation Protocol Activated](docs/Session%20Continuation%20Protocol%20Activated.txt).
 
+For details on E2E automation and 5D scoring, see [SmartAlloc LLM Optimized v2.9.3 E2E Automation Appendix D](docs/llm/SmartAlloc_LLM_Optimized_v2.9.3_E2E-Automation.md#appendix-d--5d-scoring-integration).
+
 ## Requirements
 
 - WordPress 6.3+
