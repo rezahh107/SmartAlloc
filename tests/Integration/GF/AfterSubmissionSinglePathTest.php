@@ -86,7 +86,7 @@ class AfterSubmissionSinglePathTest extends TestCase
 
         do_action('gform_after_submission_150', $entry, $form);
         $this->assertSame(1, $this->processCount);
-        $this->assertTrue($this->guard->hasProcessed(150, 123));
+        $this->assertTrue($this->guard->has_processed(150, 123));
 
         do_action('gform_after_submission_150', $entry, $form);
         $this->assertSame(1, $this->processCount);
