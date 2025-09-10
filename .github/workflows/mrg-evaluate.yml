@@ -36,15 +36,15 @@ jobs:
       - name: Build/Lint/Test
         run: |
           set -e
-          ${ matrix.variant.build.cmd }
-          ${ matrix.variant.lint.cmd }
-          ${ matrix.variant.test.cmd }
+          ${{ matrix.variant.build.cmd }}
+          ${{ matrix.variant.lint.cmd }}
+          ${{ matrix.variant.test.cmd }}
 
       - name: Perf & Patch-Guard
         run: |
           set -e
-          ${ matrix.variant.perf.cmd } || true
-          php scripts/patch-guard.php --cap-files=${ matrix.variant.patch_guard.max_files } --cap-loc=${ matrix.variant.patch_guard.max_loc }
+          ${{ matrix.variant.perf.cmd }} || true
+          php scripts/patch-guard.php --cap-files=${{ matrix.variant.patch_guard.max_files }} --cap-loc=${{ matrix.variant.patch_guard.max_loc }}
 
       - name: 5D Score (update_state.sh)
         run: |
@@ -90,7 +90,7 @@ jobs:
           git push origin "$BR" || true
           gh pr create --base "${{ github.event.client_payload.base || 'main' }}" --head "$BR" --title "$T" --body "$B"
       - name: Auto-merge (optional)
-        if: ${{ github.event.client_payload.auto_merge || true }}
+        if: ${{ github.event.client_payload.auto_merge }}
         env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
         run: |
           NUM=$(gh pr view --json number --jq .number)
