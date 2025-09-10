@@ -71,7 +71,9 @@ jobs:
     needs: [eval]
     steps:
       - uses: actions/download-artifact@v4
-        with: { path: build/selector }
+        with:
+          path: build/selector
+          merge: true
       - name: Pick winner by gates + weighted_percent
         id: pick
         run: |
@@ -90,7 +92,7 @@ jobs:
           git push origin "$BR" || true
           gh pr create --base "${{ github.event.client_payload.base || 'main' }}" --head "$BR" --title "$T" --body "$B"
       - name: Auto-merge (optional)
-        if: ${{ github.event.client_payload.auto_merge || true }}
+        if: ${{ github.event.client_payload.auto_merge == true }}
         env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
         run: |
           NUM=$(gh pr view --json number --jq .number)
