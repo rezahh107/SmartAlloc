@@ -1,0 +1,21 @@
+name: Docs Lint (LLM v2.9.3 + Appendix D)
+on:
+  pull_request:
+    paths: ["docs/**", ".github/workflows/**", "scripts/**"]
+  push:
+    paths: ["docs/**", ".github/workflows/**", "scripts/**"]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check doc exists
+        run: test -f docs/llm/SmartAlloc_LLM_Optimized_v2.9.3_E2E-Automation.md
+      - name: Ensure Appendix D heading
+        run: grep -q "Appendix D — 5D Scoring Integration" docs/llm/SmartAlloc_LLM_Optimized_v2.9.3_E2E-Automation.md
+      - name: Ensure E2E mandate mention
+        run: grep -qi "E2E" docs/llm/SmartAlloc_LLM_Optimized_v2.9.3_E2E-Automation.md
+      - name: Required workflows present
+        run: |
+          test -f .github/workflows/auto-pr.yml
+          test -f .github/workflows/mrg-evaluate.yml
