@@ -30,6 +30,19 @@ if (!function_exists('add_filter')) {
 }
 
 
+if (!function_exists('wp_create_nonce')) {
+    function wp_create_nonce($action = -1) {
+        return 'valid_nonce_' . $action;
+    }
+}
+
+if (!function_exists('wp_verify_nonce')) {
+    function wp_verify_nonce($nonce, $action = -1) {
+        return $nonce === 'valid_nonce_' . $action;
+    }
+}
+
+
 if (!function_exists('get_option')) {
     function get_option($key, $default = false) {
         return $GLOBALS['sa_options'][$key] ?? $default;
