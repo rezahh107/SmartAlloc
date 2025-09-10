@@ -1,0 +1,115 @@
+name: Evaluate Variants with 5D Scoring (E2E)
+
+on:
+  repository_dispatch:
+    types: [codex-mrg]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ${{ fromJson(github.event.client_payload.manifest).variants }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Apply branch/patch
+        run: |
+          if [ -n "${{ matrix.variant.build.branch }}" ]; then
+            git fetch origin "${{ matrix.variant.build.branch }}"
+            git checkout "${{ matrix.variant.build.branch }}"
+          fi
+
+      - name: Build/Lint/Test
+        run: |
+          set -e
+          ${ matrix.variant.build.cmd }
+          ${ matrix.variant.lint.cmd }
+          ${ matrix.variant.test.cmd }
+
+      - name: Perf & Patch-Guard
+        run: |
+          set -e
+          ${ matrix.variant.perf.cmd } || true
+          php scripts/patch-guard.php --cap-files=${ matrix.variant.patch_guard.max_files } --cap-loc=${ matrix.variant.patch_guard.max_loc }
+
+      - name: 5D Score (update_state.sh)
+        run: |
+          bash scripts/update_state.sh
+          test -f ai_context.json || (echo "ai_context.json missing" && exit 1)
+
+      - name: Export Selector Input
+        id: export
+        run: |
+          mkdir -p build/selector
+          jq -n --arg id "${{ matrix.variant.variant_id }}" \
+                --slurpfile ctx ai_context.json \
+                '{variant_id:$id, ai_context:$ctx[0]}' \
+            > "build/selector/${{ matrix.variant.variant_id }}.json"
+
+      - name: Upload selector artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: selector-${{ matrix.variant.variant_id }}
+          path: build/selector/${{ matrix.variant.variant_id }}.json
+
+  select:
+    runs-on: ubuntu-latest
+    needs: [eval]
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: build/selector }
+      - name: Pick winner by gates + weighted_percent
+        id: pick
+        run: |
+          php scripts/selector.php --input build/selector --out build/WINNER.json
+          cat build/WINNER.json
+      - name: Auto-PR (winner only)
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          BR=$(jq -r '.winner.branch // "release/mrg-" + env.GITHUB_RUN_ID' build/WINNER.json)
+          T=$(jq -r '.winner.title  // "Auto-PR (MRG Winner)"' build/WINNER.json)
+          B=$(jq -r '.winner.body   // "Selected via gates + 5D scoring."' build/WINNER.json)
+          git checkout -b "$BR" || true
+          echo "winner: $(date -u +%FT%TZ)" > .mrg-winner-stamp.md
+          git add .mrg-winner-stamp.md
+          git -c user.name="ci-bot" -c user.email="ci@users.noreply.github.com" commit -m "chore: mrg winner stamp" || true
+          git push origin "$BR" || true
+          gh pr create --base "${{ github.event.client_payload.base || 'main' }}" --head "$BR" --title "$T" --body "$B"
+      - name: Auto-merge (optional)
+        if: ${{ github.event.client_payload.auto_merge || true }}
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          NUM=$(gh pr view --json number --jq .number)
+          gh pr merge "$NUM" --merge --delete-branch --admin || true
+      - name: Notify context_pool webhook
+        env:
+          SMARTALLOC_WEBHOOK_URL: ${{ secrets.SMARTALLOC_WEBHOOK_URL }}
+          SMARTALLOC_WEBHOOK_TOKEN: ${{ secrets.SMARTALLOC_WEBHOOK_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$SMARTALLOC_WEBHOOK_URL" ] || [ -z "$SMARTALLOC_WEBHOOK_TOKEN" ]; then
+            echo "warning: webhook secrets missing" >&2
+            gh issue create --title "Missing webhook secrets" --body "SMARTALLOC_WEBHOOK_URL and/or SMARTALLOC_WEBHOOK_TOKEN not set" --label "infra/secrets" || true
+            exit 0
+          fi
+          PR=$(gh pr view --json number --jq .number)
+          URL=$(gh pr view --json url --jq .url)
+          curl -sS -X POST "$SMARTALLOC_WEBHOOK_URL" \
+            -H "Authorization: Bearer $SMARTALLOC_WEBHOOK_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"event\":\"codex-mrg\",\"pr_number\":$PR,\"pr_url\":\"$URL\"}"
+
