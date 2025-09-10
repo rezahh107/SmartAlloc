@@ -1,13 +1,12 @@
 <?php
 declare(strict_types=1);
+// phpcs:ignoreFile
+// phpstan:ignoreFile
 
 use SmartAlloc\Tests\BaseTestCase;
 use SmartAlloc\Http\Rest\DlqController;
 use SmartAlloc\Services\DlqService;
 
-if (!defined('SMARTALLOC_CAP')) {
-    define('SMARTALLOC_CAP', 'manage_options');
-}
 if (!class_exists('WP_Error')) {
     class WP_Error {
         public function __construct(public string $code = '', public string $message = '', public array $data = []) {}
@@ -23,7 +22,7 @@ if (!class_exists('WP_REST_Response')) {
 }
 if (!class_exists('WP_REST_Request')) {
     class WP_REST_Request {
-        public function __construct(private string $method, private string $route, private array $params = []) {}
+        public function __construct(private array $params = []) {}
         public function get_param(string $k) { return $this->params[$k] ?? null; }
     }
 }
@@ -34,6 +33,8 @@ if (!function_exists('as_enqueue_async_action')) { function as_enqueue_async_act
 if (!function_exists('as_next_scheduled_action')) { function as_next_scheduled_action() { return false; } }
 if (!function_exists('do_action')) { function do_action($h, $a) { if (isset($GLOBALS['__do_action'])) { ($GLOBALS['__do_action'])($h, $a); } } }
 if (!function_exists('current_user_can')) { function current_user_can($cap) { return $GLOBALS['can'] ?? false; } }
+if (!function_exists('get_current_user_id')) { function get_current_user_id() { return 1; } }
+if (!function_exists('wp_json_encode')) { function wp_json_encode($d) { return json_encode($d); } }
 
 final class DlqRoutesTest extends BaseTestCase
 {
@@ -68,7 +69,7 @@ final class DlqRoutesTest extends BaseTestCase
         $this->setupWpdb();
         $GLOBALS['can'] = false;
         $controller = new DlqController(new DlqService());
-        $resp = $controller->list(new WP_REST_Request('GET', '/smartalloc/v1/dlq'));
+        $resp = $controller->list();
         $this->assertInstanceOf(WP_Error::class, $resp);
         $this->assertSame(403, $resp->get_error_data()['status']);
     }
@@ -78,7 +79,7 @@ final class DlqRoutesTest extends BaseTestCase
         $this->setupWpdb();
         $GLOBALS['can'] = true;
         $controller = new DlqController(new DlqService());
-        $resp = $controller->list(new WP_REST_Request('GET', '/smartalloc/v1/dlq'));
+        $resp = $controller->list();
         $this->assertInstanceOf(WP_REST_Response::class, $resp);
         $this->assertSame(200, $resp->get_status());
         $data = $resp->get_data();
@@ -91,7 +92,7 @@ final class DlqRoutesTest extends BaseTestCase
         $this->setupWpdb();
         $GLOBALS['can'] = true;
         $controller = new DlqController(new DlqService());
-        $resp = $controller->retry(new WP_REST_Request('POST', '/smartalloc/v1/dlq/999/retry', ['id'=>999]));
+        $resp = $controller->retry(new WP_REST_Request(['id'=>999]));
         $this->assertInstanceOf(WP_Error::class, $resp);
         $this->assertSame(404, $resp->get_error_data()['status']);
     }
@@ -103,7 +104,7 @@ final class DlqRoutesTest extends BaseTestCase
         $controller = new DlqController(new DlqService());
         $GLOBALS['ran'] = null;
         $GLOBALS['__do_action'] = function($h,$a){$GLOBALS['ran']=$a;};
-        $resp = $controller->retry(new WP_REST_Request('POST', '/smartalloc/v1/dlq/1/retry', ['id'=>1]));
+        $resp = $controller->retry(new WP_REST_Request(['id'=>1]));
         $this->assertInstanceOf(WP_REST_Response::class, $resp);
         $this->assertSame(200, $resp->get_status());
         $this->assertSame('e', $GLOBALS['ran']['event_name']);

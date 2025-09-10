@@ -1,0 +1,14 @@
+{
+  "chunk_id": "CHUNK_SMARTALLOC_CAP",
+  "handoff_summary": "quality:selective phpstan errors and failing tests prevent validation",
+  "failing_tests": [
+    "composer run quality:selective",
+    "vendor/bin/phpunit tests/Http/DlqRoutesTest.php tests/Integration/Services/NotificationServiceIntegrationTest.php tests/Integration/OverrideEndpointTest.php"
+  ],
+  "next_step": "Resolve PHPStan autoload issues and provide missing WordPress functions",
+  "owner": "Claude_Architect",
+  "artifacts": {
+    "phpunit": "/tmp/phpunit.log",
+    "quality": "/tmp/quality.log"
+  }
+}

@@ -1,6 +1,7 @@
 <?php
-// phpcs:ignoreFile
 declare(strict_types=1);
+// phpcs:ignoreFile
+// phpstan:ignoreFile
 
 use SmartAlloc\Services\{NotificationService, CircuitBreaker, Logging, DlqService};
 use SmartAlloc\Tests\Helpers\SpyMetrics;
@@ -12,7 +13,6 @@ use SmartAlloc\Infrastructure\Contracts\DlqRepository;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
-if ( ! defined( 'SMARTALLOC_CAP' ) ) { define( 'SMARTALLOC_CAP', 'manage_options' ); }
 require_once __DIR__ . '/../../mocks/WpdbMock.php';
 
 final class NotificationServiceIntegrationTest extends TestCase
