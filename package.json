@@ -9,19 +9,8 @@
     "start-server-and-test": "^2.0.3"
   },
   "scripts": {
-    "e2e:install": "npx playwright install --with-deps",
-    "e2e:up": "docker compose up -d",
-    "e2e:seed": "bash e2e/scripts/seed.sh",
-    "e2e:wait": "node e2e/scripts/wait-for-wp.js",
-    "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "e2e:doctor": "node e2e/scripts/doctor.js",
-    "e2e:all:docker": "node e2e/scripts/doctor.js && npm run e2e:up && npm run e2e:wait && npm run e2e:seed && npm run test:e2e",
-    "e2e:up:playground": "wp-playground-cli server --auto-mount --port=9400 --blueprint=e2e/blueprint.json",
-    "e2e:all:playground": "node e2e/scripts/doctor.js && WP_BASE_URL=http://localhost:9400 start-server-and-test \"npm run e2e:up:playground\" http://localhost:9400 \"npm run test:e2e\" || exit 0",
-    "e2e:up:wpenv": "wp-env start",
-    "e2e:seed:wpenv": "WP_CLI='npx wp-env run cli wp' bash e2e/scripts/seed.sh",
-    "e2e:all:wpenv": "npm run e2e:up:wpenv && npm run e2e:seed:wpenv && npm run test:e2e",
-    "e2e:all": "npm run e2e:all:playground",
+    "e2e:install": "npx playwright install --with-deps chromium",
+    "test:e2e": "playwright test --reporter=list,junit --output=build/e2e --workers=2",
     "test": "echo \"No JS tests yet\"",
     "sec:snyk": "if command -v snyk >/dev/null; then snyk test --severity-threshold=medium || true; else echo 'snyk not installed, skipping'; fi"
   }

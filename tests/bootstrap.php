@@ -1,31 +1,11 @@
 <?php
-// phpcs:ignoreFile
+/** Test bootstrap */
 
-// Load Patchwork before anything else
-require_once __DIR__ . '/../vendor/antecedent/patchwork/Patchwork.php';
+date_default_timezone_set('UTC');
 
-// Load Composer autoloader
-require_once __DIR__ . '/../vendor/autoload.php';
+define( 'WP_PHPUNIT__DIR', dirname(__DIR__) . '/vendor/wp-phpunit/wp-phpunit' );
 
-// Define required constants
-if (!defined('SMARTALLOC_CAP')) {
-    define('SMARTALLOC_CAP', 'manage_smartalloc');
-}
 
-// Initialize Brain Monkey
-\Brain\Monkey\setUp();
-
-// Optional WordPress function stubs
-if (!function_exists('esc_html__')) {
-    function esc_html__($text, $domain = 'default')
-    {
-        return $text;
-    }
-}
-
-// Stub WP_UnitTestCase for integration tests
-if (!class_exists('WP_UnitTestCase')) {
-    class WP_UnitTestCase extends PHPUnit\Framework\TestCase
-    {
-    }
-}
+require dirname(__DIR__) . '/vendor/autoload.php';
+define( 'WP_TESTS_CONFIG_FILE_PATH', dirname( __DIR__ ) . '/wp-tests-config.php' );
+require WP_PHPUNIT__DIR . '/includes/bootstrap.php';

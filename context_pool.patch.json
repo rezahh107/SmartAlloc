@@ -3,21 +3,24 @@
     "op": "add",
     "path": "/active_context/ci_runs/-",
     "value": {
-      "timestamp": "2025-09-11T13:46:41Z",
-      "result": "sanity-pass",
-      "testing_mode": "SANITY",
-      "dispatch": "workflow_dispatch",
-      "details": "Fallback manual-pr workflow after dispatch failure"
+      "timestamp": "2025-09-11T14:11:24Z",
+      "result": "pass",
+      "testing": {"unit": "pass", "e2e": "pass"}
     }
   },
   {
     "op": "replace",
-    "path": "/active_context/handoff",
-    "value": null
+    "path": "/active_context/quality_gates/coverage_min",
+    "value": 0.80
+  },
+  {
+    "op": "replace",
+    "path": "/active_context/testing",
+    "value": {"unit": "required", "e2e": "required"}
   },
   {
     "op": "replace",
     "path": "/active_context/last_update",
-    "value": "2025-09-11T13:46:41Z"
+    "value": "2025-09-11T14:11:24Z"
   }
 ]

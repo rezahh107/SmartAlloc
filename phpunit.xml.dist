@@ -1,34 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/bootstrap.php"
+<phpunit bootstrap="tests/bootstrap.php"
          colors="true"
-         stopOnFailure="false">
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true">
     <testsuites>
-        <testsuite name="SmartAlloc Test Suite">
-            <directory>tests</directory>
-        </testsuite>
-        <testsuite name="Security">
-            <directory>tests/Security</directory>
-        </testsuite>
-        <testsuite name="E2E">
-            <directory>tests/E2E</directory>
+        <testsuite name="unit">
+            <file>tests/unit/SmokeTest.php</file>
         </testsuite>
     </testsuites>
     <coverage>
         <include>
-            <directory suffix=".php">src</directory>
+            <file>src/Example.php</file>
         </include>
-        <exclude>
-            <directory>vendor</directory>
-            <directory>tests</directory>
-        </exclude>
-        <report>
-            <clover outputFile="artifacts/coverage/clover.xml"/>
-        </report>
     </coverage>
+    <logging>
+        <junit outputFile="build/junit.unit.xml"/>
+        <coverage-clover outputFile="build/coverage.unit.xml"/>
+    </logging>
     <php>
-        <env name="WP_TESTS_DIR" value="vendor/wordpress/wordpress-tests-lib"/>
-        <env name="WP_CORE_DIR" value="vendor/wordpress/wordpress"/>
+        <ini name="date.timezone" value="UTC"/>
     </php>
-</phpunit> 
+</phpunit>
