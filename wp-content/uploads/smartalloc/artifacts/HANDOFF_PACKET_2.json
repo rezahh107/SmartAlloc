@@ -1,0 +1,8 @@
+{
+  "chunk_id": "4ddee1",
+  "handoff_summary": "wp-env cannot connect to Docker, preventing WordPress environment from starting.",
+  "failing_tests": ["wp-env start", "wp-env run tests-cli composer test", "bash scripts/lighthouse-local.sh", "bash scripts/utc_sweep/verify_health.sh", "wp site health status"],
+  "next_step": "Install and enable Docker and Chrome, then rerun wp-env and QA suite.",
+  "owner": "Claude_Architect",
+  "artifacts": []
+}
