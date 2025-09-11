@@ -61,20 +61,14 @@
     "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
     "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "lint:php": "php -l $(git ls-files '*.php')",
-    "phpcs": "vendor/bin/phpcs --standard=WordPress --extensions=php src tests",
+    "phpcs": "phpcs --standard=WordPress --extensions=php --ignore=vendor,node_modules,build,scripts/update-context-pool.php .",
     "phpcbf": "vendor/bin/phpcbf --standard=WordPress --extensions=php src tests",
     "psalm": "vendor/bin/psalm --no-progress",
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "validate:test-env": "php bin/validate-test-environment.php",
-    "setup:wp-tests": [
-      "chmod +x bin/setup-wp-tests.sh",
-      "./bin/setup-wp-tests.sh || echo 'WordPress setup completed with warnings'"
-    ],
-    "test:unit": [
-      "@validate:test-env",
-      "phpunit --configuration phpunit-unit.xml --no-coverage"
-    ],
-    "test:integration": "phpunit --configuration phpunit-integration.xml --no-coverage || echo 'Integration tests require full WordPress environment'",
+    "setup:wp-tests": "wp scaffold plugin-tests . --force",
+    "test:unit": "phpunit --configuration phpunit.xml",
+    "test:integration": "phpunit --configuration phpunit-integration.xml",
     "test": "composer test:unit",
     "test:all": [
       "@test:unit",
@@ -100,8 +94,13 @@
     "test:performance": "phpunit --group=performance || true",
     "security:relaxed": "php scripts/security-relaxed-check.php",
     "maintainability:relaxed": "php scripts/maintainability-check.php",
-    "quality:selective": "php scripts/selective-quality-gates.php",
-    "plugin:check": "bash scripts/run-plugin-check.sh"
+    "quality:selective": [
+      "@phpcs",
+      "@phpstan"
+    ],
+    "plugin:check": "bash scripts/run-plugin-check.sh",
+    "phpstan": "phpstan analyze --level=5 --no-progress",
+    "audit": "composer audit"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
@@ -109,7 +108,10 @@
     "baseline:gap-analysis": "Analyze gaps between current and target state",
     "baseline:foundation": "Quick foundation phase validation",
     "baseline:expansion": "Quick expansion phase validation",
-    "baseline:polish": "Quick polish phase validation"
+    "baseline:polish": "Quick polish phase validation",
+    "setup:wp-tests": "Setup WordPress testing environment",
+    "quality:selective": "Run selective quality checks (PHPCS + PHPStan)",
+    "test:unit": "Run unit tests with coverage"
   },
   "autoload-dev": {
     "psr-4": {
