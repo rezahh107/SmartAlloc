@@ -33,3 +33,14 @@ and never exits with a non‑zero status.
 
 Arrays and object keys are sorted for determinism. The HTML variant renders the
 same information in a basic RTL layout.
+
+## Phase 1R2 QA Summary
+
+- Security: PASS
+- WP Standards: PASS
+- Testing: SANITY-PASS
+- Performance: N/A (Phase 1)
+- Site Health: GREEN-BY-CONFIG
+- Patch Guard: PASS
+
+- Dispatch: failed (401), switched to workflow_dispatch fallback

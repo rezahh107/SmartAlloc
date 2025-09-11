@@ -1,0 +1,23 @@
+[
+  {
+    "op": "add",
+    "path": "/active_context/ci_runs/-",
+    "value": {
+      "timestamp": "2025-09-11T13:46:41Z",
+      "result": "sanity-pass",
+      "testing_mode": "SANITY",
+      "dispatch": "workflow_dispatch",
+      "details": "Fallback manual-pr workflow after dispatch failure"
+    }
+  },
+  {
+    "op": "replace",
+    "path": "/active_context/handoff",
+    "value": null
+  },
+  {
+    "op": "replace",
+    "path": "/active_context/last_update",
+    "value": "2025-09-11T13:46:41Z"
+  }
+]

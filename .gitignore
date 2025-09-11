@@ -5,3 +5,6 @@ coverage/
 .DS_Store
 node_modules/
 composer.lock
+.env
+wp-env/*
+!wp-env/Dockerfile

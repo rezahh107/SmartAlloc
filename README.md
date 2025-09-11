@@ -36,11 +36,18 @@ For details on E2E automation and 5D scoring, see [SmartAlloc LLM Optimized v2.9
 - Action Scheduler (recommended)
 ## Quickstart
 
-1. Download the latest `smartalloc-*.zip` from releases.
-2. Upload the ZIP through **Plugins → Add New → Upload Plugin**.
-3. Activate and run `wp smartalloc smoke:env` to verify the environment.
-4. Configure form settings and run allocations.
+```bash
+cp .env.example .env
+bash scripts/setup.sh
+docker compose ps
+```
 
+If services report `healthy`, browse to <http://localhost:8080>.
+
+### Troubleshooting
+- Docker not installed: install Docker Engine and Docker Compose.
+- Port 8080 in use: stop the conflicting service or change the port in `docker-compose.yml`.
+- DB connection errors: verify variables in `.env`.
 
 ## Installation
 
@@ -558,3 +565,7 @@ $env:GH_TOKEN="ghp_xxx"
 .\run_ci_dispatch.ps1
 ```
 
+
+## Manual PR Workflow
+
+If repository dispatch is unavailable, trigger the **Manual PR Fallback** workflow from the Actions tab. It creates a pull request from the specified branch and can auto-merge when enabled.
