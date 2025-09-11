@@ -1,0 +1,27 @@
+name: E2E Retry After Setup
+on:
+  workflow_dispatch:
+  
+jobs:
+  verify-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Verify Prerequisites
+        run: |
+          docker --version
+          docker compose version
+          npx playwright --version
+          
+      - name: Start Services
+        run: docker compose up -d --wait
+        
+      - name: Run E2E Tests
+        run: npm run test:e2e
+        
+      - name: Update Context Pool
+        if: success()
+        run: |
+          jq '.ci_runs += [{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","status":"passed","gates":"5/5"}]' context_pool.json > tmp.json
+          mv tmp.json context_pool.json

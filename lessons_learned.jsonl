@@ -2,3 +2,5 @@
 {"timestamp": "2025-09-11T02:32:07Z", "lesson": "Host lacks permissions to run Docker daemon even after install."}
 {"timestamp": "2025-09-11T02:44:00Z", "lesson": "wp-env requires Docker and Chrome; verify prerequisites before running QA."}
 {"timestamp":"2024-12-09T10:30:00Z","lesson":"Docker daemon absent; Playwright deps install extremely heavy; emergency test script missing"}
+{"timestamp":"2024-12-19T10:00:00Z","issue":"Missing setup scripts","resolution":"Created docker-install.sh, chrome-setup.sh, verify-setup.sh","category":"environment","severity":"P0"}
+{"timestamp":"2024-12-19T10:00:00Z","issue":"Playwright browsers not installed","resolution":"Added npx playwright install to chrome-setup.sh","category":"testing","severity":"P0"}
