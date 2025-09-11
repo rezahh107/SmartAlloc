@@ -1,0 +1,8 @@
+{
+  "chunk_id": "8b583d",
+  "handoff_summary": "Docker daemon not running; Playwright dependencies partially installed; E2E tests not executed",
+  "failing_tests": ["docker daemon connection", "playwright install-deps", "emergency-test script missing"],
+  "next_step": "Start docker service or configure fallback WordPress, complete Playwright deps installation, and execute emergency-test.sh",
+  "owner": "Claude_Architect",
+  "artifacts": []
+}
