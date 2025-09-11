@@ -207,11 +207,16 @@ composer dist
 ### Testing
 
 ```bash
-# Run all tests
-composer test
+# Unit tests
+composer setup:wp-tests
+composer test:unit
 
-# Run specific test
-vendor/bin/phpunit tests/DigitsNormalizerTest.php
+# End-to-end tests
+npm run e2e:install
+npm run test:e2e
+
+# CI
+gh workflow run wp-tests.yml
 ```
 
 ## Test Mode & Chaos Flags

@@ -11,3 +11,4 @@
 {"timestamp":"2025-09-11T13:14:14Z","lesson":"Phase 1 finalized with SANITY-PASS (no Docker); quality step decoupled from PHPCS."}
 {"timestamp":"2025-09-11T13:24:10Z","lesson":"Removed stray handoff artifact and dispatched codex-pass."}
 {"timestamp":"2025-09-11T13:46:33Z","lesson":"Phase 1 closed via manual-pr workflow; removed dispatch token dependency."}
+{"timestamp":"2025-09-11T14:11:18Z","lesson":"WP PHPUnit + Playwright wired; UTC in tests."}

@@ -1,0 +1,59 @@
+name: WP Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mariadb:10.6
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - run: npm run e2e:install
+      - name: Setup WP tests
+        run: |
+          bash scripts/db-init.sh
+          composer setup:wp-tests
+      - name: Start WordPress
+        run: php -S localhost:8080 -t wordpress >/tmp/wp.log &
+      - name: Wait for WP
+        run: sleep 5
+      - name: Unit tests
+        run: composer test:unit
+      - name: E2E tests
+        run: npm run test:e2e | tee build/junit.e2e.xml
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: |
+            build/junit.unit.xml
+            build/coverage.unit.xml
+            build/junit.e2e.xml
+            build/e2e

@@ -20,7 +20,7 @@
     "maennchen/zipstream-php": ">=3.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^10.5",
+    "phpunit/phpunit": "^9.6",
     "yoast/phpunit-polyfills": "^2.0",
     "brain/monkey": "^2.6",
     "mockery/mockery": "^1.6",
@@ -38,7 +38,7 @@
     "vimeo/psalm": "^5.18",
     "php-stubs/wordpress-stubs": "^6.6",
     "giorgiosironi/eris": "^1.0",
-    "wp-phpunit/wp-phpunit": "^6",
+    "wp-phpunit/wp-phpunit": "^6.3",
     "johnpbloch/wordpress-core": "^6.5"
   },
   "autoload": {
@@ -66,8 +66,8 @@
     "psalm": "vendor/bin/psalm --no-progress",
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "validate:test-env": "php bin/validate-test-environment.php",
-    "setup:wp-tests": "wp scaffold plugin-tests . --force",
-    "test:unit": "phpunit --configuration phpunit.xml",
+    "setup:wp-tests": "vendor/bin/wp-phpunit-setup || echo setup",
+    "test:unit": "XDEBUG_MODE=coverage vendor/bin/phpunit --colors=always --log-junit build/junit.unit.xml --coverage-clover build/coverage.unit.xml",
     "test:integration": "phpunit --configuration phpunit-integration.xml",
     "test": "composer test:unit",
     "test:all": [
