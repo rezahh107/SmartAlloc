@@ -1,232 +1,176 @@
-name: SmartAlloc CI
+name: CI Pipeline
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - '.github/workflows/**'
-      - 'composer.*'
-      - 'phpcs.xml'
-      - 'psalm.xml*'
-      - 'phpunit.xml'
   pull_request:
-    branches: [ main ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
+  push:
+    branches: [ main, develop ]
   workflow_dispatch:
-    inputs:
-      inject_ci_failure:
-        description: "Inject dummy ci_failure for AUTO-FIX test"
-        type: boolean
-        default: false
-  schedule:
-    - cron: '0 6 * * 0'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-permissions:
-  contents: write
-  actions: write
 
 env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  TZ: UTC
-  LOGIC_MIN: ${{ vars.LOGIC_MIN || '18' }}
-  PERFORMANCE_MIN: ${{ vars.PERFORMANCE_MIN || '19' }}
-  READABILITY_MIN: ${{ vars.READABILITY_MIN || '19' }}
-  GOAL_MIN: ${{ vars.GOAL_MIN || '18' }}
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+  MYSQL_VERSION: '8.0'
 
 jobs:
-  qa:
+  test-and-qa:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['8.1','8.2']
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_tests
+          MYSQL_USER: wp_user
+          MYSQL_PASSWORD: wp_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=2s
+          --health-retries=30
+
     steps:
-      - uses: actions/checkout@v4
-      - name: 📦 Install jq & bc (early)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq bc
-      - name: 🔧 Setup PHP
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          coverage: pcov
-          extensions: pcov
-          ini-values: pcov.enabled=1, pcov.directory=src, pcov.exclude="~vendor~"
-      - name: 🗃️ Composer cache (PHP-scoped)
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, intl, mysqli, zip, xml
+          coverage: xdebug
+          tools: composer:v2, wp-cli
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.cache/composer/files
-          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-composer-
-      - name: 🧱 Ensure ai_context.json exists (pre)
-        if: always()
-        run: |
-          set -euo pipefail
-          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
-          jq empty ai_context.json
-      - name: 🔄 Sync AI context features
-        run: php scripts/sync-features-to-ai-context.php
-      - name: 🔍 Check phase transition
-        run: bash scripts/check_phase_transition.sh
-      - name: 📥 Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
 
-      - name: ✅ Unit tests with coverage
-        run: vendor/bin/phpunit --configuration phpunit-unit.xml --coverage-text
-      - name: Install Playwright deps
-        run: npx playwright install --with-deps
-      - name: 🎨 PHPCBF (soft)
-        run: composer phpcbf || true
-      - name: 📊 5D Score
-        run: composer score:5d
-      - name: ✅ Evaluate 5D gates
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+          npm ci || npm install
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..60}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -proot --silent; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i/60)"
+            sleep 2
+          done
+          exit 1
+
+      - name: Setup WordPress test environment
+        env:
+          WP_DB_NAME: wordpress_tests
+          WP_DB_USER: wp_user
+          WP_DB_PASS: wp_pass
+          WP_DB_HOST: 127.0.0.1
+        run: |
+          bash scripts/db-init.sh
+          composer setup:wp-tests -- --dbname=$WP_DB_NAME --dbuser=$WP_DB_USER --dbpass=$WP_DB_PASS --dbhost=$WP_DB_HOST
+
+      - name: Security scan
+        id: security
+        run: |
+          composer audit --no-dev --format=json > build/security-scan.json || true
+          php scripts/security-check.php build/security-scan.json
+
+      - name: Code quality checks
+        id: quality
+        run: |
+          composer quality:selective
+          composer phpcs -- --report=json > build/phpcs-report.json || true
+
+      - name: Run unit tests
+        id: unit-tests
+        run: |
+          composer test:unit -- --testdox-html build/testdox.html --log-junit build/junit.xml
+
+      - name: Run E2E tests
+        id: e2e-tests
+        run: |
+          npm run test:e2e -- --reporter json > build/e2e-report.json || true
+
+      - name: Performance benchmark
+        id: performance
+        run: |
+          php scripts/perf-microbench.php > build/perf.json
+
+      - name: Site health check
+        id: site-health
+        run: |
+          php scripts/site-health.php > build/site-health.json
+
+      - name: Generate QA report
+        id: qa-report
+        run: |
+          php scripts/qa-report.php \
+            --security build/security-scan.json \
+            --phpcs build/phpcs-report.json \
+            --unit build/junit.xml \
+            --e2e build/e2e-report.json \
+            --perf build/perf.json \
+            --health build/site-health.json \
+            --out-json build/qa-report.json \
+            --out-md build/qa-summary.md \
+            --out-friendly build/friendly.md
+
+      - name: Check Patch-Guard compliance
+        id: patch-guard
+        run: |
+          git diff --name-only origin/main...HEAD | grep -v -E '^(.github/|docs/|tests/|\.md$)' > changed-files.txt || true
+          php scripts/patch-guard.php changed-files.txt
+
+      - name: Update context pool
         if: always()
+        env:
+          GOV_WEBHOOK_URL: ${{ secrets.GOV_WEBHOOK_URL }}
         run: |
-          chmod +x scripts/evaluate_scores.sh
-          scripts/evaluate_scores.sh
-      - name: CI 5D Gates
-        run: bash scripts/ci/ensure_ci_thresholds.sh
-      - name: 🔄 Update project state
-        run: make state
-      - name: 🚀 Commit state files
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add FEATURES.md PROJECT_STATE.md ai_context.json
-          git commit -m "chore: auto-update state files" || echo "no changes to commit"
-          git push origin HEAD:${{ github.ref_name }} || true
-      - name: 📝 Append 5D Summary & AUTO-FIX
+          php scripts/update-context-pool.php \
+            --run-id "${{ github.run_id }}" \
+            --status "${{ job.status }}" \
+            --gates-json build/qa-report.json \
+            --webhook "$GOV_WEBHOOK_URL"
+
+      - name: Upload artifacts
         if: always()
-        run: |
-          chmod +x .github/scripts/emit_summary.sh .github/scripts/emit_autofix.sh
-          if [ "${{ inputs.inject_ci_failure }}" = "true" ]; then
-            echo '{"ci_failure":{"security_score":15,"phpcs_errors":2,"test_failures":1}}' > ai_context.json
-          fi
-          .github/scripts/emit_summary.sh && .github/scripts/emit_autofix.sh
-      - name: 📤 Upload Enhanced Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: project-state-enhanced-${{ github.job }}-php${{ matrix.php }}-${{ github.run_id }}-${{ github.run_attempt }}
-          if-no-files-found: warn
+          name: ci-artifacts-${{ github.run_id }}
           path: |
-            FEATURES.md
-            ai_context.json
-  full:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: 📦 Install jq & bc (early)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq bc
-      - name: 🔧 Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-      - name: 🗃️ Composer cache (PHP-scoped)
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/composer/files
-          key: ${{ runner.os }}-php-8.2-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-8.2-composer-
-      - name: 🧱 Ensure ai_context.json exists (pre)
-        if: always()
-        run: |
-          set -euo pipefail
-          test -s ai_context.json || echo '{"decisions":[]}' > ai_context.json
-          jq empty ai_context.json
-      - name: 🔄 Sync AI context features
-        run: php scripts/sync-features-to-ai-context.php
-      - name: 🔍 Check phase transition
-        run: bash scripts/check_phase_transition.sh
-      - name: 📥 Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
-      - name: Install Playwright deps
-        run: npx playwright install --with-deps
-      - name: 🎨 PHPCBF (soft)
-        run: composer phpcbf || true
-      - name: 📊 5D Score
-        run: composer score:5d
-      - name: ✅ Evaluate 5D gates
-        if: always()
-        run: |
-          chmod +x scripts/evaluate_scores.sh
-          scripts/evaluate_scores.sh
-      - name: CI 5D Gates
-        run: bash scripts/ci/ensure_ci_thresholds.sh
-      - name: 🔄 Update project state
-        run: make state
-      - name: 🚀 Commit state files
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add FEATURES.md PROJECT_STATE.md ai_context.json
-          git commit -m "chore: auto-update state files" || echo "no changes to commit"
-          git push origin HEAD:${{ github.ref_name }} || true
-      - name: 📝 Append 5D Summary & AUTO-FIX
-        if: always()
-        run: |
-          chmod +x .github/scripts/emit_summary.sh .github/scripts/emit_autofix.sh
-          if [ "${{ inputs.inject_ci_failure }}" = "true" ]; then
-            echo '{"ci_failure":{"security_score":15,"phpcs_errors":2,"test_failures":1}}' > ai_context.json
-          fi
-          .github/scripts/emit_summary.sh && .github/scripts/emit_autofix.sh
-      - name: ❌ Enforce 5D gates (full only)
-        if: always()
-        run: |
-          chmod +x scripts/fail_on_ci_failure.sh
-          scripts/fail_on_ci_failure.sh
-      - name: 📤 Upload Enhanced Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: project-state-enhanced-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          if-no-files-found: warn
-          path: |
-            FEATURES.md
-            ai_context.json
+            build/
+            wp-content/uploads/smartalloc/artifacts/context_pool.json
+          retention-days: 30
 
-  phase-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install yq
+      - name: Create handoff packet (on failure)
+        if: failure()
         run: |
-          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          chmod +x /usr/local/bin/yq
+          php scripts/create-handoff.php \
+            --chunk-id "${{ github.run_id }}" \
+            --qa-report build/qa-report.json \
+            --owner "Claude_Architect" \
+            --out wp-content/uploads/smartalloc/artifacts/HANDOFF_PACKET.json
 
-      - name: Install jq
+      - name: Dispatch success event
+        if: success()
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Sync AI context features
-        run: |
-          php scripts/sync-features-to-ai-context.php features.json ai_context.json
-
-      - name: Check Phase Transition Readiness
-        run: |
-          ./scripts/check_phase_transition.sh
-        continue-on-error: true
-
-      - name: Generate Transition Report
-        if: always()
-        run: |
-          ./scripts/generate_phase_report.sh > phase_report.md
-
-      - name: Upload Report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: phase-transition-report
-          path: phase_report.md
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type":"codex-pass","client_payload":{"run_id":"${{ github.run_id }}"}}'

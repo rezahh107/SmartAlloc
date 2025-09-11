@@ -1,90 +1,51 @@
-name: Auto PR
-
+name: Auto PR Creation
 on:
   repository_dispatch:
     types: [codex-pass]
+  workflow_dispatch:
 
 jobs:
-  auto-pr:
+  create-pr:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
         with:
-          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ci/mysql-setup-${{ github.event.client_payload.run_id || github.run_id }}
+          title: "🚀 CI: MySQL Service + WordPress Tests Setup"
+          body: |
+            ## Automated CI Setup
+            
+            This PR adds GitHub Actions CI with MySQL 8 service for WordPress testing.
+            
+            ### Changes
+            - ✅ GitHub Actions workflow with MySQL service
+            - ✅ Automated test environment setup
+            - ✅ Quality gates (Security, Performance, Testing, WP Standards)
+            - ✅ Patch-Guard compliance
+            - ✅ Site Health monitoring
+            
+            ### Auto-merge
+            This PR will be automatically merged if labeled with `auto_merge`.
+            
+            Run ID: ${{ github.event.client_payload.run_id || github.run_id }}
+          commit-message: "ci: add MySQL service and WordPress test automation"
+          labels: |
+            ci/cd
+            automated
+            auto_merge
 
-      - name: Extract dispatch payload
-        id: payload
-        run: |
-          echo "base=${{ github.event.client_payload.base }}" >> "$GITHUB_OUTPUT"
-          echo "head=${{ github.event.client_payload.pr_branch }}" >> "$GITHUB_OUTPUT"
-          echo "title=${{ github.event.client_payload.pr_title }}" >> "$GITHUB_OUTPUT"
-          echo "body=${{ github.event.client_payload.pr_body }}" >> "$GITHUB_OUTPUT"
-          echo "auto_merge=${{ github.event.client_payload.auto_merge }}" >> "$GITHUB_OUTPUT"
-          echo "commit_ref=${{ github.event.client_payload.commit_ref }}" >> "$GITHUB_OUTPUT"
-
-      - name: Prepare branch
-        id: branch
-        env:
-          HEAD: ${{ steps.payload.outputs.head }}
-          COMMIT_REF: ${{ steps.payload.outputs.commit_ref }}
-        run: |
-          if [ -n "$HEAD" ]; then
-            echo "pr_branch=$HEAD" >> "$GITHUB_OUTPUT"
-          else
-            BRANCH="release/$COMMIT_REF"
-            git checkout -b "$BRANCH" "$COMMIT_REF"
-            git push origin "$BRANCH"
-            echo "pr_branch=$BRANCH" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create pull request
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE: ${{ steps.payload.outputs.base }}
-          TITLE: ${{ steps.payload.outputs.title }}
-          BODY: ${{ steps.payload.outputs.body }}
-          HEAD: ${{ steps.branch.outputs.pr_branch }}
-        run: |
-          pr_url=$(gh pr create --base "$BASE" --head "$HEAD" --title "$TITLE" --body "$BODY")
-          pr_number=$(gh pr view "$pr_url" --json number -q .number)
-          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
-          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
-
-      - name: Auto merge
-        if: steps.payload.outputs.auto_merge == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-        run: gh pr merge "$PR_NUMBER" --merge --delete-branch --admin
-
-      - name: Notify WordPress
-        if: ${{ secrets.SMARTALLOC_WEBHOOK_URL != '' && secrets.SMARTALLOC_WEBHOOK_TOKEN != '' }}
-        env:
-          WEBHOOK_URL: ${{ secrets.SMARTALLOC_WEBHOOK_URL }}
-          WEBHOOK_TOKEN: ${{ secrets.SMARTALLOC_WEBHOOK_TOKEN }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-          PR_URL: ${{ steps.pr.outputs.url }}
-          PAYLOAD: ${{ toJson(github.event.client_payload) }}
-        run: |
-          jq -n \
-            --arg pr_number "$PR_NUMBER" \
-            --arg pr_url "$PR_URL" \
-            --argjson payload "$PAYLOAD" \
-            '{pr_number:$pr_number, pr_url:$pr_url, payload:$payload}' \
-            | curl -s -X POST "$WEBHOOK_URL" \
-                -H "Authorization: Bearer $WEBHOOK_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d @-
-
-      - name: Missing webhook secrets
-        if: ${{ secrets.SMARTALLOC_WEBHOOK_URL == '' || secrets.SMARTALLOC_WEBHOOK_TOKEN == '' }}
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue create --title "Missing webhook secrets" --body "Need SMARTALLOC_WEBHOOK_URL and SMARTALLOC_WEBHOOK_TOKEN secrets" --label infra/secrets || true
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} \
+            --auto \
+            --squash \
+            --delete-branch
