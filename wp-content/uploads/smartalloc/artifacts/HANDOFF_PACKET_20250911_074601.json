@@ -1,0 +1,31 @@
+{
+  "chunk_id": "CHUNK_Foundation_Gates",
+  "handoff_summary": "Foundation Gates validation failed. Root cause: Multiple gate failures requiring architectural review.",
+  "failing_tests": [
+  "unit_testing",
+  "e2e_testing"
+],
+  "next_step": "Claude_Architect must analyze failing gates and provide remediation strategy. Priority: Block all merges until resolved.",
+  "owner": "Claude_Architect",
+  "priority": "P0",
+  "artifacts": {
+    "junit": "build/junit.xml",
+    "failures": "build/failures.json",
+    "coverage": "build/coverage/summary.json",
+    "quality_report": "build/quality-report.json",
+    "patch_guard": "build/patch-guard.json",
+    "site_health": "build/site-health.json"
+  },
+  "context": {
+    "total_failures": 2,
+    "gate_results": {
+      "quality": 0,
+      "baseline": 0,
+      "unit": 1,
+      "e2e": 1,
+      "patch_guard": 0,
+      "site_health": 0
+    }
+  },
+  "timestamp": "2025-09-11T07:46:01Z"
+}
