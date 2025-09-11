@@ -90,7 +90,12 @@ EOF2
      '.active_context.ci_runs += [{"timestamp": $timestamp, "phase": "FOUNDATION", "status": "PASS", "commit_sha": $commit, "pr_branch": $branch, "gates_passed": ["quality", "baseline", "unit", "e2e", "patch_guard", "site_health"]}] | .active_context.last_update = $timestamp' \
      "$CONTEXT_FILE" > temp.json && mv temp.json "$CONTEXT_FILE"
   if [ -n "$GITHUB_TOKEN" ]; then
-    curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/$GITHUB_REPOSITORY/dispatches" -d @auto_pr_payload.json
+    curl -X POST \
+      -H "Authorization: token $GITHUB_TOKEN" \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Content-Type: application/json" \
+      "https://api.github.com/repos/$GITHUB_REPOSITORY/dispatches" \
+      -d @auto_pr_payload.json
   fi
 else
   echo "❌ FOUNDATION GATES FAILED - Generating Handoff"
