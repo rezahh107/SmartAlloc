@@ -8,26 +8,25 @@ use Brain\Monkey\Functions;
 
 final class DLQMetricsTest extends BaseTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        if (!defined('SMARTALLOC_CAP')) {
-            define('SMARTALLOC_CAP', 'manage_smartalloc');
-        }
-
-        Functions\when('get_option')->alias(function ($k, $d = false) { global $o; return $o[$k] ?? $d; });
-        Functions\when('update_option')->alias(function ($k, $v) { global $o; $o[$k] = $v; });
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-    }
-
     public function test_records_metrics_and_event(): void
     {
-        global $o, $actions; $o = $actions = [];
+        global $o, $actions;
+        /** @var array<string, mixed> $o */
+        $o = $actions = [];
+
+        Functions\when('get_option')->alias(
+            function (string $k, $d = false) use (&$o): mixed {
+                return $o[$k] ?? $d;
+            }
+        );
+
+        Functions\when('update_option')->alias(
+            function (string $k, $v) use (&$o): bool {
+                $o[$k] = $v;
+                return true;
+            }
+        );
+
         $m = new DLQMetrics();
         $m->recordPush('q1', []);
         $m->recordFinalFailure('q1', []);
