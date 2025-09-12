@@ -44,7 +44,7 @@ class UtcTimeHelper
     public static function utcToLocal(string $utcDatetime, string $format = 'Y-m-d H:i:s'): string
     {
         $timestamp = self::utcDatetimeToTimestamp($utcDatetime) + self::getTimezoneOffset();
-        return date($format, $timestamp);
+        return gmdate($format, $timestamp);
     }
 
     public static function localToUtc(string $localDatetime, string $format = 'Y-m-d H:i:s'): string

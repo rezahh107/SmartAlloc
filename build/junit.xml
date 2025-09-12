@@ -1,11 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-  <testsuite name="" tests="2" assertions="2" errors="0" warnings="0" failures="0" skipped="0" time="0.171195">
-    <testsuite name="unit" tests="2" assertions="2" errors="0" warnings="0" failures="0" skipped="0" time="0.171195">
-      <testsuite name="SmokeTest" file="/app/tests/unit/SmokeTest.php" tests="2" assertions="2" errors="0" warnings="0" failures="0" skipped="0" time="0.171195">
-        <testcase name="test_plugin_file_exists" class="SmokeTest" classname="SmokeTest" file="/app/tests/unit/SmokeTest.php" line="6" assertions="1" time="0.136493"/>
-        <testcase name="test_example_add" class="SmokeTest" classname="SmokeTest" file="/app/tests/unit/SmokeTest.php" line="10" assertions="1" time="0.034702"/>
-      </testsuite>
-    </testsuite>
-  </testsuite>
-</testsuites>
+<testsuites/>

@@ -71,7 +71,7 @@ final class CircuitBreaker
                 $data['state']  = 'open';
                 $data['opened_at'] = $now;
                 $this->metrics->inc('breaker_open');
-                error_log('export.circuit.open');
+                \SmartAlloc\Support\LogHelper::error('export.circuit.open');
             }
         }
         $this->write($data);

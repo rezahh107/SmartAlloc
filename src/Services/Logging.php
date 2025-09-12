@@ -6,6 +6,8 @@ namespace SmartAlloc\Services;
 
 use SmartAlloc\Contracts\LoggerInterface;
 use SmartAlloc\Infra\Logging\Redactor;
+use SmartAlloc\Support\LogHelper;
+use SmartAlloc\Infra\FS\Filesystem;
 
 /**
  * Logging service with data masking for sensitive information
@@ -57,7 +59,7 @@ final class Logging implements LoggerInterface
         if ($logFile) {
             $this->writeToFile($logFile, $logMessage);
         } else {
-            error_log($logMessage);
+            LogHelper::error($logMessage);
         }
     }
 
@@ -93,7 +95,7 @@ final class Logging implements LoggerInterface
             return null;
         }
 
-        return $logDir . 'smartalloc-' . date('Y-m-d') . '.log';
+        return $logDir . 'smartalloc-' . gmdate('Y-m-d') . '.log';
     }
 
     /**
@@ -112,12 +114,12 @@ final class Logging implements LoggerInterface
             $timestamp = current_time('Y-m-d H:i:s');
             $formattedMessage = "[{$timestamp}] {$message}" . PHP_EOL;
             
-            file_put_contents($logFile, $formattedMessage, FILE_APPEND | LOCK_EX);
+            Filesystem::write($logFile, $formattedMessage);
             
         } catch (\Throwable $e) {
             // Fallback to error_log if file writing fails
-            error_log("SmartAlloc log file error: " . $e->getMessage());
-            error_log($message);
+            LogHelper::error('SmartAlloc log file error', ['error' => $e->getMessage()]);
+            LogHelper::error($message);
         }
     }
 
@@ -129,10 +131,9 @@ final class Logging implements LoggerInterface
         $backupFile = $logFile . '.backup';
         
         if (file_exists($backupFile)) {
-            unlink($backupFile);
+            Filesystem::delete($backupFile);
         }
-        
-        rename($logFile, $backupFile);
+        Filesystem::move($logFile, $backupFile);
     }
 
     /**
@@ -141,7 +142,7 @@ final class Logging implements LoggerInterface
     public function getLogContents(?string $date = null): string
     {
         if ($date === null) {
-            $date = date('Y-m-d');
+            $date = gmdate('Y-m-d');
         }
 
         $logFile = $this->getLogFile();
@@ -163,7 +164,7 @@ final class Logging implements LoggerInterface
         }
 
         try {
-            file_put_contents($logFile, '');
+            Filesystem::clear($logFile);
             return true;
         } catch (\Throwable $e) {
             return false;

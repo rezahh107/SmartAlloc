@@ -94,7 +94,7 @@ final class SabtExporter
     {
         self::$dailyCounter++;
         self::$batchCounter++;
-        $date = date('Y_m_d');
+        $date = gmdate('Y_m_d');
         return sprintf('SabtExport-ALLOCATED-%s-%04d-B%03d.xlsx', $date, self::$dailyCounter, self::$batchCounter);
     }
 
@@ -111,6 +111,6 @@ final class SabtExporter
             'errors' => $errors,
         ];
         $json = json_encode($report, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        file_put_contents($dir . '/export-report.json', $json);
+        \SmartAlloc\Infra\FS\Filesystem::write($dir . '/export-report.json', (string) $json);
     }
 }

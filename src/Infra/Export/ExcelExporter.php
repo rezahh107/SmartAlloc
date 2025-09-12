@@ -205,7 +205,7 @@ class ExcelExporter
     private function generateFilename(): string
     {
         [$daily, $batch] = $this->getNextCounters();
-        $date   = date('Y_m_d');
+        $date   = gmdate('Y_m_d');
         $dailyS = str_pad((string) $daily, 4, '0', STR_PAD_LEFT);
         $batchS = str_pad((string) $batch, 3, '0', STR_PAD_LEFT);
 
@@ -226,4 +226,3 @@ class ExcelExporter
         }
     }
 }
-

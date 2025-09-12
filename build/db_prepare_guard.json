@@ -1,0 +1,8 @@
+{
+    "unsafe_sql_files": [
+        "/app/scripts/../src/CLI/DoctorCommand.php",
+        "/app/scripts/../src/Services/Db.php",
+        "/app/scripts/../src/Services/HealthCheckService.php",
+        "/app/scripts/../tests/Unit/Security/SqlPrepareScannerTest.php"
+    ]
+}

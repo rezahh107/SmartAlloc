@@ -17,17 +17,13 @@ use SmartAlloc\Infra\DB\TableResolver;
 use SmartAlloc\Services\{ExportService, Logging};
 use SmartAlloc\Tests\BaseTestCase;
 
-class TestWpdb extends wpdb {
-    public string $prefix = 'wp_';
-    public string $last_query = '';
+// Use the shared TestWpdb stub to avoid typed property conflicts.
+require_once dirname(__DIR__) . '/Support/TestWpdb.php';
+class TestWpdbWithData extends \TestWpdb {
     private int $calls = 0;
-    public function __construct() {}
-    public function query($sql): void { $this->last_query = $sql; }
-    public function get_results($sql, $output = OBJECT): array {
-        $this->last_query = $sql;
-        if ($this->calls++ > 0) {
-            return [];
-        }
+    public function get_results($sql = null, $output = OBJECT) {
+        $this->last_query = (string) $sql;
+        if ($this->calls++ > 0) { return []; }
         return [(object) ['id' => 1, 'national_id' => '1', 'mobile' => '2', 'postal' => '3']];
     }
 }
@@ -55,7 +51,7 @@ final class StreamingExportTest extends BaseTestCase
 {
     public function test_ajax_endpoint_streams_correctly(): void
     {
-        $GLOBALS['wpdb'] = new TestWpdb();
+        $GLOBALS['wpdb'] = new TestWpdbWithData();
         $_GET['_wpnonce'] = wp_create_nonce('smartalloc_export_stream');
         $_GET['limit']    = '1';
         $tables = new TableResolver($GLOBALS['wpdb']);
@@ -69,7 +65,7 @@ final class StreamingExportTest extends BaseTestCase
 
     public function test_error_handling_persists_to_database(): void
     {
-        $GLOBALS['wpdb'] = new TestWpdb();
+        $GLOBALS['wpdb'] = new TestWpdbWithData();
         $tables = new TableResolver($GLOBALS['wpdb']);
         $svc    = new ExportService($tables, config: null, logger: new Logging());
         $ref = new \ReflectionClass($svc);

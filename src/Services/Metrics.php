@@ -38,14 +38,9 @@ class Metrics
         if ($this->logger) {
             $this->logger->error('Metrics database operation failed', $context);
         } else {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(
-                sprintf(
-                    'Metrics::%s failed for table %s: %s',
-                    $method,
-                    $this->table,
-                    $e->getMessage()
-                )
+            \SmartAlloc\Support\LogHelper::error(
+                'Metrics operation failed',
+                ['method' => $method, 'table' => $this->table, 'exception' => $e->getMessage()]
             );
         }
     }
@@ -149,4 +144,3 @@ class Metrics
         return $rows;
     }
 }
-

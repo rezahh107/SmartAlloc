@@ -23,3 +23,9 @@ if (!defined('WP_TESTS_CONFIG_FILE_PATH')) {
 
 // Bootstrap WordPress test environment.
 require WP_PHPUNIT__DIR . '/includes/bootstrap.php';
+
+// Load integration support stubs if present.
+$__wpdb_stub = __DIR__ . '/Integration/Support/TestWpdb.php';
+if (file_exists($__wpdb_stub)) {
+    require_once $__wpdb_stub;
+}

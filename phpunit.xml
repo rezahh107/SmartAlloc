@@ -1,8 +1,14 @@
 <?xml version="1.0"?>
 <phpunit bootstrap="tests/bootstrap.php" colors="true">
   <testsuites>
-    <testsuite name="all">
-      <directory>tests</directory>
+    <testsuite name="Unit">
+      <directory suffix="Test.php">tests/Unit</directory>
+    </testsuite>
+    <testsuite name="Integration">
+      <directory suffix="Test.php">tests/Integration</directory>
+    </testsuite>
+    <testsuite name="E2E">
+      <directory suffix="Test.php">tests/E2E</directory>
     </testsuite>
   </testsuites>
 
@@ -13,13 +19,12 @@
   </coverage>
 
   <logging>
-    <log type="coverage-clover" target="build/coverage.xml"/>
-    <log type="junit" target="build/junit.xml"/>
-    <log type="testdox-text" target="build/testdox.txt"/>
+    <junit outputFile="build/junit.xml"/>
+    <coverage-clover outputFile="build/coverage.xml"/>
+    <testdoxText outputFile="build/testdox.txt"/>
   </logging>
 
   <php>
     <env name="XDEBUG_MODE" value="coverage"/>
   </php>
 </phpunit>
-

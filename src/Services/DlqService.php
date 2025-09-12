@@ -51,14 +51,7 @@ final class DlqService
             if ($this->logger) {
                 $this->logger->error('dlq.push_failed', $context + ['error' => $e->getMessage()]);
             } else {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                error_log(
-                    sprintf(
-                        'SmartAlloc DLQ Error: Failed to push event "%s" - %s',
-                        $context['event_name'],
-                        $e->getMessage()
-                    )
-                );
+                \SmartAlloc\Support\LogHelper::error('dlq.push_failed', $context + ['error' => $e->getMessage()]);
             }
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new RepositoryException('Failed to push notification to DLQ', 'dlq_push', $context, $e);
@@ -171,16 +164,7 @@ final class DlqService
                 'line'  => $line,
             ]);
         } else {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(
-                sprintf(
-                    'DLQ Replay Failed - Row ID: %s, Event: %s, Exception: %s (%s)',
-                    $logContext['row_id'],
-                    $logContext['event_name'],
-                    $message,
-                    $exception
-                )
-            );
+            \SmartAlloc\Support\LogHelper::error('dlq.replay_failed', $logContext);
         }
     }
 
