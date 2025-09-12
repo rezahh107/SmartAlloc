@@ -11,6 +11,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect PHP service
+        id: detect
+        run: |
+          set -e
+          CANDS='php php-fpm wordpress app web backend fpm wp site'
+          SVC=""
+          for c in $CANDS; do
+            if docker compose config --services | grep -E "^${c}$" >/dev/null 2>&1; then SVC="$c"; break; fi
+          done
+          if [ -z "$SVC" ]; then
+            echo "No PHP-like service found. Rename your service or edit the allowlist."; exit 1
+          fi
+          echo "PHP_SERVICE=$SVC" >> "$GITHUB_ENV"
+          echo "Detected PHP service: $SVC"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -33,22 +48,22 @@ jobs:
           docker compose build --no-cache
           docker compose up -d db
           sleep 8
-          docker compose up -d php
+          docker compose up -d ${{ env.PHP_SERVICE }}
 
       - name: Composer install
-        run: docker compose run --rm php composer install -o
+        run: docker compose run --rm ${{ env.PHP_SERVICE }} composer install -o
 
       - name: Project init
-        run: docker compose run --rm php bash -lc "./docker/init.sh"
+        run: docker compose run --rm ${{ env.PHP_SERVICE }} bash -lc "./docker/init.sh"
 
       - name: Unit tests
-        run: docker compose run --rm php vendor/bin/phpunit -v
+        run: docker compose run --rm ${{ env.PHP_SERVICE }} vendor/bin/phpunit -v
 
       - name: Quality selective
-        run: docker compose run --rm php composer run quality:selective
+        run: docker compose run --rm ${{ env.PHP_SERVICE }} composer run quality:selective
 
       - name: Baseline check
-        run: docker compose run --rm php php baseline-check --current-phase=FOUNDATION
+        run: docker compose run --rm ${{ env.PHP_SERVICE }} php baseline-check --current-phase=FOUNDATION
 
       - name: Collect artifacts (optional)
         if: always()
@@ -61,4 +76,3 @@ jobs:
         with:
           name: build-artifacts
           path: artifacts
-

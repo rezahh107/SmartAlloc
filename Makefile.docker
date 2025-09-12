@@ -1,9 +1,22 @@
-docker-test:
-	 docker compose down -v
-	 docker compose up -d db
-	 docker compose run --rm php bash -lc ""./docker/init.sh""
-	 docker compose run --rm php vendor/bin/phpunit -v
-docker-ci: docker-test
-	 docker compose run --rm php composer run quality:selective
-	 docker compose run --rm php php baseline-check --current-phase=FOUNDATION
+# Detect compose binary
+DOCKER_COMPOSE ?= docker compose
 
+# Auto-detect PHP-like service name (first match)
+# Allowlist kept tight to avoid wrong picks
+PHP_SERVICE ?= $(shell $(DOCKER_COMPOSE) config --services 2>/dev/null | awk '/^(php|php-fpm|wordpress|app|web|backend|fpm|wp|site)$$/{print; exit}')
+
+ifeq ($(strip $(PHP_SERVICE)),)
+$(error Could not detect a PHP-like service. Set PHP_SERVICE=your_service or rename your service to one of: php, php-fpm, wordpress, app, web, backend, fpm, wp, site)
+endif
+
+docker-test:
+	$(DOCKER_COMPOSE) down -v
+	$(DOCKER_COMPOSE) up -d db
+	$(DOCKER_COMPOSE) up -d $(PHP_SERVICE)
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) composer install -o
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc "./docker/init.sh"
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) vendor/bin/phpunit -v
+
+docker-ci: docker-test
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) composer run quality:selective
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) php baseline-check --current-phase=FOUNDATION
