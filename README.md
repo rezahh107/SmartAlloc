@@ -1,4 +1,5 @@
-# SmartAlloc WordPress Plugin
+﻿# SmartAlloc WordPress Plugin
+[![CI](https://github.com/rezahh107/SmartAlloc/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rezahh107/SmartAlloc/actions/workflows/ci.yml?query=branch%3Amain)
 
 Event-driven student support allocation with Gravity Forms + Exporter.
 
@@ -574,3 +575,18 @@ $env:GH_TOKEN="ghp_xxx"
 ## Manual PR Workflow
 
 If repository dispatch is unavailable, trigger the **Manual PR Fallback** workflow from the Actions tab. It creates a pull request from the specified branch and can auto-merge when enabled.
+
+## CI
+
+This repo uses a Dockerized GitHub Actions workflow (`.github/workflows/ci.yml`) to run:
+- `vendor/bin/phpunit -v` (unit tests)
+- `composer run quality:selective` (PHPCS/PHPStan selective gates)
+- `php baseline-check --current-phase=FOUNDATION` (baseline compliance)
+
+Local mirrors:
+```bash
+make -f Makefile.docker docker-test   # DB up → init → phpunit
+make -f Makefile.docker docker-ci     # selective gates + baseline
+```
+
+The badge above reflects the status of the `main` branch.
