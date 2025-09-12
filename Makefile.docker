@@ -9,10 +9,28 @@ ifeq ($(strip $(PHP_SERVICE)),)
 $(error Could not detect a PHP-like service. Set PHP_SERVICE=your_service or rename your service to one of: php, php-fpm, wordpress, app, web, backend, fpm, wp, site)
 endif
 
+# DB service auto-detect
+DB_SERVICE ?= $(shell $(DOCKER_COMPOSE) config --services 2>/dev/null | awk '/^(db|mysql|mariadb)$$/{print; exit}')
+ifeq ($(strip $(DB_SERVICE)),)
+$(error Could not detect DB-like service (db/mysql/mariadb). Set DB_SERVICE=your_db)
+endif
+
+# wait for DB to be responsive
+wait-db:
+	@echo ">> Waiting for DB ($(DB_SERVICE)) to be ready..."
+	@$(DOCKER_COMPOSE) exec -T $(DB_SERVICE) sh -lc '\
+		for i in $$(seq 1 60); do \
+			mysqladmin ping -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent && exit 0; \
+			sleep 2; \
+		done; \
+		echo "DB not ready after timeout" >&2; exit 1'
+
 docker-test:
 	$(DOCKER_COMPOSE) down -v
-	$(DOCKER_COMPOSE) up -d db
+	$(DOCKER_COMPOSE) up -d $(DB_SERVICE)
+	$(MAKE) wait-db
 	$(DOCKER_COMPOSE) up -d $(PHP_SERVICE)
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc 'chmod +x ./docker/init.sh || true'
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) composer install -o
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc "./docker/init.sh"
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) vendor/bin/phpunit -v

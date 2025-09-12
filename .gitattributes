@@ -3,3 +3,6 @@
 # Don't include docs in export archives by default
 docs/ export-ignore
 .github/ export-ignore
+
+# Ensure shell scripts keep LF endings (Windows-safe)
+*.sh text eol=lf

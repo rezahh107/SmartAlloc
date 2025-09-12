@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Detect PHP service
-        id: detect
+        id: detect-php
         run: |
           set -e
           CANDS='php php-fpm wordpress app web backend fpm wp site'
@@ -25,6 +25,27 @@ jobs:
           fi
           echo "PHP_SERVICE=$SVC" >> "$GITHUB_ENV"
           echo "Detected PHP service: $SVC"
+
+      - name: Detect DB service
+        id: detect-db
+        run: |
+          set -e
+          CANDS='db mysql mariadb'
+          SVC=""
+          for d in $CANDS; do
+            if docker compose config --services | grep -E "^${d}$" >/dev/null 2>&1; then SVC="$d"; break; fi
+          done
+          if [ -z "$SVC" ]; then
+            echo "No DB-like service found. Rename your service or edit the allowlist."; exit 1
+          fi
+          echo "DB_SERVICE=$SVC" >> "$GITHUB_ENV"
+          echo "Detected DB service: $SVC"
+
+      - name: Normalize shell scripts (LF) and perms
+        run: |
+          sudo apt-get update && sudo apt-get install -y dos2unix
+          if [ -d docker ]; then find docker -type f -name "*.sh" -print0 | xargs -0 -I{} dos2unix {}; fi
+          chmod +x docker/init.sh || true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -46,9 +67,18 @@ jobs:
       - name: Build and start
         run: |
           docker compose build --no-cache
-          docker compose up -d db
+          docker compose up -d ${{ env.DB_SERVICE }}
           sleep 8
           docker compose up -d ${{ env.PHP_SERVICE }}
+
+      - name: Wait for DB
+        run: |
+          docker compose exec -T ${{ env.DB_SERVICE }} sh -lc '\
+            for i in $(seq 1 60); do \
+              mysqladmin ping -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent && exit 0; \
+              sleep 2; \
+            done; \
+            echo "DB not ready after timeout" >&2; exit 1'
 
       - name: Composer install
         run: docker compose run --rm ${{ env.PHP_SERVICE }} composer install -o
