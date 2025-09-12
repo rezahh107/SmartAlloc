@@ -1,20 +1,14 @@
 <?php
 /**
- * WP test configuration for SmartAlloc.
+ * WordPress tests configuration (docker-compatible)
  */
 
-$env = [];
-$env_file = __DIR__ . '/.env';
-if ( file_exists( $env_file ) ) {
-    $env = parse_ini_file( $env_file, false, INI_SCANNER_RAW ) ?: [];
-}
-
-define( 'DB_NAME', $env['WP_TEST_DB_NAME'] ?? 'wordpress_tests' );
-define( 'DB_USER', $env['DB_USER'] ?? 'root' );
-define( 'DB_PASSWORD', $env['DB_PASSWORD'] ?? 'root' );
-define( 'DB_HOST', '127.0.0.1' );
-define( 'DB_CHARSET', 'utf8mb4' );
-define( 'DB_COLLATE', 'utf8mb4_unicode_ci' );
+define( 'DB_NAME', getenv('WP_TESTS_DB_NAME') ?: 'wordpress_tests' );
+define( 'DB_USER', getenv('WP_TESTS_DB_USER') ?: 'wp' );
+define( 'DB_PASSWORD', getenv('WP_TESTS_DB_PASS') ?: 'wp' );
+define( 'DB_HOST', getenv('WP_TESTS_DB_HOST') ?: 'db' );
+define( 'DB_CHARSET', 'utf8' );
+define( 'DB_COLLATE', '' );
 
 define( 'ABSPATH', __DIR__ . '/wordpress/' );
 
@@ -26,4 +20,5 @@ define( 'WP_TESTS_EMAIL', 'admin@example.org' );
 define( 'WP_TESTS_TITLE', 'Test Blog' );
 define( 'WP_PHP_BINARY', 'php' );
 
-$table_prefix = 'wp_';
+$table_prefix = 'wptests_';
+

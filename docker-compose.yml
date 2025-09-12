@@ -28,8 +28,8 @@ services:
       WP_VERSION: ${WP_VERSION:-6.6.2}
       WP_PHPUNIT__DIR: /app/vendor/wp-phpunit/wp-phpunit
       WP_TESTS_DB_NAME: ${WP_TESTS_DB_NAME:-wordpress_tests}
-      WP_TESTS_DB_USER: ${WP_TESTS_DB_USER:-root}
-      WP_TESTS_DB_PASS: ${WP_TESTS_DB_PASS:-root}
+      WP_TESTS_DB_USER: ${WP_TESTS_DB_USER:-wp}
+      WP_TESTS_DB_PASS: ${WP_TESTS_DB_PASS:-wp}
       WP_TESTS_DB_HOST: db
       XDEBUG_MODE: ${XDEBUG_MODE:-off}
     depends_on:

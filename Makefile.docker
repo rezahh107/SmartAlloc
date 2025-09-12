@@ -1,4 +1,4 @@
-.PHONY: build db-up init test quality baseline down shell
+.PHONY: build db-up init test quality baseline down shell docker-test
 
 build:
 	docker compose build php
@@ -12,6 +12,12 @@ init:
 test:
 	docker compose run --rm php vendor/bin/phpunit -v
 
+.PHONY: docker-ci
+
+docker-ci: docker-test
+	docker compose run --rm php composer run quality:selective
+	docker compose run --rm php php baseline-check --current-phase=FOUNDATION
+
 quality:
 	docker compose run --rm php composer run quality:selective
 
@@ -24,3 +30,11 @@ down:
 shell:
 	docker compose run --rm php bash
 
+# Full end-to-end test flow in Docker
+.PHONY: docker-test
+
+docker-test:
+	docker compose down -v
+	docker compose up -d db
+	docker compose run --rm php bash -lc "./docker/init.sh"
+	docker compose run --rm php vendor/bin/phpunit -v

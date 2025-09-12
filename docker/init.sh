@@ -14,14 +14,14 @@ echo "[init] DB=${DB_USER}@${DB_HOST}/${DB_NAME}"
 
 echo "[init] Waiting for database to be ready..."
 for i in {1..60}; do
-  if mysqladmin ping -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" --silent >/dev/null 2>&1; then
+  if mysqladmin --skip-ssl ping -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" --silent >/dev/null 2>&1; then
     echo "[init] Database is up."
     break
   fi
   sleep 1
 done
 
-if ! mysqladmin ping -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" --silent >/dev/null 2>&1; then
+if ! mysqladmin --skip-ssl ping -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" --silent >/dev/null 2>&1; then
   echo "[init] ERROR: Database did not become ready in time." >&2
   exit 1
 fi
