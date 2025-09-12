@@ -98,6 +98,7 @@
       "php scripts/selective-quality-gates.php lint",
       "php scripts/selective-quality-gates.php analyze"
     ],
+    "patch:guard:ps": "powershell -ExecutionPolicy Bypass -File scripts/patch-guard-check.ps1",
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
     "audit": "composer audit"
