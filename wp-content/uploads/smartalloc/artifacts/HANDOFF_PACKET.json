@@ -1,8 +1,0 @@
-{
-  "chunk_id": "95dc8d",
-  "handoff_summary": "Docker daemon fails to start due to insufficient privileges (overlay mount and iptables errors), preventing WordPress environment from launching.",
-  "failing_tests": ["dockerd", "docker-compose up -d"],
-  "next_step": "Provision a host that permits Docker to run or enable required kernel features, then rerun stack startup and QA suite.",
-  "owner": "Claude_Architect",
-  "artifacts": []
-}

@@ -1,0 +1,9 @@
+docker-test:
+	 docker compose down -v
+	 docker compose up -d db
+	 docker compose run --rm php bash -lc ""./docker/init.sh""
+	 docker compose run --rm php vendor/bin/phpunit -v
+docker-ci: docker-test
+	 docker compose run --rm php composer run quality:selective
+	 docker compose run --rm php php baseline-check --current-phase=FOUNDATION
+

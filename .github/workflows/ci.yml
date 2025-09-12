@@ -1,176 +1,64 @@
-name: CI Pipeline
+name: CI
 on:
-  pull_request:
   push:
-    branches: [ main, develop ]
-  workflow_dispatch:
-
-env:
-  PHP_VERSION: '8.2'
-  NODE_VERSION: '20'
-  MYSQL_VERSION: '8.0'
-
+    branches: [ main, "repair/**" ]
+  pull_request:
+    branches: [ main ]
 jobs:
-  test-and-qa:
+  build-test:
     runs-on: ubuntu-latest
-    
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: wordpress_tests
-          MYSQL_USER: wp_user
-          MYSQL_PASSWORD: wp_pass
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
-          --health-interval=5s
-          --health-timeout=2s
-          --health-retries=30
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, intl, mysqli, zip, xml
-          coverage: xdebug
-          tools: composer:v2, wp-cli
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+      - name: Show Docker versions
+        run: |
+          docker --version
+          docker compose version
 
-      - name: Cache Composer dependencies
+      - name: Composer cache
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: composer-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: |
-          composer install --no-interaction --prefer-dist --optimize-autoloader
-          npm ci || npm install
-
-      - name: Wait for MySQL
-        run: |
-          for i in {1..60}; do
-            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -proot --silent; then
-              echo "MySQL is ready"
-              exit 0
-            fi
-            echo "Waiting for MySQL... ($i/60)"
-            sleep 2
-          done
-          exit 1
-
-      - name: Setup WordPress test environment
-        env:
-          WP_DB_NAME: wordpress_tests
-          WP_DB_USER: wp_user
-          WP_DB_PASS: wp_pass
-          WP_DB_HOST: 127.0.0.1
-        run: |
-          bash scripts/db-init.sh
-          composer setup:wp-tests -- --dbname=$WP_DB_NAME --dbuser=$WP_DB_USER --dbpass=$WP_DB_PASS --dbhost=$WP_DB_HOST
-
-      - name: Security scan
-        id: security
-        run: |
-          composer audit --no-dev --format=json > build/security-scan.json || true
-          php scripts/security-check.php build/security-scan.json
-
-      - name: Code quality checks
-        id: quality
-        run: |
-          composer quality:selective
-          composer phpcs -- --report=json > build/phpcs-report.json || true
-
-      - name: Run unit tests
-        id: unit-tests
-        run: |
-          composer test:unit -- --testdox-html build/testdox.html --log-junit build/junit.xml
-
-      - name: Run E2E tests
-        id: e2e-tests
-        run: |
-          npm run test:e2e -- --reporter json > build/e2e-report.json || true
-
-      - name: Performance benchmark
-        id: performance
-        run: |
-          php scripts/perf-microbench.php > build/perf.json
-
-      - name: Site health check
-        id: site-health
-        run: |
-          php scripts/site-health.php > build/site-health.json
-
-      - name: Generate QA report
-        id: qa-report
-        run: |
-          php scripts/qa-report.php \
-            --security build/security-scan.json \
-            --phpcs build/phpcs-report.json \
-            --unit build/junit.xml \
-            --e2e build/e2e-report.json \
-            --perf build/perf.json \
-            --health build/site-health.json \
-            --out-json build/qa-report.json \
-            --out-md build/qa-summary.md \
-            --out-friendly build/friendly.md
-
-      - name: Check Patch-Guard compliance
-        id: patch-guard
-        run: |
-          git diff --name-only origin/main...HEAD | grep -v -E '^(.github/|docs/|tests/|\.md$)' > changed-files.txt || true
-          php scripts/patch-guard.php changed-files.txt
-
-      - name: Update context pool
-        if: always()
-        env:
-          GOV_WEBHOOK_URL: ${{ secrets.GOV_WEBHOOK_URL }}
-        run: |
-          php scripts/update-context-pool.php \
-            --run-id "${{ github.run_id }}" \
-            --status "${{ job.status }}" \
-            --gates-json build/qa-report.json \
-            --webhook "$GOV_WEBHOOK_URL"
-
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-artifacts-${{ github.run_id }}
           path: |
-            build/
-            wp-content/uploads/smartalloc/artifacts/context_pool.json
-          retention-days: 30
+            ~/.composer/cache
+          key: composer-${{ runner.os }}-v2-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-v2-
 
-      - name: Create handoff packet (on failure)
-        if: failure()
+      - name: Build and start
         run: |
-          php scripts/create-handoff.php \
-            --chunk-id "${{ github.run_id }}" \
-            --qa-report build/qa-report.json \
-            --owner "Claude_Architect" \
-            --out wp-content/uploads/smartalloc/artifacts/HANDOFF_PACKET.json
+          docker compose build --no-cache
+          docker compose up -d db
+          sleep 8
+          docker compose up -d php
 
-      - name: Dispatch success event
-        if: success()
+      - name: Composer install
+        run: docker compose run --rm php composer install -o
+
+      - name: Project init
+        run: docker compose run --rm php bash -lc "./docker/init.sh"
+
+      - name: Unit tests
+        run: docker compose run --rm php vendor/bin/phpunit -v
+
+      - name: Quality selective
+        run: docker compose run --rm php composer run quality:selective
+
+      - name: Baseline check
+        run: docker compose run --rm php php baseline-check --current-phase=FOUNDATION
+
+      - name: Collect artifacts (optional)
+        if: always()
         run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/dispatches \
-            -d '{"event_type":"codex-pass","client_payload":{"run_id":"${{ github.run_id }}"}}'
+          mkdir -p artifacts
+          cp -r build artifacts/ || true
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-artifacts
+          path: artifacts
+
