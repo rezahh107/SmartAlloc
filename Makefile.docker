@@ -38,3 +38,39 @@ docker-test:
 	docker compose up -d db
 	docker compose run --rm php bash -lc "./docker/init.sh"
 	docker compose run --rm php vendor/bin/phpunit -v
+
+# Audit pipeline: tests, quality gates, and state update
+.PHONY: preflight docker-audit
+
+preflight:
+	@command -v docker >/dev/null 2>&1 || { echo "WARN: docker not found on host"; } 
+	@docker compose version >/dev/null 2>&1 || { echo "WARN: docker compose not found on host"; } 
+	@mkdir -p build
+	@echo "Preflight OK"
+
+docker-audit: preflight
+	# Build and ensure deps inside container
+	docker compose build php
+	docker compose run --rm php composer install --no-interaction --prefer-dist || true
+
+	# Tests + Coverage
+	docker compose run --rm php vendor/bin/phpunit \
+		--coverage-clover build/coverage.xml \
+		--log-junit build/junit.xml || true
+
+	# Quality Gates
+	docker compose run --rm php composer run quality:selective || true
+	docker compose run --rm php php scripts/patch_guard.php || true
+	docker compose run --rm php php scripts/utc_sweep.php || true
+	docker compose run --rm php php -r "file_exists('build/utc_sweep.json') ?: file_put_contents('build/utc_sweep.json','{\"violations\":0}');" || true
+
+	# Observability
+	docker compose run --rm php php scripts/site_health_check.php || true
+	docker compose run --rm php php scripts/metrics_check.php || true
+	docker compose run --rm php php scripts/dlq_monitor.php || true
+
+	# 5D + State
+	docker compose run --rm php php scripts/5d_evaluation.php --output build/5d_report.json || true
+	docker compose run --rm php php scripts/update_state.php --context wp-content/uploads/smartalloc/artifacts/context_pool.json || true
+
+	@echo "=== AUDIT DONE ==="

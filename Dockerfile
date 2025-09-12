@@ -17,3 +17,7 @@ RUN php -r "copy('https://getcomposer.org/installer','composer-setup.php');" \
 WORKDIR /app
 ENV XDEBUG_MODE=off
 
+# Enable coverage: prefer pcov, else xdebug
+RUN set -eux; \
+    (pecl install pcov && docker-php-ext-enable pcov && echo "pcov.enabled=1" > /usr/local/etc/php/conf.d/pcov.ini) \
+    || (pecl install xdebug && docker-php-ext-enable xdebug && echo "xdebug.mode=coverage" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini)
