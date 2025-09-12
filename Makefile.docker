@@ -1,0 +1,26 @@
+.PHONY: build db-up init test quality baseline down shell
+
+build:
+	docker compose build php
+
+db-up:
+	docker compose up -d db
+
+init:
+	docker compose run --rm php bash -lc "./docker/init.sh"
+
+test:
+	docker compose run --rm php vendor/bin/phpunit -v
+
+quality:
+	docker compose run --rm php composer run quality:selective
+
+baseline:
+	docker compose run --rm php php baseline-check --current-phase=FOUNDATION
+
+down:
+	docker compose down -v
+
+shell:
+	docker compose run --rm php bash
+

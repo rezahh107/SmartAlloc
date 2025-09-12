@@ -1,43 +1,41 @@
-version: '3.9'
+version: "3.8"
 services:
   db:
-    image: mysql:8.0
-    restart: unless-stopped
+    image: mariadb:10.11
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    command: --default-authentication-plugin=mysql_native_password
+      MYSQL_DATABASE: ${WP_TESTS_DB_NAME:-wordpress_tests}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-root}
+      MYSQL_USER: ${WP_TESTS_DB_USER:-wp}
+      MYSQL_PASSWORD: ${WP_TESTS_DB_PASS:-wp}
+    ports:
+      - "${DB_PORT:-3306}:3306"
     volumes:
-      - db_data:/var/lib/mysql
+      - dbdata:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASS:-root}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
-  wordpress:
-    build: ./wp-env
-    restart: unless-stopped
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      WP_VERSION: ${WP_VERSION:-6.6.2}
+      WP_PHPUNIT__DIR: /app/vendor/wp-phpunit/wp-phpunit
+      WP_TESTS_DB_NAME: ${WP_TESTS_DB_NAME:-wordpress_tests}
+      WP_TESTS_DB_USER: ${WP_TESTS_DB_USER:-root}
+      WP_TESTS_DB_PASS: ${WP_TESTS_DB_PASS:-root}
+      WP_TESTS_DB_HOST: db
+      XDEBUG_MODE: ${XDEBUG_MODE:-off}
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8080:80"
-    environment:
-      WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
-      WORDPRESS_DB_USER: ${MYSQL_USER}
-      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-      WP_ENVIRONMENT_TYPE: ${WP_ENVIRONMENT_TYPE}
-      WP_DEBUG: ${WP_DEBUG}
-    volumes:
-      - .:/var/www/html/wp-content/plugins/smart-alloc
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/wp-login.php"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
+    command: sh -lc "tail -f /dev/null"
+
 volumes:
-  db_data:
+  dbdata:
