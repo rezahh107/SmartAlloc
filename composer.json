@@ -94,7 +94,10 @@
     "test:performance": "phpunit --group=performance || true",
     "security:relaxed": "php scripts/security-relaxed-check.php",
     "maintainability:relaxed": "php scripts/maintainability-check.php",
-    "quality:selective": "php -v",
+    "quality:selective": [
+      "php scripts/selective-quality-gates.php lint",
+      "php scripts/selective-quality-gates.php analyze"
+    ],
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
     "audit": "composer audit"
@@ -118,7 +121,9 @@
   "config": {
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true,
-      "infection/extension-installer": true
+      "infection/extension-installer": true,
+      "phpstan/extension-installer": true,
+      "cweagans/composer-patches": true
     },
     "platform": {
       "php": "8.1.0"
