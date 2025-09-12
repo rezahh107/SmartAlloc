@@ -1,1 +1,1 @@
-{"version":1,"defects":[],"times":{"SmokeTest::test_plugin_file_exists":0.225,"SmokeTest::test_example_add":0.032}}
+{"version":1,"defects":[],"times":{"SmokeTest::test_plugin_file_exists":0.136,"SmokeTest::test_example_add":0.035}}

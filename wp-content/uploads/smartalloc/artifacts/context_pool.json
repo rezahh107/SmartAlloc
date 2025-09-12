@@ -1,20 +1,22 @@
 {
-  "ssot": true,
-  "active_context": {
-    "ci_runs": [],
-    "handoff": {
-      "path": "wp-content/uploads/smartalloc/artifacts/HANDOFF_PACKET_20250911_074601.json",
-      "created": "2025-09-11T07:46:01Z",
-      "status": "PENDING_ARCHITECT"
+    "ssot": true,
+    "active_context": {
+        "ci_runs": [],
+        "handoff": {
+            "path": "wp-content\/uploads\/smartalloc\/artifacts\/HANDOFF_PACKET_20250911_074601.json",
+            "created": "2025-09-11T07:46:01Z",
+            "status": "PENDING_ARCHITECT"
+        },
+        "last_update": "2025-09-11T07:46:01Z",
+        "phase": "FOUNDATION"
     },
-    "last_update": "2025-09-11T07:46:01Z",
-    "phase": "FOUNDATION"
-  },
-  "thresholds": {
-    "patch_guard_files": 20,
-    "patch_guard_loc": 800,
-    "dlq_ratio": 0.01,
-    "error_rate": 0.005,
-    "p95_latency": 2.0
-  }
+    "thresholds": {
+        "patch_guard_files": 20,
+        "patch_guard_loc": 800,
+        "dlq_ratio": 0.01,
+        "error_rate": 0.005,
+        "p95_latency": 2
+    },
+    "PROJECT_STATE": "foundation",
+    "updated_at": "2025-09-12T15:04:34+00:00"
 }
