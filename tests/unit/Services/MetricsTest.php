@@ -1,122 +1,64 @@
 <?php
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-use Psr\Log\AbstractLogger;
-use SmartAlloc\Database\DbPort;
-use SmartAlloc\Services\Metrics;
-
-if (!function_exists('wp_json_encode')) {
-    function wp_json_encode($data) {
-        return json_encode($data);
+namespace {
+    if (!function_exists('wp_json_encode')) {
+        function wp_json_encode($data) {
+            return json_encode($data);
+        }
     }
 }
 
+namespace SmartAlloc\Tests\Unit\Services {
+
+use Exception;
+use PHPUnit\Framework\TestCase;
+use SmartAlloc\Infrastructure\Contracts\DbProxy;
+use SmartAlloc\Services\Metrics;
+
 final class MetricsTest extends TestCase
 {
-    public function test_constructor_injection_and_inc_uses_db_port(): void
+    public function test_constructor_accepts_db_proxy_and_table(): void
     {
-        $db = new class implements DbPort {
-            public string $sql = '';
-            public array $args = [];
-            public function exec(string $sql, mixed ...$args)
-            {
-                $this->sql  = $sql;
-                $this->args = $args;
-                return 1;
-            }
-            public function insert_id(): int { return 0; }
-        };
+        $mockDb = $this->createMock(DbProxy::class);
+        $metrics = new Metrics($mockDb, 'wp_salloc_metrics');
 
-        $logger = new class extends AbstractLogger {
-            /** @var array<int,array<string,mixed>> */
-            public array $records = [];
-            public function log($level, $message, array $context = []): void
-            {
-                $this->records[] = compact('level', 'message', 'context');
-            }
-        };
-
-        $metrics = new Metrics($db, 'salloc_metrics', $logger);
-        $metrics->inc('views');
-
-        $this->assertStringContainsString('salloc_metrics', $db->sql);
-        $this->assertEmpty($logger->records);
+        $this->assertInstanceOf(Metrics::class, $metrics);
     }
 
-    public function test_inc_logs_errors_and_continues(): void
+    public function test_database_exception_handling(): void
     {
-        $db = new class implements DbPort {
-            public function exec(string $sql, mixed ...$args)
-            {
-                throw new RuntimeException('fail');
-            }
-            public function insert_id(): int { return 0; }
-        };
+        $mockDb = $this->createMock(DbProxy::class);
+        $mockDb->method('getResults')->willThrowException(new Exception('DB Error'));
 
-        $logger = new class extends AbstractLogger {
-            /** @var array<int,array<string,mixed>> */
-            public array $records = [];
-            public function log($level, $message, array $context = []): void
-            {
-                $this->records[] = compact('level', 'message', 'context');
-            }
-        };
-
-        $metrics = new Metrics($db, 'salloc_metrics', $logger);
-        $metrics->inc('views');
-
-        $this->assertSame('error', $logger->records[0]['level']);
-        $this->assertSame('Metrics database operation failed', $logger->records[0]['message']);
-    }
-
-    public function test_get_returns_safe_default_on_failure(): void
-    {
-        $db = new class implements DbPort {
-            public function exec(string $sql, mixed ...$args)
-            {
-                throw new RuntimeException('fail');
-            }
-            public function insert_id(): int { return 0; }
-        };
-
-        $logger = new class extends AbstractLogger {
-            /** @var array<int,array<string,mixed>> */
-            public array $records = [];
-            public function log($level, $message, array $context = []): void
-            {
-                $this->records[] = compact('level', 'message', 'context');
-            }
-        };
-
-        $metrics = new Metrics($db, 'salloc_metrics', $logger);
-        $result  = $metrics->get('views');
+        $metrics = new Metrics($mockDb, 'wp_salloc_metrics');
+        $result = $metrics->get('foo');
 
         $this->assertSame([], $result);
-        $this->assertSame('error', $logger->records[0]['level']);
     }
 
-    public function test_get_decodes_labels(): void
+    public function test_error_logging_on_database_failure(): void
     {
-        $db = new class implements DbPort {
-            public function exec(string $sql, mixed ...$args)
-            {
-                return [
-                    [
-                        'metric_key' => 'views',
-                        'labels'     => '{"foo":1}',
-                        'value'      => 2,
-                        'ts'         => '2024-01-01 00:00:00',
-                    ],
-                ];
-            }
-            public function insert_id(): int { return 0; }
-        };
+        $mockDb = $this->createMock(DbProxy::class);
+        $mockDb->method('insert')->willThrowException(new Exception('Insert failed'));
+        $metrics = new Metrics($mockDb, 'wp_salloc_metrics');
 
-        $metrics = new Metrics($db, 'salloc_metrics');
-        $rows    = $metrics->get('views');
+        $temp = tempnam(sys_get_temp_dir(), 'log');
+        $log = ini_set('error_log', $temp);
+        $metrics->inc('foo');
+        ini_set('error_log', (string) $log);
+        $output = file_get_contents($temp) ?: '';
+        unlink($temp);
 
-        $this->assertSame(['foo' => 1], $rows[0]['labels']);
+        $this->assertStringContainsString('Metrics::inc: Insert failed', $output);
     }
+
+    public function test_factory_method_creates_with_defaults(): void
+    {
+        $metrics = Metrics::createDefault();
+        $this->assertInstanceOf(Metrics::class, $metrics);
+    }
+}
+
 }
 

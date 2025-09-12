@@ -4,12 +4,20 @@ param(
   [switch]$CreatePR,
   [string]$Branch = '',
   [string]$RepoSsh = 'git@github.com:rezahh107/SmartAlloc.git',
-  [switch]$SkipCI
+  [switch]$SkipCI,
+  [switch]$DryRun,
+  [switch]$NoRebase,
+  [switch]$AllowDirty
 )
 
 $ErrorActionPreference = 'Stop'
-function note($t){ Write-Host "== $t" }
-function run($c){ Write-Host ">> $c"; iex $c }
+
+function note($t){ Write-Host ("== {0}" -f $t) -ForegroundColor Cyan }
+function ok($t){ Write-Host ("✔ {0}" -f $t) -ForegroundColor Green }
+function warn($t){ Write-Host ("! {0}" -f $t) -ForegroundColor Yellow }
+function err($t){ Write-Host ("✖ {0}" -f $t) -ForegroundColor Red }
+function run($c){ Write-Host ">> $c"; if (-not $DryRun) { iex $c } }
+function fail($code,$msg){ err $msg; exit $code }
 
 # 0) Branch detection
 if (-not $Branch) {
@@ -56,7 +64,8 @@ function Stage-ByRules {
     if (-not $path) { continue }
     foreach ($rx in $rules) {
       if ($path -match $rx) {
-        run ("git add -- '{0}'" -f $path)
+        if ($DryRun) { Write-Host ("(dryrun) would stage: {0}" -f $path) }
+        else { run ("git add -- '{0}'" -f $path) }
         break
       }
     }
@@ -67,7 +76,8 @@ if (-not $nothingToCommit) {
   if ($Scope -eq 'infra') {
     Stage-ByRules -rules $allowInfra
   } else {
-    run 'git add -A'
+    if ($DryRun) { Write-Host "(dryrun) would: git add -A" }
+    else { run 'git add -A' }
   }
 }
 
@@ -78,7 +88,8 @@ if ($stagedRaw) { $staged = $stagedRaw -split "`r?`n" | Where-Object { $_ -ne ''
 foreach ($p in $staged) {
   foreach ($rx in $blocked) {
     if ($p -match $rx) {
-      throw "Blocked path staged: $p. Remove from index and retry."
+      if ($DryRun) { err ("Blocked path would be staged: {0}" -f $p); fail 10 "DryRun detected blocked path" }
+      else { fail 10 ("Blocked path staged: {0}. Remove from index and retry." -f $p) }
     }
   }
 }
@@ -103,57 +114,95 @@ if (-not $staged -or $staged.Count -eq 0) {
     $Message = "$pick: automated ship (infra)"
   }
   note "Commit: $Message"
-  run ("git commit -m {0}" -f ('"'+$Message.Replace('"','\"')+'"'))
+  if ($DryRun) { Write-Host "(dryrun) would: git commit -m ..." }
+  else { run ("git commit -m {0}" -f ('"'+$Message.Replace('"','\"')+'"')) }
   $didCommit = $true
 }
 
 # 7) Optional: run offline CI
+${ciSummary} = ""
+${ciPass} = $true
 if (-not $SkipCI) {
   note "Running offline CI (tools/offline-ci.ps1)"
   if (Test-Path .\tools\offline-ci.ps1) {
-    powershell -ExecutionPolicy Bypass -File .\tools\offline-ci.ps1
+    if ($DryRun) {
+      Write-Host "(dryrun) would: run offline-ci.ps1"
+    } else {
+      & powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\offline-ci.ps1
+      $exit = $LASTEXITCODE
+      # derive latest artifacts folder
+      $base = Join-Path (Get-Location) 'build/ci-local'
+      $latest = ''
+      if (Test-Path $base) {
+        $latest = Get-ChildItem -Path $base -Directory | Sort-Object Name -Descending | Select-Object -First 1 | ForEach-Object { $_.FullName }
+      }
+      if ($exit -ne 0) { $ciPass = $false }
+      $ciSummary = "Offline CI: " + ($(if ($ciPass) { 'PASS' } else { 'FAIL' }))
+      if ($latest) { $ciSummary += " | artifacts: $latest" }
+      if (-not $ciPass) { warn $ciSummary; fail 20 "Offline CI failed" }
+      else { ok $ciSummary }
+    }
   } else {
-    Write-Host "⚠️ tools/offline-ci.ps1 not found; skipping CI"
+    warn "tools/offline-ci.ps1 not found; skipping CI"
   }
 }
 
 # 8) Network: ensure SSH or fallback to HTTPS
 note "Ensuring SSH remote & connectivity"
-run ("git remote set-url origin {0}" -f $RepoSsh)
-$sshOk = $true
-try { run 'ssh -T git@github.com' } catch { $sshOk = $false }
-if (-not $sshOk) {
-  # Use port 443
-  $cfg="$env:USERPROFILE\.ssh\config"
-  if (!(Test-Path (Split-Path $cfg))) { New-Item -ItemType Directory -Path (Split-Path $cfg) | Out-Null }
-  @"
+if ($DryRun) {
+  Write-Host "(dryrun) would: set origin to $RepoSsh and test ssh"
+} else {
+  run ("git remote set-url origin {0}" -f $RepoSsh)
+  $sshOk = $true
+  try { run 'ssh -T git@github.com' } catch { $sshOk = $false }
+  if (-not $sshOk) {
+    # Use port 443
+    $cfg="$env:USERPROFILE\.ssh\config"
+    if (!(Test-Path (Split-Path $cfg))) { New-Item -ItemType Directory -Path (Split-Path $cfg) | Out-Null }
+    @"
 Host github.com
   HostName ssh.github.com
   Port 443
   User git
   IdentityFile ~/.ssh/id_ed25519
 "@ | Out-File -Encoding ascii $cfg
-  try { run 'ssh -T git@github.com'; $sshOk = $true } catch { $sshOk = $false }
+    try { run 'ssh -T git@github.com'; $sshOk = $true } catch { $sshOk = $false }
+  }
 }
 
 $usedHttps = $false
-try { note "git fetch"; run 'git fetch origin' }
-catch {
-  note "Fetch failed; switching to HTTPS temporarily"; $usedHttps=$true;
-  run 'git remote set-url origin https://github.com/rezahh107/SmartAlloc.git';
-  run 'git fetch origin'
+if ($DryRun) {
+  Write-Host "(dryrun) would: git fetch origin"
+} else {
+  try { note "git fetch"; run 'git fetch origin' }
+  catch {
+    note "Fetch failed; switching to HTTPS temporarily"; $usedHttps=$true;
+    run 'git remote set-url origin https://github.com/rezahh107/SmartAlloc.git';
+    run 'git fetch origin'
+  }
 }
 
 # 9) Rebase & push
-note "Rebase origin/$Branch"
-run ("git rebase origin/{0}" -f $Branch)
+if (-not $NoRebase) {
+  note "Rebase origin/$Branch"
+  if ($DryRun) { Write-Host "(dryrun) would: git rebase origin/$Branch" }
+  else {
+    try { run ("git rebase origin/{0}" -f $Branch) } catch { fail 30 "Rebase failed" }
+  }
+} else { warn "Skipping rebase (NoRebase)" }
 
 note "Push branch"
-if ($usedHttps) {
-  run ("git push -u origin {0}" -f $Branch)
-  run ("git remote set-url origin {0}" -f $RepoSsh)
+if ($DryRun) {
+  Write-Host "(dryrun) would: git push -u origin $Branch"
 } else {
-  run ("git push -u origin {0}" -f $Branch)
+  try {
+    if ($usedHttps) {
+      run ("git push -u origin {0}" -f $Branch)
+      run ("git remote set-url origin {0}" -f $RepoSsh)
+    } else {
+      run ("git push -u origin {0}" -f $Branch)
+    }
+  } catch { fail 40 "Push failed" }
 }
 
 # 10) Optional PR
@@ -161,11 +210,18 @@ if ($CreatePR) {
   $title = 'CI reset & repo hygiene (infra-only)'
   if (Get-Command gh -ErrorAction SilentlyContinue) {
     note "Creating PR via gh"
-    & gh pr create --base main --title $title --body "Infra-only: CI reset + repo hygiene + service auto-detect + wait-for-DB + script perms/LF. No app code changes."
+    $body = "Infra-only: CI reset + repo hygiene + service auto-detect + wait-for-DB + script perms/LF. No app code changes."
+    if ($ciSummary) { $body = "$body`n`n$ciSummary" }
+    try {
+      & gh pr create --base main --title $title --body $body
+    } catch {
+      warn "PR creation may have failed or already exists; attempting to comment summary"
+      if ($ciSummary) { try { & gh pr comment --body $ciSummary } catch { warn "Couldn't add PR comment." } }
+    }
   } else {
     Write-Host "Open PR in browser:"
     Write-Host ("https://github.com/rezahh107/SmartAlloc/compare/main...{0}?expand=1" -f $Branch)
   }
 }
 
-Write-Host "`n✅ Ship done. Branch: $Branch"
+if ($DryRun) { ok "DryRun complete. Branch: $Branch" } else { ok "Ship done. Branch: $Branch" }
