@@ -25,14 +25,24 @@ wait-db:
 		done; \
 		echo "DB not ready after timeout" >&2; exit 1'
 
+# longer wait with socket fallback
+wait-db-long:
+	@echo ">> Waiting longer for DB ($(DB_SERVICE))..."
+	@$(DOCKER_COMPOSE) exec -T $(DB_SERVICE) sh -lc '\
+		for i in $$(seq 1 120); do \
+			(mysqladmin ping -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent) || (test -S /var/run/mysqld/mysqld.sock) && exit 0; \
+			sleep 2; \
+		done; \
+		echo "DB not ready after extended timeout" >&2; exit 1'
+
 docker-test:
 	$(DOCKER_COMPOSE) down -v
 	$(DOCKER_COMPOSE) up -d $(DB_SERVICE)
-	$(MAKE) wait-db
+	$(MAKE) wait-db-long
 	$(DOCKER_COMPOSE) up -d $(PHP_SERVICE)
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc 'chmod +x ./docker/init.sh || true'
-	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) composer install -o
-	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc "./docker/init.sh"
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc 'export COMPOSER_MEMORY_LIMIT=-1; composer clear-cache || true; composer install -o || composer install -o'
+	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) bash -lc 'if [ -f ./docker/init.sh ]; then ./docker/init.sh; else echo "No docker/init.sh, skipping"; fi'
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) vendor/bin/phpunit -v
 
 docker-ci: docker-test
