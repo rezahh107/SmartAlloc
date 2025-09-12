@@ -48,3 +48,17 @@ docker-test:
 docker-ci: docker-test
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) composer run quality:selective
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) php baseline-check --current-phase=FOUNDATION
+
+ci-local:
+	@if [ "$$((uname -s) 2>/dev/null)" = "Windows_NT" ] || [ -n "$$WINDIR" ]; then \
+		powershell -ExecutionPolicy Bypass -File tools/offline-ci.ps1 ; \
+	else \
+		pwsh -File tools/offline-ci.ps1 ; \
+	fi
+
+ship-auto:
+	@if [ "$$((uname -s) 2>/dev/null)" = "Windows_NT" ] || [ -n "$$WINDIR" ]; then \
+		powershell -ExecutionPolicy Bypass -File tools/ship-auto.ps1 -Branch "$$((git rev-parse --abbrev-ref HEAD) 2>/dev/null)" ; \
+	else \
+		pwsh -File tools/ship-auto.ps1 -Branch "$$((git rev-parse --abbrev-ref HEAD) 2>/dev/null)" ; \
+	fi

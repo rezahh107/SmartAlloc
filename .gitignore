@@ -16,4 +16,9 @@ wp-env/*
 /.env
 /.idea/
 /.vscode/*
+!.vscode/
 !.vscode/settings.json
+!.vscode/tasks.json
+\n+# Offline CI/local ship logs
+/build/ci-local/
+/build/ship-logs/

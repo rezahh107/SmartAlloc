@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Ship: Path B (stash → rebase → push)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy","Bypass",
+        "-File","${workspaceFolder}\\final-path-b.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Run offline-ci.ps1",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy","Bypass","-File","${workspaceFolder}\\tools\\offline-ci.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Ship: Auto commit & push",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy","Bypass",
+        "-File","${workspaceFolder}\\tools\\ship-auto.ps1",
+        "-Branch","${input:gitBranch}"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "gitBranch",
+      "type": "command",
+      "command": "git.revParse",
+      "args": ["--abbrev-ref","HEAD"]
+    }
+  ]
+}
