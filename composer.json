@@ -54,6 +54,10 @@
     ]
   },
   "scripts": {
+    "qa:phpcs": "vendor/bin/phpcs --standard=phpcs.xml",
+    "qa:selective": "bash scripts/selective_or_full.sh",
+    "test:unit": "vendor/bin/phpunit --testsuite unit || vendor/bin/phpunit",
+    "test:all": "vendor/bin/phpunit --coverage-clover build/coverage.xml --log-junit build/junit.xml",
     "score:5d": [
       "@phpcbf",
       "bash scripts/update_state.sh"

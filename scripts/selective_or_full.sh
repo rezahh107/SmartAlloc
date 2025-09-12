@@ -12,4 +12,3 @@ else
 fi
 
 # Note: inside containers without Git history, fallback will run.
-
