@@ -1,0 +1,2 @@
+
+ERROR: time="2025-09-13T10:43:08+03:30" level=warning msg="E:\\SmartLoc\\SmartAlloc\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
