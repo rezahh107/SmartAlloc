@@ -63,7 +63,7 @@ jobs:
           XDEBUG_MODE: coverage
         run: |
           vendor/bin/phpunit --colors=always --log-junit build/junit.unit.xml --coverage-clover build/coverage.unit.xml -c phpunit-unit.xml || true
-          php scripts/coverage-threshold.php --file=build/coverage.unit.xml --min=60
+          php scripts/coverage-threshold.php --file=build/coverage.unit.xml --min=65
 
       - name: Static analysis (non-blocking)
         run: |
@@ -71,6 +71,9 @@ jobs:
           vendor/bin/phpstan analyze --level=5 --no-progress --error-format=json src includes > out/phpstan.json || true
           vendor/bin/psalm --no-progress --output-format=json > out/psalm.json || true
           php scripts/quality-summary.php --phpstan=out/phpstan.json --psalm=out/psalm.json
+
+      - name: QA Summary (Markdown)
+        run: php scripts/qa-summary-md.php || true
 
       - name: QA Orchestrator (index + bundle)
         run: |
@@ -94,6 +97,9 @@ jobs:
 
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout
@@ -114,6 +120,10 @@ jobs:
           name: semgrep-results
           path: semgrep.sarif
           if-no-files-found: warn
+      - name: Upload to Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
 
   e2e:
     name: E2E (conditional)
