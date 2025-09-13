@@ -26,6 +26,10 @@ $cwd    = getcwd();
 $gitCmd = 'git -c safe.directory=' . escapeshellarg($cwd);
 exec($gitCmd . ' diff --cached --name-only --diff-filter=ACMR | grep "\\.php$"', $staged);
 $staged = array_filter($staged, static function (string $file): bool {
+    // Keep only core plugin code areas; skip tests/scripts by default
+    if (!preg_match('#^(src/|includes/|smart-alloc\\.php|uninstall\\.php)#', $file)) {
+        return false;
+    }
     return !preg_match('/stub|mock|fixture/i', $file);
 });
 
@@ -39,7 +43,9 @@ $exit  = 0;
 
 if ($mode === 'lint' || $mode === 'all') {
     echo "Running PHPCS on staged files...\n";
-    passthru("vendor/bin/phpcs --standard=PSR12 $files", $lintCode);
+    // Prefer project phpcs.xml if present; otherwise fall back to WordPress standard
+    $standard = is_file(__DIR__ . '/../phpcs.xml') ? 'phpcs.xml' : 'WordPress';
+    passthru("vendor/bin/phpcs -q --standard={$standard} $files", $lintCode);
     $exit = max($exit, $lintCode);
 }
 

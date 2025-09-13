@@ -6,8 +6,9 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 BASE=$(git merge-base origin/develop HEAD 2>/dev/null || git rev-parse HEAD~1)
 
 FILTER='^(vendor/|node_modules/|dist/|build/|assets/dist/|languages/.*\.(mo|po)$|.*\.min\.(js|css)$|.*\.bundle\.js$)'
-FILES=$(git diff --name-only "$BASE...HEAD" | grep -Ev "$FILTER" | wc -l | tr -d ' ')
-LOC=$(git diff --numstat "$BASE...HEAD" | grep -Ev "$FILTER" | awk '{add+=$1; del+=$2} END {print (add+del)}')
+# Be robust when no files match the filter (grep exits 1). Use a grouping + fallback.
+FILES=$({ git diff --name-only "$BASE...HEAD" | grep -Ev "$FILTER" || true; } | wc -l | tr -d ' ')
+LOC=$({ git diff --numstat "$BASE...HEAD" | grep -Ev "$FILTER" || true; } | awk '{add+=$1; del+=$2} END {print (add+del)+0}')
 
 max_files=10; max_loc=300
 case "$BRANCH" in

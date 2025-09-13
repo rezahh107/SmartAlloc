@@ -3,12 +3,30 @@
 
 set -euo pipefail
 
-echo "▶ Running SmartAlloc Docker pre-commit checks…"
-if [ -x "scripts/precommit-docker.sh" ]; then
+echo "▶ Running SmartAlloc pre-commit checks…"
+
+# Prefer Docker-based checks when available; otherwise fall back to local lightweight checks.
+if [ -x "scripts/precommit-docker.sh" ] \
+   && { docker compose version >/dev/null 2>&1 || command -v docker-compose >/dev/null 2>&1; } \
+   && docker info >/dev/null 2>&1; then
   ./scripts/precommit-docker.sh
 else
-  echo "❌ scripts/precommit-docker.sh not found or not executable" >&2
-  exit 1
+  echo "ℹ️ Docker not available. Using local fallback (selective quality + baseline + patch guard)"
+  # Ensure Composer deps exist (best-effort, non-fatal if composer missing)
+  if [ ! -x vendor/bin/phpcs ] || [ ! -x vendor/bin/phpstan ]; then
+    if command -v composer >/dev/null 2>&1; then
+      COMPOSER_MEMORY_LIMIT=-1 composer install -o || true
+    fi
+  fi
+  # Minimal gates (blocking)
+  if command -v composer >/dev/null 2>&1; then
+    composer run -q quality:selective
+  else
+    echo "❌ composer not found; cannot run selective quality" >&2
+    exit 1
+  fi
+  php baseline-check --current-phase=FOUNDATION
+  bash scripts/patch-guard-check.sh
 fi
 
 # Append current state to project history (best-effort)
