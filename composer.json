@@ -2,7 +2,6 @@
   "name": "smartalloc/wordpress-plugin",
   "description": "Event-driven student support allocation with Gravity Forms + Exporter",
   "type": "wordpress-plugin",
-  "version": "1.0.0-rc.2",
   "license": "MIT",
   "authors": [
     {
@@ -50,7 +49,16 @@
     },
     "files": [
       "src/Support/SafetyKit.php",
-      "src/Infra/DbAbstraction.php"
+      "src/Infra/DbAbstraction.php",
+      "src/RuleEngine/Contracts.php",
+      "src/Rules/Exceptions.php"
+    ],
+    "exclude-from-classmap": [
+      "src/Infra/DbAbstraction.php",
+      "src/Support/SafetyKit.php",
+      "src/RuleEngine/Contracts.php",
+      "src/Rules/Exceptions.php",
+      "tests/"
     ]
   },
   "scripts": {
@@ -97,7 +105,12 @@
     "quality:selective": "php scripts/selective-quality-gates.php",
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
-    "audit": "composer audit"
+    "audit": "composer audit",
+    "dev:tests:fix-structure": [
+      "php scripts/tools/fix-test-namespaces.php",
+      "php scripts/tools/fix-declare-position.php",
+      "php scripts/tools/fix-mixed-namespaces.php"
+    ]
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
