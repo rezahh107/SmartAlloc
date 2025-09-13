@@ -1,0 +1,60 @@
+name: QA Light
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Baseline (FOUNDATION)
+        run: php baseline-check --current-phase=FOUNDATION
+
+      - name: Security & Compliance Scans (light)
+        run: |
+          set -euo pipefail
+          php scripts/scan-rest-permissions.php      > rest-violations.json      || true
+          php scripts/scan-sql-prepare.php           > sql-violations.json       || true
+          php scripts/scan-secrets.php               > secrets.json              || true
+          if [ -f scripts/headers-guard.php ]; then php scripts/headers-guard.php --q || true; fi
+          if [ -f scripts/i18n-lint.php ]; then php scripts/i18n-lint.php > i18n-lint.json || true; fi
+
+      - name: QA Orchestrator (index + bundle)
+        run: |
+          bash scripts/qa-orchestrator.sh || true
+
+      - name: Upload QA Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-artifacts
+          path: |
+            artifacts/**
+            rest-violations.json
+            sql-violations.json
+            secrets.json
+            i18n-lint.json
+          if-no-files-found: warn
+
