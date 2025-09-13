@@ -16,8 +16,12 @@ require_once __DIR__ . '/Contracts.php';
  */
 final class RuleEngineService implements RuleEngineContract
 {
-    private const MAX_DEPTH = 3;
+    private const MAX_DEPTH = 4;
+    private const MAX_CONDITIONS = 100;
+    private const TIMEOUT_SECONDS = 2.0;
     private CapacityProvider $capacity;
+    private int $conditionCount = 0;
+    private float $startTime = 0.0;
 
     public function __construct(?CapacityProvider $capacity = null)
     {
@@ -64,9 +68,13 @@ final class RuleEngineService implements RuleEngineContract
      */
     public function evaluateCompositeRule(array $rule, array $context, int $depth = 0): bool
     {
-        if ($depth > self::MAX_DEPTH) {
-            throw new InvalidRuleException('Rule depth exceeded maximum: ' . self::MAX_DEPTH); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        if ($depth === 0) {
+            $this->startTime = microtime(true);
+            $this->conditionCount = 0;
         }
+
+        $this->checkLimits($depth);
+        $this->conditionCount++;
         if ($rule === []) {
             return false;
         }
@@ -79,6 +87,10 @@ final class RuleEngineService implements RuleEngineContract
             if ($upper === 'SINGLE') {
                 $child = $rule['conditions'][0] ?? [];
                 return $this->evaluateCompositeRule($child, $context, $depth + 1);
+            }
+            // Validate conditions array
+            if (!is_array($rule['conditions']) || $rule['conditions'] === []) {
+                throw new InvalidRuleException('Invalid rule structure: empty conditions');
             }
             return $this->evaluateLogicalOperator($rule, $context, $depth);
         }
@@ -152,5 +164,18 @@ final class RuleEngineService implements RuleEngineContract
             '!=' => $current !== $value,
             default => throw new InvalidRuleException("Unsupported comparator: {$op}"), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         };
+    }
+
+    private function checkLimits(int $depth): void
+    {
+        if ($depth > self::MAX_DEPTH) {
+            throw new InvalidRuleException('Rule depth exceeded maximum: ' . self::MAX_DEPTH);
+        }
+        if ($this->conditionCount >= self::MAX_CONDITIONS) {
+            throw new InvalidRuleException('Rule complexity exceeded');
+        }
+        if ($this->startTime > 0 && (microtime(true) - $this->startTime) > self::TIMEOUT_SECONDS) {
+            throw new InvalidRuleException('Rule evaluation timeout');
+        }
     }
 }

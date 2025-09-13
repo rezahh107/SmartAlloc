@@ -72,6 +72,31 @@
       "status": "pending",
       "files": ["src/Admin/SiteHealth"],
       "acceptance": ["all green on staging"]
+    },
+    {
+      "id": "PERF-1",
+      "title": "Performance harness (phpbench/WP/k6)",
+      "owner": "core",
+      "status": "pending",
+      "files": ["tests/Performance", "scripts/k6"],
+      "acceptance": [
+        "export_1000_le_2s",
+        "peak_mem_le_128mb",
+        "ruleengine_p95_lt_100ms"
+      ]
+    },
+    {
+      "id": "RULE-2",
+      "title": "RuleEngine guards (depth/complexity/timeout)",
+      "owner": "core",
+      "status": "in_progress",
+      "files": ["src/RuleEngine/RuleEngineService.php", "tests/RuleEngine"],
+      "acceptance": [
+        "depth_eq_4",
+        "complexity_cap_100",
+        "timeout_2s",
+        "negative_tests_green"
+      ]
     }
   ],
   "kpis": {
@@ -82,4 +107,3 @@
     "forms": {"submission_error_pct_lt": 0.5, "gf_schema_compat_pct": 100}
   }
 }
-
