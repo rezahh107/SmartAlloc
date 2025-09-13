@@ -27,7 +27,13 @@ function Step([string]$name, [ScriptBlock]$block){
   $logFile = Join-Path $logsDir $safe
   $ok = $true
   try {
-    & $block 2>&1 | Tee-Object -FilePath $logFile | Out-Host
+    $oldEap = $ErrorActionPreference
+    try {
+      $ErrorActionPreference = 'Continue'
+      & $block 2>&1 | Tee-Object -FilePath $logFile | Out-Host
+    } finally {
+      $ErrorActionPreference = $oldEap
+    }
     if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) { throw "Exit $LASTEXITCODE" }
   } catch {
     $ok = $false
@@ -39,7 +45,14 @@ function Step([string]$name, [ScriptBlock]$block){
 }
 
 function Detect-Service([string[]]$candidates){
-  $servicesRaw = (& docker compose config --services 2>&1)
+  # Suppress stderr warnings and non-terminating errors from docker compose under ErrorActionPreference=Stop
+  $oldEap = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = 'Continue'
+    $servicesRaw = (docker compose config --services 2>$null)
+  } finally {
+    $ErrorActionPreference = $oldEap
+  }
   $services = @()
   foreach($ln in ($servicesRaw -split "`r?`n")){
     if ([string]::IsNullOrWhiteSpace($ln)) { continue }
@@ -72,6 +85,9 @@ Write-Host ("Detected services → PHP: {0} | DB: {1}" -f $PHP,$DB)
 
 $results = @()
 
+# Plugin directory inside container
+$pluginDir = "/var/www/html/wp-content/plugins/smart-alloc"
+
 # 2) Build
 $results += Step "Docker build" { docker compose build --no-cache }
 
@@ -92,7 +108,12 @@ $results += Step "Normalize scripts + chmod" {
 
 # 6) Composer install (retry, unlimited memory)
 $results += Step "Composer install" {
-  docker compose run --rm $PHP bash -lc 'export COMPOSER_MEMORY_LIMIT=-1; composer clear-cache || true; composer install -o || composer install -o'
+  docker compose run --rm $PHP bash -lc "cd $pluginDir; export COMPOSER_MEMORY_LIMIT=-1; composer clear-cache || true; composer install -o || composer install -o"
+}
+
+# 7.5) Setup WordPress test environment
+$results += Step "Setup wp-tests" {
+  docker compose run --rm $PHP bash -lc "cd $pluginDir; bash ./docker/setup-wp-tests.sh"
 }
 
 # 7) Project init
@@ -103,13 +124,13 @@ $results += Step "Project init" {
 }
 
 # 8) PHPUnit
-$results += Step "Unit tests (phpunit)" { docker compose run --rm $PHP vendor/bin/phpunit -v }
+$results += Step "Unit tests (phpunit)" { docker compose run --rm $PHP bash -lc "cd $pluginDir; vendor/bin/phpunit -v" }
 
 # 9) Quality selective
-$results += Step "Quality selective" { docker compose run --rm $PHP composer run quality:selective }
+$results += Step "Quality selective" { docker compose run --rm $PHP bash -lc "cd $pluginDir; composer run quality:selective" }
 
 # 10) Baseline check
-$results += Step "Baseline (FOUNDATION)" { docker compose run --rm $PHP php baseline-check --current-phase=FOUNDATION }
+$results += Step "Baseline (FOUNDATION)" { docker compose run --rm $PHP bash -lc "cd $pluginDir; php baseline-check --current-phase=FOUNDATION" }
 
 # 11) Collect artifacts
 Note "Collecting artifacts"
@@ -129,4 +150,3 @@ foreach($r in $results){
 Write-Host ("Artifacts saved to: {0}" -f $root)
 
 if ($anyFail) { Write-Host "One or more steps failed." -ForegroundColor Red; exit 1 } else { Write-Host "All steps passed." -ForegroundColor Green; exit 0 }
-
