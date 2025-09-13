@@ -1,0 +1,19 @@
+name: Roadmap Staleness Check
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+jobs:
+  roadmap-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - name: Check roadmap freshness
+        run: php scripts/roadmap-staleness-check.php
+

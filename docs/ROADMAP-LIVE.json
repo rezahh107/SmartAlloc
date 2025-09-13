@@ -1,0 +1,85 @@
+{
+  "phase": "foundation",
+  "updated_at": "2025-09-13T18:55:00Z",
+  "progress": 0.68,
+  "links": {
+    "canonical_doc": "docs/سند نهایی تجمیع‌شده — به‌روزرسانی ۱۹ شهریور ۱۴۰۴ (جهت متخصص توسعه پروژه) — نسخهٔ نهایی ادغام‌شده.md",
+    "policy_patch_guard": "docs/maps/PATCH_GUARD_STANDARDS_WordPress_2025-09-07(1).md"
+  },
+  "priorities": [
+    {
+      "id": "Q-1",
+      "title": "Notification throttling + DLQ metrics + Replay",
+      "owner": "core",
+      "status": "in_progress",
+      "files": [
+        "src/Services/NotificationService.php",
+        "src/Services/DlqService.php",
+        "src/Services/DLQMetrics.php"
+      ],
+      "acceptance": ["notify_throttled_total increments", "DLQ replay success path"]
+    },
+    {
+      "id": "Q-2",
+      "title": "Action Scheduler default (groups/backoff/DLQ)",
+      "owner": "core",
+      "status": "pending",
+      "files": [
+        "src/Integration/ActionSchedulerAdapter.php"
+      ],
+      "acceptance": ["backoff 1/5/15/30", "group smartalloc", "DLQ hook wired"]
+    },
+    {
+      "id": "GF-1",
+      "title": "GF Single Path + Idempotency (form 150)",
+      "owner": "core",
+      "status": "done",
+      "files": [
+        "src/Infra/GF/HookBootstrap.php",
+        "src/Infra/GF/IdempotencyGuard.php",
+        "src/Infra/GF/SabtSubmissionHandler.php"
+      ],
+      "acceptance": ["no double-processing"]
+    },
+    {
+      "id": "SCHEMA-1",
+      "title": "SchemaChecker (IDs 39/20/92/93/94/75)",
+      "owner": "core",
+      "status": "in_progress",
+      "files": ["src/Infra/GF/SchemaChecker.php"],
+      "acceptance": ["compatibility score computed", "issues listed"]
+    },
+    {
+      "id": "RULE-1",
+      "title": "RuleEngine AND/OR + depth guard (<=4) + negative tests",
+      "owner": "core",
+      "status": "pending",
+      "files": ["src/RuleEngine/RuleEngineService.php", "tests/RuleEngine"],
+      "acceptance": ["invalid operator throws", "depth>4 throws"]
+    },
+    {
+      "id": "OBS-1",
+      "title": "Health endpoint enrich (CB/AS/DLQ)",
+      "owner": "core",
+      "status": "pending",
+      "files": ["src/Http/Rest/HealthController.php"],
+      "acceptance": ["reports CB state", "AS pending count", "DLQ depth"]
+    },
+    {
+      "id": "SH-1",
+      "title": "Plugin Health (Site Health) – GF/AS/SMTP/Rule-of-One/UTC",
+      "owner": "core",
+      "status": "pending",
+      "files": ["src/Admin/SiteHealth"],
+      "acceptance": ["all green on staging"]
+    }
+  ],
+  "kpis": {
+    "queue": {"failed_lt": 0.01, "p95_wait_s_lt": 10, "dlq_max": 5},
+    "allocation": {"p95_ms_lt": 80, "capacity_dev_pct_lte": 5, "conflict_eq": 0},
+    "export": {"peak_mem_mb_lt": 128, "build_s_lte": 2, "csv_injection_eq": 0},
+    "comms": {"delivery_pct_gte": 98, "duplicate_eq": 0},
+    "forms": {"submission_error_pct_lt": 0.5, "gf_schema_compat_pct": 100}
+  }
+}
+

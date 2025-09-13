@@ -1,28 +1,18 @@
-﻿## Summary
-<!-- What changed? Why? -->
+## Summary
+- Linked Roadmap Item ID(s): <!-- e.g., Q-2, RULE-1 -->
+- Phase: <!-- foundation / expansion / polish -->
 
+## Checklist (must pass)
+- [ ] Patch Guard limits respected (branch-type caps)
+- [ ] `composer run quality:selective` passed
+- [ ] `php baseline-check --current-phase=FOUNDATION` passed (or updated per phase)
+- [ ] `./scripts/patch-guard-check.sh` passed
+- [ ] Roadmap updated if scope/acceptance changed (`docs/ROADMAP-LIVE.json`)
 
+## Scope
+- What changed and why?
+- Acceptance criteria met? Link to tests/metrics.
 
-<!-- CI-CHECKLIST:BEGIN -->
-## CI Checklist
-- [ ] CI passes on this PR (phpunit / quality:selective / baseline-check)
-- [ ] No application code changed (infra-only)
-- [ ] Coverage meets project target (≥80% if applicable)
-- [ ] Baseline phase: FOUNDATION — PASS
-- [ ] `.env` not committed; `vendor/` and `wp-content/uploads/` ignored
-<!-- CI-CHECKLIST:END -->## QA Checklist (advisory)
-- [ ] Ran `composer qa:advisory`
-- [ ] If i18n touched, ran `php scripts/pot-refresh.php`
-- [ ] REST routes enforce cap + nonce/signature
-- [ ] No unprepared `$wpdb` queries
-- [ ] Linked rehearsal summary/JUnit and attached artifacts
+## KPI Impact
+- Queue / Allocation / Export / Forms: any threshold affected?
 
-## Artifacts
-- `artifacts/ga/GA_REHEARSAL.txt`
-- `artifacts/ga/GA_REHEARSAL.junit.xml`
-
-## Local Mirrors
-```bash
-make -f Makefile.docker docker-test   # DB up → init → phpunit
-make -f Makefile.docker docker-ci     # selective gates + baseline
-```

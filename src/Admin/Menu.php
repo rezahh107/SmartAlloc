@@ -47,5 +47,14 @@ final class Menu
             'smartalloc-reports',
             [ReportsPage::class, 'render']
         );
+
+        add_submenu_page(
+            'smartalloc-dashboard',
+            esc_html__('Roadmap & KPIs', 'smartalloc'),
+            esc_html__('Roadmap & KPIs', 'smartalloc'),
+            SMARTALLOC_CAP,
+            'smartalloc-roadmap',
+            [\SmartAlloc\Admin\Pages\RoadmapPage::class, 'render']
+        );
     }
 }

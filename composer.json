@@ -110,7 +110,10 @@
       "php scripts/tools/fix-test-namespaces.php",
       "php scripts/tools/fix-declare-position.php",
       "php scripts/tools/fix-mixed-namespaces.php"
-    ]
+    ],
+    "roadmap": "php scripts/roadmap-print.php",
+    "kpi": "php scripts/roadmap-kpi.php",
+    "roadmap:stale-check": "php scripts/roadmap-staleness-check.php"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
@@ -121,7 +124,10 @@
     "baseline:polish": "Quick polish phase validation",
     "setup:wp-tests": "Setup WordPress testing environment",
     "quality:selective": "Run selective lint/analyze on staged PHP files",
-    "test:unit": "Run unit tests with coverage"
+    "test:unit": "Run unit tests with coverage",
+    "roadmap": "Print live roadmap summary",
+    "kpi": "Print KPI thresholds from roadmap",
+    "roadmap:stale-check": "Fail if ROADMAP-LIVE.json is older than 7 days"
   },
   "autoload-dev": {
     "psr-4": {
