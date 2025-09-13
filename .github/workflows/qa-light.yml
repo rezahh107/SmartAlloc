@@ -99,10 +99,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Semgrep (local rules)
+      - name: Semgrep (local + packs)
         uses: returntocorp/semgrep-action@v1
         with:
-          config: semgrep-rules
+          config: >-
+            semgrep-rules
+            p/php
+            p/wordpress
         continue-on-error: true
 
       - name: Upload Semgrep SARIF
@@ -110,4 +113,81 @@ jobs:
         with:
           name: semgrep-results
           path: semgrep.sarif
+          if-no-files-found: warn
+
+  e2e:
+    name: E2E (conditional)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect UI/editor changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          CHANGED=$(git diff --name-only "$BASE..$HEAD" || true)
+          echo "Changed files:\n$CHANGED"
+          if echo "$CHANGED" | grep -Eq '^(src/Admin/|includes/Admin/|templates/|assets/|e2e/|tests/e2e/|.*\.(css|scss|js|ts|tsx)$)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif echo "${{ join(github.event.pull_request.labels.*.name, ',') }}" | grep -qi 'ui-change'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node
+        if: steps.changes.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright deps
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          npx --yes playwright install --with-deps
+
+      - name: Start WordPress (Docker)
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          docker compose up -d --build db wordpress
+          # wait for health
+          for i in $(seq 1 30); do
+            if docker inspect --format='{{json .State.Health.Status}}' $(docker compose ps -q wordpress) | grep -q healthy; then
+              break; fi; sleep 5; done
+          docker compose ps
+
+      - name: Install WordPress (wp-cli.phar)
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          docker compose exec -T wordpress bash -lc '
+            set -euo pipefail
+            cd /var/www/html
+            php -r "copy(\"https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar\", \"wp-cli.phar\");"
+            php wp-cli.phar core is-installed || php wp-cli.phar core install \
+              --url="http://localhost" --title="Test Site" \
+              --admin_user=admin --admin_password=admin --admin_email=test@example.com --skip-email
+          '
+
+      - name: Run Playwright E2E
+        if: steps.changes.outputs.run == 'true'
+        env:
+          WP_BASE_URL: http://localhost:8080
+          E2E: '1'
+        run: |
+          npx playwright test e2e/tests/editor-smoke.spec.ts || true
+          npx playwright test tests/e2e/smoke.spec.ts || true
+
+      - name: Upload E2E Report
+        if: steps.changes.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: playwright-report
           if-no-files-found: warn
