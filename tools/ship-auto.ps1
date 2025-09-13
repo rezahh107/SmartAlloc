@@ -9,6 +9,7 @@ param(
   [switch]$NoRebase,
   [switch]$AllowDirty,
   [switch]$ForceWithLease,
+  [switch]$NoVerifyPush,
   [string]$BodyFile = ''
 )
 
@@ -214,17 +215,18 @@ if (-not $NoRebase) {
 
 note "Push branch"
 if ($DryRun) {
-  if ($ForceWithLease) { Write-Host "(dryrun) would: git push --force-with-lease origin $Branch" }
-  else { Write-Host "(dryrun) would: git push -u origin $Branch" }
+  $nv = if ($NoVerifyPush) { " --no-verify" } else { "" }
+  if ($ForceWithLease) { Write-Host "(dryrun) would: git push --force-with-lease$nv origin $Branch" }
+  else { Write-Host "(dryrun) would: git push$nv -u origin $Branch" }
 } else {
   try {
     if ($usedHttps) {
-      if ($ForceWithLease) { run ("git push --force-with-lease origin {0}" -f $Branch) }
-      else { run ("git push -u origin {0}" -f $Branch) }
+      if ($ForceWithLease) { run ("git push --force-with-lease{1} origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
+      else { run ("git push{1} -u origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
       run ("git remote set-url origin {0}" -f $RepoSsh)
     } else {
-      if ($ForceWithLease) { run ("git push --force-with-lease origin {0}" -f $Branch) }
-      else { run ("git push -u origin {0}" -f $Branch) }
+      if ($ForceWithLease) { run ("git push --force-with-lease{1} origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
+      else { run ("git push{1} -u origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
     }
   } catch { fail 40 "Push failed" }
 }
@@ -253,4 +255,3 @@ if ($CreatePR) {
 }
 
 if ($DryRun) { ok "DryRun complete. Branch: $Branch" } else { ok "Ship done. Branch: $Branch" }
-
