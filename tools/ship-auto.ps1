@@ -221,12 +221,14 @@ if ($DryRun) {
 } else {
   try {
     if ($usedHttps) {
-      if ($ForceWithLease) { run ("git push --force-with-lease{1} origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
-      else { run ("git push{1} -u origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
+      $nv = if ($NoVerifyPush) { ' --no-verify' } else { '' }
+      if ($ForceWithLease) { run ("git push --force-with-lease{0} origin {1}" -f $nv, $Branch) }
+      else { run ("git push{0} -u origin {1}" -f $nv, $Branch) }
       run ("git remote set-url origin {0}" -f $RepoSsh)
     } else {
-      if ($ForceWithLease) { run ("git push --force-with-lease{1} origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
-      else { run ("git push{1} -u origin {0}" -f $Branch -f ($(if($NoVerifyPush){' --no-verify'}else{''}))) }
+      $nv = if ($NoVerifyPush) { ' --no-verify' } else { '' }
+      if ($ForceWithLease) { run ("git push --force-with-lease{0} origin {1}" -f $nv, $Branch) }
+      else { run ("git push{0} -u origin {1}" -f $nv, $Branch) }
     }
   } catch { fail 40 "Push failed" }
 }
