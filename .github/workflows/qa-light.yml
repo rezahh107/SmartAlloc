@@ -14,6 +14,19 @@ permissions:
 jobs:
   qa:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wordpress_tests
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,13 +35,16 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          coverage: none
+          coverage: xdebug
           tools: composer:v2
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
         with:
           composer-options: --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup WP tests (idempotent)
+        run: composer setup:wp-tests || true
 
       - name: Baseline (FOUNDATION)
         run: php baseline-check --current-phase=FOUNDATION
@@ -41,6 +57,20 @@ jobs:
           php scripts/scan-secrets.php               > secrets.json              || true
           if [ -f scripts/headers-guard.php ]; then php scripts/headers-guard.php --q || true; fi
           if [ -f scripts/i18n-lint.php ]; then php scripts/i18n-lint.php > i18n-lint.json || true; fi
+
+      - name: Unit tests (coverage)
+        env:
+          XDEBUG_MODE: coverage
+        run: |
+          vendor/bin/phpunit --colors=always --log-junit build/junit.unit.xml --coverage-clover build/coverage.unit.xml -c phpunit-unit.xml || true
+          php scripts/coverage-threshold.php --file=build/coverage.unit.xml --min=60
+
+      - name: Static analysis (non-blocking)
+        run: |
+          mkdir -p out
+          vendor/bin/phpstan analyze --level=5 --no-progress --error-format=json src includes > out/phpstan.json || true
+          vendor/bin/psalm --no-progress --output-format=json > out/psalm.json || true
+          php scripts/quality-summary.php --phpstan=out/phpstan.json --psalm=out/psalm.json
 
       - name: QA Orchestrator (index + bundle)
         run: |
@@ -56,5 +86,28 @@ jobs:
             sql-violations.json
             secrets.json
             i18n-lint.json
+            build/coverage.unit.xml
+            build/junit.unit.xml
+            out/phpstan.json
+            out/psalm.json
           if-no-files-found: warn
 
+  semgrep:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Semgrep (local rules)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: semgrep-rules
+        continue-on-error: true
+
+      - name: Upload Semgrep SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep.sarif
+          if-no-files-found: warn
