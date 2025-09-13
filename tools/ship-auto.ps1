@@ -7,15 +7,17 @@ param(
   [switch]$SkipCI,
   [switch]$DryRun,
   [switch]$NoRebase,
-  [switch]$AllowDirty
+  [switch]$AllowDirty,
+  [switch]$ForceWithLease,
+  [string]$BodyFile = ''
 )
 
 $ErrorActionPreference = 'Stop'
 
 function note($t){ Write-Host ("== {0}" -f $t) -ForegroundColor Cyan }
-function ok($t){ Write-Host ("✔ {0}" -f $t) -ForegroundColor Green }
+function ok($t){ Write-Host ("OK {0}" -f $t) -ForegroundColor Green }
 function warn($t){ Write-Host ("! {0}" -f $t) -ForegroundColor Yellow }
-function err($t){ Write-Host ("✖ {0}" -f $t) -ForegroundColor Red }
+function err($t){ Write-Host ("ERR {0}" -f $t) -ForegroundColor Red }
 function run($c){ Write-Host ">> $c"; if (-not $DryRun) { iex $c } }
 function fail($code,$msg){ err $msg; exit $code }
 
@@ -81,11 +83,30 @@ if (-not $nothingToCommit) {
   }
 }
 
-# 4) Ensure nothing blocked is staged
+# 4) Ensure nothing blocked is staged (simulate on DryRun)
 $stagedRaw = (git diff --cached --name-only) 2>$null
 $staged = @()
 if ($stagedRaw) { $staged = $stagedRaw -split "`r?`n" | Where-Object { $_ -ne '' } }
-foreach ($p in $staged) {
+
+$candidate = @()
+if ($DryRun) {
+  # Build predicted staged set
+  foreach ($line in $changed) {
+    $p = Normalize-PathFromStatus $line
+    if (-not $p) { continue }
+    if ($Scope -eq 'infra') {
+      $allowed = $false
+      foreach ($rx in $allowInfra) { if ($p -match $rx) { $allowed = $true; break } }
+      if ($allowed) { $candidate += $p }
+    } else {
+      $candidate += $p
+    }
+  }
+} else {
+  $candidate = $staged
+}
+
+foreach ($p in $candidate) {
   foreach ($rx in $blocked) {
     if ($p -match $rx) {
       if ($DryRun) { err ("Blocked path would be staged: {0}" -f $p); fail 10 "DryRun detected blocked path" }
@@ -111,7 +132,7 @@ if (-not $staged -or $staged.Count -eq 0) {
     foreach ($k in $types.Keys) {
       if ($staged | Where-Object { $_ -match ($types[$k] -join '|') }) { $pick = $k; break }
     }
-    $Message = "$pick: automated ship (infra)"
+    $Message = "$($pick): automated ship (infra)"
   }
   note "Commit: $Message"
   if ($DryRun) { Write-Host "(dryrun) would: git commit -m ..." }
@@ -157,7 +178,7 @@ if ($DryRun) {
   try { run 'ssh -T git@github.com' } catch { $sshOk = $false }
   if (-not $sshOk) {
     # Use port 443
-    $cfg="$env:USERPROFILE\.ssh\config"
+    $cfg = "$env:USERPROFILE\.ssh\config"
     if (!(Test-Path (Split-Path $cfg))) { New-Item -ItemType Directory -Path (Split-Path $cfg) | Out-Null }
     @"
 Host github.com
@@ -193,14 +214,17 @@ if (-not $NoRebase) {
 
 note "Push branch"
 if ($DryRun) {
-  Write-Host "(dryrun) would: git push -u origin $Branch"
+  if ($ForceWithLease) { Write-Host "(dryrun) would: git push --force-with-lease origin $Branch" }
+  else { Write-Host "(dryrun) would: git push -u origin $Branch" }
 } else {
   try {
     if ($usedHttps) {
-      run ("git push -u origin {0}" -f $Branch)
+      if ($ForceWithLease) { run ("git push --force-with-lease origin {0}" -f $Branch) }
+      else { run ("git push -u origin {0}" -f $Branch) }
       run ("git remote set-url origin {0}" -f $RepoSsh)
     } else {
-      run ("git push -u origin {0}" -f $Branch)
+      if ($ForceWithLease) { run ("git push --force-with-lease origin {0}" -f $Branch) }
+      else { run ("git push -u origin {0}" -f $Branch) }
     }
   } catch { fail 40 "Push failed" }
 }
@@ -213,7 +237,11 @@ if ($CreatePR) {
     $body = "Infra-only: CI reset + repo hygiene + service auto-detect + wait-for-DB + script perms/LF. No app code changes."
     if ($ciSummary) { $body = "$body`n`n$ciSummary" }
     try {
-      & gh pr create --base main --title $title --body $body
+      if ($BodyFile -and (Test-Path $BodyFile)) {
+        & gh pr create --base main --title $title --body-file $BodyFile
+      } else {
+        & gh pr create --base main --title $title --body $body
+      }
     } catch {
       warn "PR creation may have failed or already exists; attempting to comment summary"
       if ($ciSummary) { try { & gh pr comment --body $ciSummary } catch { warn "Couldn't add PR comment." } }
@@ -225,3 +253,4 @@ if ($CreatePR) {
 }
 
 if ($DryRun) { ok "DryRun complete. Branch: $Branch" } else { ok "Ship done. Branch: $Branch" }
+
