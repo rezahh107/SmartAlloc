@@ -65,6 +65,36 @@ jobs:
           vendor/bin/phpunit --colors=always --log-junit build/junit.unit.xml --coverage-clover build/coverage.unit.xml -c phpunit-unit.xml || true
           php scripts/coverage-threshold.php --file=build/coverage.unit.xml --min=65
 
+      - name: Checkout base for coverage compare
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          fetch-depth: 0
+
+      - name: Install dependencies (base)
+        if: github.event_name == 'pull_request'
+        working-directory: base
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup WP tests (base)
+        if: github.event_name == 'pull_request'
+        working-directory: base
+        run: composer setup:wp-tests || true
+
+      - name: Unit tests (coverage) - base
+        if: github.event_name == 'pull_request'
+        env:
+          XDEBUG_MODE: coverage
+        working-directory: base
+        run: |
+          vendor/bin/phpunit --colors=always --log-junit build/junit.unit.xml --coverage-clover build/coverage.unit.xml -c phpunit-unit.xml || true
+
+      - name: Coverage compare (no regression)
+        if: github.event_name == 'pull_request'
+        run: php scripts/coverage-compare.php --base=base/build/coverage.unit.xml --head=build/coverage.unit.xml --tolerance=0.5
+
       - name: Static analysis (non-blocking)
         run: |
           mkdir -p out
