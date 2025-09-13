@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# .githooks/pre-push - run Docker pre-push checks
+
+set -euo pipefail
+
+echo "▶ Running SmartAlloc Docker pre-push checks…"
+if [ -x "scripts/prepush-docker.sh" ]; then
+  ./scripts/prepush-docker.sh
+else
+  echo "❌ scripts/prepush-docker.sh not found or not executable" >&2
+  exit 1
+fi
+
+exit 0
+
