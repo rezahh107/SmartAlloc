@@ -20,7 +20,11 @@ if (!in_array($mode, $validModes, true)) {
 
 // Fetch staged PHP files
 $staged = [];
-exec('git diff --cached --name-only --diff-filter=ACMR | grep "\\.php$"', $staged);
+// Ensure Git trusts the working directory when running in containers with different UID/GID.
+// Using -c safe.directory avoids needing global git config writes.
+$cwd    = getcwd();
+$gitCmd = 'git -c safe.directory=' . escapeshellarg($cwd);
+exec($gitCmd . ' diff --cached --name-only --diff-filter=ACMR | grep "\\.php$"', $staged);
 $staged = array_filter($staged, static function (string $file): bool {
     return !preg_match('/stub|mock|fixture/i', $file);
 });

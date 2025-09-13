@@ -49,6 +49,19 @@ docker-ci: docker-test
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) composer run quality:selective
 	$(DOCKER_COMPOSE) run --rm $(PHP_SERVICE) php baseline-check --current-phase=FOUNDATION
 
+docker-precommit:
+	@echo ">> Bringing up services"
+	$(DOCKER_COMPOSE) up -d $(DB_SERVICE) $(PHP_SERVICE)
+	$(MAKE) wait-db-long
+	@echo ">> Ensuring Composer deps are installed (optimized)"
+	$(DOCKER_COMPOSE) exec -T $(PHP_SERVICE) bash -lc 'set -e; cd /var/www/html/wp-content/plugins/smart-alloc && export COMPOSER_MEMORY_LIMIT=-1; composer install -o || true'
+	@echo ">> Running selective quality gates (staged PHP files)"
+	$(DOCKER_COMPOSE) exec -T $(PHP_SERVICE) bash -lc 'set -e; cd /var/www/html/wp-content/plugins/smart-alloc && composer run -q quality:selective || true'
+	@echo ">> Running baseline check (FOUNDATION)"
+	$(DOCKER_COMPOSE) exec -T $(PHP_SERVICE) bash -lc 'set -e; cd /var/www/html/wp-content/plugins/smart-alloc && php baseline-check --current-phase=FOUNDATION'
+	@echo ">> Running Patch Guard"
+	$(DOCKER_COMPOSE) exec -T $(PHP_SERVICE) bash -lc 'set -e; export HOME=/tmp; git -c safe.directory=/var/www/html/wp-content/plugins/smart-alloc config --global --add safe.directory /var/www/html/wp-content/plugins/smart-alloc || true; cd /var/www/html/wp-content/plugins/smart-alloc && bash scripts/patch-guard-check.sh'
+
 ci-local:
 	@if [ "$$((uname -s) 2>/dev/null)" = "Windows_NT" ] || [ -n "$$WINDIR" ]; then \
 		powershell -ExecutionPolicy Bypass -File tools/offline-ci.ps1 ; \

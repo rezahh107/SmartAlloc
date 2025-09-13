@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
-# .githooks/pre-commit - append current state to project history
+# .githooks/pre-commit - run Docker precommit checks, then append project state
 
 set -euo pipefail
 
+echo "▶ Running SmartAlloc Docker pre-commit checks…"
+if [ -x "scripts/precommit-docker.sh" ]; then
+  ./scripts/precommit-docker.sh
+else
+  echo "❌ scripts/precommit-docker.sh not found or not executable" >&2
+  exit 1
+fi
+
+# Append current state to project history (best-effort)
 # check for last_state.yml
 if [ ! -f "ai_outputs/last_state.yml" ]; then
-    echo "⚠️ ai_outputs/last_state.yml not found. Run status-auditor.sh to generate current state."
+    echo "ℹ️ ai_outputs/last_state.yml not found. Run status-auditor.sh to generate current state. Skipping state append."
     exit 0
 fi
 
@@ -22,12 +31,13 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "N/A")
 
-echo "" >> docs/PROJECT_STATE.yml
-echo "timestamp: \"$TIMESTAMP\"" >> docs/PROJECT_STATE.yml
-echo "commit: \"$COMMIT_HASH\"" >> docs/PROJECT_STATE.yml
-echo "branch: \"$BRANCH\"" >> docs/PROJECT_STATE.yml
-
-cat ai_outputs/last_state.yml >> docs/PROJECT_STATE.yml
+{
+  echo ""
+  echo "timestamp: \"$TIMESTAMP\""
+  echo "commit: \"$COMMIT_HASH\""
+  echo "branch: \"$BRANCH\""
+  cat ai_outputs/last_state.yml
+} >> docs/PROJECT_STATE.yml
 
 echo "✅ وضعیت پروژه به docs/PROJECT_STATE.yml الحاق شد"
 exit 0

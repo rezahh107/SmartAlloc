@@ -94,7 +94,7 @@
     "test:performance": "phpunit --group=performance || true",
     "security:relaxed": "php scripts/security-relaxed-check.php",
     "maintainability:relaxed": "php scripts/maintainability-check.php",
-    "quality:selective": "php -v",
+    "quality:selective": "php scripts/selective-quality-gates.php",
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
     "audit": "composer audit"
@@ -107,7 +107,7 @@
     "baseline:expansion": "Quick expansion phase validation",
     "baseline:polish": "Quick polish phase validation",
     "setup:wp-tests": "Setup WordPress testing environment",
-    "quality:selective": "Display PHP version for Phase 1",
+    "quality:selective": "Run selective lint/analyze on staged PHP files",
     "test:unit": "Run unit tests with coverage"
   },
   "autoload-dev": {
