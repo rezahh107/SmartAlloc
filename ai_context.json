@@ -1,10 +1,10 @@
 {
-  "last_update_utc": "2025-09-11T14:20:04Z",
+  "last_update_utc": "2025-09-13T06:38:07Z",
   "repo": {
-    "default_branch": "main",
-    "last_commit": "1572a15ecb1b366e0d39f4029d88b3eab366080b",
-    "commits_total": 1271,
-    "files_tracked": 879
+    "default_branch": "repair/ci-reset-20250912-2350",
+    "last_commit": "01b1d84d5b64213474d04e2e0170f13d80ef9669",
+    "commits_total": 1284,
+    "files_tracked": 881
   },
   "quality_gate": {
     "weighted_threshold": 0.85,
