@@ -17,6 +17,9 @@ if (! defined('WP_TESTS_DOMAIN')) {
 
 require_once __DIR__ . '/../bootstrap.php';
 
+/**
+ * @group integration
+ */
 final class DebugScreenTest extends TestCase {
 
         private DebugScreen $debug_screen;
@@ -24,7 +27,7 @@ final class DebugScreenTest extends TestCase {
 
 	protected function setUp(): void {
                 parent::setUp();
-                $cb                   = new CircuitBreaker( 'test' );
+                $cb                   = new CircuitBreaker( 'test' ); // @phpstan-ignore-line
                 $this->health_reporter = new HealthReporter( $cb );
                 $this->debug_screen    = new DebugScreen( $this->health_reporter );
         }

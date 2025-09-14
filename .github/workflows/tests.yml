@@ -18,64 +18,42 @@ jobs:
         run: composer test:unit
 
   integration:
-    name: Integration (Docker-in-Docker)
+    name: Integration (DinD)
     runs-on: ubuntu-latest
     services:
       dind:
         image: docker:27-dind
         privileged: true
-        env:
-          DOCKER_TLS_CERTDIR: ""
+        env: { DOCKER_TLS_CERTDIR: "" }
         options: >-
-          --dns 8.8.8.8
           --health-cmd "docker info >/dev/null 2>&1 || exit 1"
-          --health-interval 2s
-          --health-retries 60
-          --health-timeout 2s
-        ports:
-          - 2375:2375
+          --health-interval 2s --health-retries 60 --health-timeout 2s
+        ports: [ "2375:2375" ]
     env:
       DOCKER_HOST: tcp://localhost:2375
       COMPOSE_DOCKER_CLI_BUILD: 1
       DOCKER_BUILDKIT: 1
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install PHP & Composer
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-
-      - name: Install Docker CLI & compose plugin
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', coverage: none }
+      - name: Install Docker CLI & Compose plugin
         run: |
           sudo apt-get update -y
           sudo apt-get install -y docker-ce-cli docker-compose-plugin
           docker version
           docker compose version
-
-      - name: Install project deps
+      - name: Install deps
         run: composer install --no-interaction --prefer-dist
-
       - name: Wait for DinD
         run: |
           for i in {1..90}; do docker info >/dev/null 2>&1 && exit 0; sleep 2; done
-          echo "Docker daemon not ready" >&2; exit 1
-
-      - name: Compose up (MySQL for tests)
-        run: docker compose -f docker-compose.test.yml up -d --wait
-
-      - name: Run integration tests
-        env:
-          WP_INTEGRATION: "1"
+          echo "Docker daemon not ready"; exit 1
+      - name: Run integration via runner
+        env: { WP_INTEGRATION: "1" }
         run: |
           chmod +x scripts/run-integration.sh || true
           bash scripts/run-integration.sh
-
-      - name: Compose down
-        if: always()
-        run: docker compose -f docker-compose.test.yml down -v
-
       - name: Archive logs (optional)
         if: always()
         uses: actions/upload-artifact@v4

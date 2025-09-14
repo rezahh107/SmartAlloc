@@ -14,4 +14,5 @@ Functions\stubs([
     'current_user_can' => fn() => true,
     'wp_die' => fn() => '',
     'get_option' => fn($name, $default = false) => $default,
+    'wp_json_encode' => fn($data) => json_encode($data),
 ]);

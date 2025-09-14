@@ -603,14 +603,14 @@ composer test:all
 docker-compose -f docker-compose.test.yml down -v
 ```
 
-### رفتار CI و لوکال
-- Local: Unit همیشه؛ Integration در نبود Docker → skip
-- CI: دو Job مجزا؛ Integration سخت‌گیر با Docker
+### Integration via Docker
+- Local: install `docker-ce-cli` + compose plugin (Debian/Ubuntu) or Docker Desktop (macOS/Windows).
+- If Docker/daemon is missing, `scripts/run-integration.sh` **skips gracefully**.
+- CI: a DinD service exposes `DOCKER_HOST=tcp://localhost:2375`; the runner owns `compose up/down`.
 
-### CI Integration via Docker-in-Docker (DinD)
-- CI job `integration` یک سرویس Docker داره (privileged) و با `DOCKER_HOST=tcp://localhost:2375` متصل می‌شه.
-- اسکریپت `scripts/run-integration.sh` قبل از اجرا اتصال به daemon رو چک می‌کنه و در نبود Docker **graceful skip** انجام می‌ده.
-- برای اجرای محلی، یا Docker Desktop/Engine داشته باشید یا فقط Unitها رو اجرا کنید.
-
-### متغیرهای محیطی
-- WP_PATH, WP_INTEGRATION, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD
+Commands:
+```bash
+composer test:unit
+composer test:int
+composer test:all
+```

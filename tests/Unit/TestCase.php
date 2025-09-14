@@ -18,8 +18,8 @@ abstract class TestCase extends PHPUnitTestCase
         parent::setUp();
         Monkey\setUp();
 
-        // Mock WordPress globals
-        if (!defined('ABSPATH')) {
+        // Mock WordPress globals (no ABSPATH in unit mode)
+        if (getenv('WP_INTEGRATION') === '1' && !defined('ABSPATH')) {
             define('ABSPATH', '/tmp/wordpress/');
         }
     }
@@ -35,6 +35,7 @@ abstract class TestCase extends PHPUnitTestCase
      */
     protected function &mockTransients(): array
     {
+        /** @var array<string, mixed> $transientStorage */
         $transientStorage = [];
 
         Functions\when('get_transient')->alias(function ($key) use (&$transientStorage) {
@@ -148,4 +149,3 @@ abstract class TestCase extends PHPUnitTestCase
         return $transients;
     }
 }
-

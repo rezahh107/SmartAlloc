@@ -1,4 +1,3 @@
-# version: '3.9'  # Compose V2 does not require a version key
 services:
   db:
     image: mysql:8.0

@@ -55,7 +55,8 @@
   "scripts": {
     "qa:phpcs": "vendor/bin/phpcs --standard=phpcs.xml",
     "qa:selective": "bash scripts/selective_or_full.sh",
-    "test:unit": "phpunit --configuration=phpunit-unit.xml --testsuite=unit",
+    "test": "composer test:unit",
+    "test:unit": "phpunit --configuration=phpunit-unit.xml --testsuite=unit --fail-on-skipped --fail-on-incomplete",
     "test:int": "bash scripts/run-integration.sh",
     "test:all": "composer test:unit && composer test:int",
     "test:coverage": "phpunit --configuration=phpunit-unit.xml --coverage-html=coverage/html --coverage-clover=coverage/clover.xml",
@@ -68,7 +69,6 @@
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "validate:test-env": "php bin/validate-test-environment.php",
     "setup:wp-tests": "vendor/bin/wp-phpunit-setup || echo setup",
-    "test": "composer test:unit",
     "test:debug": "phpunit --configuration phpunit-unit.xml --no-coverage --verbose",
     "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
     "gen:features": "php scripts/generate_features_md.php",
