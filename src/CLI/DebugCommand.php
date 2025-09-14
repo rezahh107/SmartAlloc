@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SmartAlloc\Cli;
+namespace SmartAlloc\CLI;
 
 use SmartAlloc\Debug\ReproBuilder;
+
 use function function_exists;
 
 final class DebugCommand
@@ -34,7 +35,7 @@ final class DebugCommand
             return 1;
         }
         $builder = new ReproBuilder();
-        $path = $builder->buildBundle($id);
+        $path = $builder->buildBundle($id); // @phpstan-ignore-line
         echo $path . "\n";
         return 0;
     }

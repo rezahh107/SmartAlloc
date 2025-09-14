@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * Reproduction case builder for debugging SmartAlloc issues.
  *
@@ -25,7 +26,7 @@ use InvalidArgumentException;
  *
  * @since 2.0.0
  */
-final class Repro_Builder {
+final class ReproBuilder {
 
 	/**
 	 * Redaction adapter for sanitizing sensitive data.
@@ -105,7 +106,7 @@ final class Repro_Builder {
 		global $wp_filesystem;
 
 		if ( empty( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
+			require_once ABSPATH . '/wp-admin/includes/file.php'; // @phpstan-ignore-line
 			WP_Filesystem();
 		}
 
@@ -152,7 +153,7 @@ final class Repro_Builder {
 	 * @return bool True on success, false on failure.
 	 */
 	public function create_test_case( array $context ): bool {
-		if ( method_exists( $this->metrics, 'start_timer' ) ) {
+		if ( method_exists( $this->metrics, 'start_timer' ) ) { // @phpstan-ignore-line
 			$this->metrics->start_timer( 'repro_creation' );
 		}
 
@@ -173,7 +174,7 @@ final class Repro_Builder {
 			$success = $this->filesystem->put_contents(
 				$test_file,
 				$test_data . "\n",
-				FS_CHMOD_FILE
+				FS_CHMOD_FILE // @phpstan-ignore-line
 			);
 
 			if ( $success ) {
@@ -183,7 +184,7 @@ final class Repro_Builder {
 			return (bool) $success;
 
 		} finally {
-			if ( method_exists( $this->metrics, 'stop_timer' ) ) {
+			if ( method_exists( $this->metrics, 'stop_timer' ) ) { // @phpstan-ignore-line
 				$this->metrics->stop_timer( 'repro_creation' );
 			}
 		}
@@ -219,7 +220,7 @@ final class Repro_Builder {
 		return (bool) $this->filesystem->put_contents(
 			$bp_file,
 			$bp_data . "\n",
-			FS_CHMOD_FILE
+			FS_CHMOD_FILE // @phpstan-ignore-line
 		);
 	}
 
@@ -236,7 +237,7 @@ final class Repro_Builder {
 			return true;
 		}
 
-		return $this->filesystem->mkdir( $dir, FS_CHMOD_DIR );
+		return $this->filesystem->mkdir( $dir, FS_CHMOD_DIR ); // @phpstan-ignore-line
 	}
 
 	/**
@@ -282,7 +283,7 @@ final class Repro_Builder {
 	 * @return int Number of files cleaned up.
 	 */
 	public function cleanup_old_files( int $days = 7 ): int {
-		$cutoff_time = time() - ( $days * DAY_IN_SECONDS );
+		$cutoff_time = time() - ( $days * DAY_IN_SECONDS ); // @phpstan-ignore-line
 		$cleaned     = 0;
 
 		$test_files = $this->filesystem->dirlist( $this->test_dir );

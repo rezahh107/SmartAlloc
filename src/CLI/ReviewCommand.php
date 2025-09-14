@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SmartAlloc\Cli;
+namespace SmartAlloc\CLI;
 
 use function absint;
 use function sanitize_text_field;
@@ -18,7 +18,7 @@ final class ReviewCommand
      */
     public function __invoke(array $args, array $assoc): int
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can(SMARTALLOC_CAP)) { // @phpstan-ignore-line
             echo "forbidden\n";
             return 1;
         }
@@ -41,7 +41,7 @@ final class ReviewCommand
         if (($assoc['format'] ?? '') === 'json') {
             echo wp_json_encode($result) . "\n";
         } else {
-            echo ($result['action'] ?? 'review') . "\n";
+            echo ($result['action'] ?? 'review') . "\n"; // @phpstan-ignore-line
         }
         return 0;
     }

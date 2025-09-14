@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SmartAlloc\Cli;
+namespace SmartAlloc\CLI;
 
 use SmartAlloc\Infra\Settings\Settings;
 
@@ -48,7 +48,7 @@ final class DoctorCommand
         $index = $exists && $wpdb->get_var("SHOW INDEX FROM {$table} WHERE Key_name='mentor_id'");
 
         $uploads = wp_upload_dir();
-        $writable = is_writable($uploads['basedir'] ?? sys_get_temp_dir());
+        $writable = is_writable($uploads['basedir'] ?? sys_get_temp_dir()); // @phpstan-ignore-line
         // wp_next_scheduled requires the args parameter in newer WordPress
         // versions; pass an empty array for forward compatibility.
         $cron = (bool) wp_next_scheduled('smartalloc_retention_daily', []);

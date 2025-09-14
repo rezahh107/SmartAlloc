@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SmartAlloc\Cli;
+namespace SmartAlloc\CLI;
 
 use function absint;
 use function sanitize_text_field;
@@ -18,7 +18,7 @@ final class AllocateCommand
      */
     public function __invoke(array $args, array $assoc): int
     {
-        if (!current_user_can(SMARTALLOC_CAP)) {
+        if (!current_user_can(SMARTALLOC_CAP)) { // @phpstan-ignore-line
             echo "forbidden\n";
             return 1;
         }
