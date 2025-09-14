@@ -30,7 +30,7 @@
     "phpcompatibility/phpcompatibility-wp": "^2.1",
     "phpcompatibility/phpcompatibility-paragonie": "^1.0",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-    "squizlabs/php_codesniffer": "^3.7",
+    "squizlabs/php_codesniffer": "^3.10",
     "phpcsstandards/phpcsextra": "^1.2",
     "phpcsstandards/phpcsutils": "^1.0",
     "sirbrillig/phpcs-variable-analysis": "^2.11",
@@ -39,7 +39,9 @@
     "php-stubs/wordpress-stubs": "^6.6",
     "giorgiosironi/eris": "^1.0",
     "wp-phpunit/wp-phpunit": "6.5.*",
-    "johnpbloch/wordpress-core": "^6.5"
+    "johnpbloch/wordpress-core": "^6.5",
+    "friendsofphp/php-cs-fixer": "^3.59",
+    "slevomat/coding-standard": "^8.14"
   },
   "autoload": {
     "psr-4": {
@@ -103,8 +105,8 @@
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
     "audit": "composer audit",
-    "fix:naming": "php-cs-fixer fix --allow-risky=yes --using-cache=no --rules='{ \"psr_autoloading\": true }'",
-    "check:naming": "phpcs -q"
+    "fix:naming": "php-cs-fixer fix src --allow-risky=yes --using-cache=no --rules='{ \"psr_autoloading\": true }'",
+    "check:naming": "phpcs -q --standard=phpcs.xml"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
