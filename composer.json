@@ -105,8 +105,12 @@
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
     "audit": "composer audit",
-    "fix:naming": "php-cs-fixer fix src --allow-risky=yes --using-cache=no --rules='{ \"psr_autoloading\": true }'",
-    "check:naming": "phpcs -q --standard=phpcs.xml"
+    "fix:naming": "php-cs-fixer fix --allow-risky=yes --using-cache=no --rules='{ \"psr_autoloading\": true }'",
+    "check:naming": "phpcs -q --standard=phpcs.xml",
+    "check:vip": "vendor/bin/phpcs --standard=.phpcs.xml -q",
+    "fix:vip": "vendor/bin/phpcbf --standard=.phpcs.xml || true",
+    "health:check": "php scripts/site_health_check.php",
+    "doctor:mysql": "mysql --version"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",

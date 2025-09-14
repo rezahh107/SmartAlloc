@@ -32,9 +32,9 @@ final class ExportLogMigrator
             column_name VARCHAR(100) NULL,
             message TEXT NOT NULL
         ) $charset;";
-        $upgrade = ABSPATH . 'wp-admin/includes/upgrade.php';
-        if (is_readable($upgrade)) {
-            require_once $upgrade;
+        $upgrade_path = ABSPATH . 'wp-admin/includes/upgrade.php';
+        if (is_readable($upgrade_path)) {
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         }
         if (function_exists('dbDelta')) {
             \dbDelta($sqlLog);

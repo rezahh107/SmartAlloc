@@ -17,7 +17,8 @@ spl_autoload_register(
         $file           = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
 
         if (file_exists($file)) {
-            require $file;
+            // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable -- Autoloader requires dynamic path
+            require_once $file;
         }
     }
 );
