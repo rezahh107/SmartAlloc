@@ -68,15 +68,15 @@ jobs:
       - name: Build and start
         run: |
           docker compose build --no-cache
-          docker compose up -d ${{ env.DB_SERVICE }}
+          docker compose up -d "$DB_SERVICE"
           sleep 8
-          docker compose up -d ${{ env.PHP_SERVICE }}
+          docker compose up -d "$PHP_SERVICE"
 
       - name: Wait for DB
         run: |
           for i in $(seq 1 120); do
-            docker compose exec -T ${{ env.DB_SERVICE }} sh -lc 'mysqladmin ping -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent' \
-            || docker compose exec -T ${{ env.DB_SERVICE }} sh -lc 'test -S /var/run/mysqld/mysqld.sock' \
+            docker compose exec -T "$DB_SERVICE" sh -lc 'mysqladmin ping -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent' \
+            || docker compose exec -T "$DB_SERVICE" sh -lc 'test -S /var/run/mysqld/mysqld.sock' \
             && exit 0 || true
             sleep 2
           done
@@ -84,19 +84,19 @@ jobs:
 
       - name: Composer install (retry, unlimited memory)
         run: |
-          docker compose run --rm ${{ env.PHP_SERVICE }} bash -lc 'export COMPOSER_MEMORY_LIMIT=-1; composer clear-cache || true; composer install -o || composer install -o'
+          docker compose run --rm "$PHP_SERVICE" bash -lc 'export COMPOSER_MEMORY_LIMIT=-1; composer clear-cache || true; composer install -o || composer install -o'
 
       - name: Project init
-        run: docker compose run --rm ${{ env.PHP_SERVICE }} bash -lc "./docker/init.sh"
+        run: docker compose run --rm "$PHP_SERVICE" bash -lc "./docker/init.sh"
 
       - name: Unit tests
-        run: docker compose run --rm ${{ env.PHP_SERVICE }} vendor/bin/phpunit -v
+        run: docker compose run --rm "$PHP_SERVICE" vendor/bin/phpunit -v
 
       - name: Quality selective
-        run: docker compose run --rm ${{ env.PHP_SERVICE }} composer run quality:selective
+        run: docker compose run --rm "$PHP_SERVICE" composer run quality:selective
 
       - name: Baseline check
-        run: docker compose run --rm ${{ env.PHP_SERVICE }} php baseline-check --current-phase=FOUNDATION
+        run: docker compose run --rm "$PHP_SERVICE" php baseline-check --current-phase=FOUNDATION
 
       - name: Collect artifacts (optional)
         if: always()
