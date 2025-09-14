@@ -55,12 +55,10 @@
   "scripts": {
     "qa:phpcs": "vendor/bin/phpcs --standard=phpcs.xml",
     "qa:selective": "bash scripts/selective_or_full.sh",
-    "test:unit": "vendor/bin/phpunit --testsuite unit || vendor/bin/phpunit",
-    "test:all": "vendor/bin/phpunit --coverage-clover build/coverage.xml --log-junit build/junit.xml",
-    "score:5d": [
-      "@phpcbf",
-      "bash scripts/update_state.sh"
-    ],
+    "test:unit": "phpunit --testsuite=unit --stop-on-failure",
+    "test:int": "bash scripts/run-integration.sh",
+    "test:all": "composer test:unit && composer test:int",
+    "test:coverage": "phpunit --testsuite=unit --coverage-html=coverage",
     "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
     "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "lint:php": "php -l $(git ls-files '*.php')",
@@ -70,9 +68,6 @@
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "validate:test-env": "php bin/validate-test-environment.php",
     "setup:wp-tests": "vendor/bin/wp-phpunit-setup || echo setup",
-    "test:unit": "vendor/bin/phpunit --testsuite=unit",
-    "test:int": "bash scripts/run-integration.sh",
-    "test:all": "composer test:unit && composer test:int",
     "test": "composer test:unit",
     "test:debug": "phpunit --configuration phpunit-unit.xml --no-coverage --verbose",
     "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
@@ -122,10 +117,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "SmartAlloc\\Tests\\": "tests/",
-      "SmartAlloc\\Tests\\Unit\\": "tests/Unit/",
-      "SmartAlloc\\Tests\\Integration\\": "tests/Integration/",
-      "SmartAlloc\\Tests\\E2E\\": "tests/E2E/"
+      "SmartAlloc\\Tests\\": "tests/"
     }
   },
   "config": {
