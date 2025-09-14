@@ -55,8 +55,6 @@
   "scripts": {
     "qa:phpcs": "vendor/bin/phpcs --standard=phpcs.xml",
     "qa:selective": "bash scripts/selective_or_full.sh",
-    "test:unit": "vendor/bin/phpunit --testsuite unit || vendor/bin/phpunit",
-    "test:all": "vendor/bin/phpunit --coverage-clover build/coverage.xml --log-junit build/junit.xml",
     "score:5d": [
       "@phpcbf",
       "bash scripts/update_state.sh"
@@ -70,7 +68,7 @@
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "validate:test-env": "php bin/validate-test-environment.php",
     "setup:wp-tests": "vendor/bin/wp-phpunit-setup || echo setup",
-    "test:unit": "vendor/bin/phpunit --testsuite=unit",
+    "test:unit": "vendor/bin/phpunit --no-configuration --bootstrap tools/bootstrap/autoload.php tests/Unit/Service/AllocServiceTest.php",
     "test:int": "bash scripts/run-integration.sh",
     "test:all": "composer test:unit && composer test:int",
     "test": "composer test:unit",

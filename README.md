@@ -208,8 +208,13 @@ composer dist
 
 ```bash
 # Unit tests
-composer setup:wp-tests
 composer test:unit
+
+# Integration tests (requires Docker)
+composer test:int
+
+# All tests
+composer test:all
 
 # End-to-end tests
 npm run e2e:install

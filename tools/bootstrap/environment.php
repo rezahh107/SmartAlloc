@@ -28,4 +28,13 @@ if (! defined('ABSPATH')) { // @phpstan-ignore-line
     throw new RuntimeException(
         'Could not resolve ABSPATH for Integration tests. Set WP_PATH or check your WP install.'
     );
+} else {
+    require_once ABSPATH . 'wp-includes/wp-db.php';
+
+    $dbHost = getenv('DB_HOST') ?: '127.0.0.1';
+    $dbName = getenv('DB_NAME') ?: 'wp_test';
+    $dbUser = getenv('DB_USER') ?: 'root';
+    $dbPass = getenv('DB_PASS') ?: 'root';
+
+    $GLOBALS['wpdb'] = new \wpdb($dbUser, $dbPass, $dbName, $dbHost);
 }
