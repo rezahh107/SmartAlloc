@@ -575,34 +575,29 @@ $env:GH_TOKEN="ghp_xxx"
 
 If repository dispatch is unavailable, trigger the **Manual PR Fallback** workflow from the Actions tab. It creates a pull request from the specified branch and can auto-merge when enabled.
 
-## Testing
+## 🧪 Testing Guide
 
-### Unit Tests
-
-Run fast unit tests without WordPress or a database:
-
+### Unit (Fast, WP/DB-free)
+- مستقل از WordPress/DB
+- Stubs/Mocks + UTC
 ```bash
 composer test:unit
-```
-
-### Integration Tests
-
-Integration tests require MySQL and WordPress. When Docker is available, the helper script provisions them automatically:
-
-```bash
-composer test:int
-```
-
-Locally, if Docker or MySQL are missing, the command exits without error. In CI, set `CI=true` to enforce database availability.
-
-Environment variables used:
-
-- `WP_INTEGRATION` (default `0`)
-- `WP_PATH` (WordPress path; default `./wordpress`)
-- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-
-Generate HTML coverage for unit tests with:
-
-```bash
 composer test:coverage
 ```
+
+### Integration (Real WP + MySQL)
+
+نیازمند Docker
+```bash
+docker-compose -f docker-compose.test.yml up -d --wait
+composer test:int
+composer test:all
+docker-compose -f docker-compose.test.yml down -v
+```
+
+### رفتار CI و لوکال
+- Local: Unit همیشه؛ Integration در نبود Docker → skip
+- CI: دو Job مجزا؛ Integration سخت‌گیر با Docker
+
+### متغیرهای محیطی
+- WP_PATH, WP_INTEGRATION, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD
