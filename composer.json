@@ -70,13 +70,10 @@
     "psalm:taint": "vendor/bin/psalm --taint-analysis",
     "validate:test-env": "php bin/validate-test-environment.php",
     "setup:wp-tests": "vendor/bin/wp-phpunit-setup || echo setup",
-    "test:unit": "XDEBUG_MODE=coverage vendor/bin/phpunit --colors=always --log-junit build/junit.unit.xml --coverage-clover build/coverage.unit.xml",
-    "test:integration": "phpunit --configuration phpunit-integration.xml",
+    "test:unit": "vendor/bin/phpunit --testsuite=unit",
+    "test:int": "bash scripts/run-integration.sh",
+    "test:all": "composer test:unit && composer test:int",
     "test": "composer test:unit",
-    "test:all": [
-      "@test:unit",
-      "@test:integration"
-    ],
     "test:debug": "phpunit --configuration phpunit-unit.xml --no-coverage --verbose",
     "test:smoke": "vendor/bin/phpunit tests/Unit/BrainMonkeySmokeTest.php tests/WordPress/Smoke/BootTest.php",
     "gen:features": "php scripts/generate_features_md.php",
@@ -125,6 +122,7 @@
   },
   "autoload-dev": {
     "psr-4": {
+      "SmartAlloc\\Tests\\": "tests/",
       "SmartAlloc\\Tests\\Unit\\": "tests/Unit/",
       "SmartAlloc\\Tests\\Integration\\": "tests/Integration/",
       "SmartAlloc\\Tests\\E2E\\": "tests/E2E/"
