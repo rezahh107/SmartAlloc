@@ -5,24 +5,29 @@ on:
   pull_request:
 
 jobs:
-  phpunit:
+  unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
-
-      - name: Run Unit
+      - name: Run unit tests
         run: composer test:unit
 
-      - name: Run Integration (Docker DB)
-        run: |
-          docker compose -f docker-compose.test.yml up -d db
-          bash scripts/wait-for-db.sh 127.0.0.1 root root
-          composer test:int
+  integration:
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Run integration tests
+        env:
+          CI: "true"
+        run: composer test:int

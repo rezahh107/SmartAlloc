@@ -574,3 +574,35 @@ $env:GH_TOKEN="ghp_xxx"
 ## Manual PR Workflow
 
 If repository dispatch is unavailable, trigger the **Manual PR Fallback** workflow from the Actions tab. It creates a pull request from the specified branch and can auto-merge when enabled.
+
+## Testing
+
+### Unit Tests
+
+Run fast unit tests without WordPress or a database:
+
+```bash
+composer test:unit
+```
+
+### Integration Tests
+
+Integration tests require MySQL and WordPress. When Docker is available, the helper script provisions them automatically:
+
+```bash
+composer test:int
+```
+
+Locally, if Docker or MySQL are missing, the command exits without error. In CI, set `CI=true` to enforce database availability.
+
+Environment variables used:
+
+- `WP_INTEGRATION` (default `0`)
+- `WP_PATH` (WordPress path; default `./wordpress`)
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+
+Generate HTML coverage for unit tests with:
+
+```bash
+composer test:coverage
+```

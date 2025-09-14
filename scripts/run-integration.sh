@@ -1,29 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 1) اگر Docker داری، DB را بالا بیار
-if command -v docker &>/dev/null; then
+# CI mode is strict: fail if Docker/DB not available
+if [[ "${CI:-}" == "true" ]]; then
+  if ! command -v docker >/dev/null; then
+    echo "Docker is required for integration tests in CI" >&2
+    exit 1
+  fi
   docker compose -f docker-compose.test.yml up -d db
   bash scripts/wait-for-db.sh 127.0.0.1 root root
-  DB_HOST="127.0.0.1"
-  DB_USER="root"
-  DB_PASS="root"
-  DB_NAME="wp_test"
 else
-  # فرض: یک MySQL محلی داری
-  DB_HOST="${DB_HOST:-127.0.0.1}"
-  DB_USER="${DB_USER:-root}"
-  DB_PASS="${DB_PASS:-root}"
-  DB_NAME="${DB_NAME:-wp_test}"
-  bash scripts/wait-for-db.sh "$DB_HOST" "$DB_USER" "$DB_PASS"
+  if ! command -v docker >/dev/null; then
+    echo "Docker not available; skipping integration tests" >&2
+    exit 0
+  fi
+  if ! docker compose -f docker-compose.test.yml up -d db; then
+    echo "Docker compose failed; skipping integration tests" >&2
+    exit 0
+  fi
+  if ! bash scripts/wait-for-db.sh 127.0.0.1 root root; then
+    echo "Database not ready; skipping integration tests" >&2
+    exit 0
+  fi
 fi
 
-# 2) نصب/آپدیت محیط تست وردپرس (اگر اسکریپت استاندارد را داری)
-if [ -f "scripts/setup-wp-tests.sh" ]; then
-  bash scripts/setup-wp-tests.sh "$DB_NAME" "$DB_USER" "$DB_PASS" "$DB_HOST" latest
-fi
-
-# 3) اجرای PHPUnit در حالت Integration
+bash scripts/setup-wp-tests.sh wp_test root root 127.0.0.1 latest
+export DB_HOST=127.0.0.1
+export DB_USER=root
+export DB_PASSWORD=root
+export DB_NAME=wp_test
 export WP_INTEGRATION=1
-# export WP_PATH=${WP_PATH:-/var/www/html}
+
 vendor/bin/phpunit --testsuite=integration
