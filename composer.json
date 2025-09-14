@@ -55,10 +55,10 @@
   "scripts": {
     "qa:phpcs": "vendor/bin/phpcs --standard=phpcs.xml",
     "qa:selective": "bash scripts/selective_or_full.sh",
-    "test:unit": "phpunit --testsuite=unit --stop-on-failure",
+    "test:unit": "phpunit --configuration=phpunit-unit.xml --testsuite=unit",
     "test:int": "bash scripts/run-integration.sh",
     "test:all": "composer test:unit && composer test:int",
-    "test:coverage": "phpunit --testsuite=unit --coverage-html=coverage",
+    "test:coverage": "phpunit --configuration=phpunit-unit.xml --coverage-html=coverage/html --coverage-clover=coverage/clover.xml",
     "state": "php scripts/generate_features_md.php && php scripts/ai_context_sync.php && bash scripts/update_state.sh",
     "cs": "vendor/bin/phpcs -q --standard=phpcs.xml",
     "lint:php": "php -l $(git ls-files '*.php')",
