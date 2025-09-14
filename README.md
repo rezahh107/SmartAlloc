@@ -207,9 +207,17 @@ composer dist
 ### Testing
 
 ```bash
-# Unit tests
-composer setup:wp-tests
+# Unit tests (no WordPress or DB required)
 composer test:unit
+
+# Generate unit test coverage
+composer test:coverage
+
+# Integration tests (requires Docker; skips if unavailable)
+composer test:int
+
+# Run both suites
+composer test:all
 
 # End-to-end tests
 npm run e2e:install
