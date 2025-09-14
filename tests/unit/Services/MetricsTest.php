@@ -13,14 +13,14 @@ namespace SmartAlloc\Tests\Unit\Services {
 
 use Exception;
 use PHPUnit\Framework\TestCase;
-use SmartAlloc\Infrastructure\Contracts\DbProxy;
+use SmartAlloc\Database\DbPort;
 use SmartAlloc\Services\Metrics;
 
 final class MetricsTest extends TestCase
 {
-    public function test_constructor_accepts_db_proxy_and_table(): void
+    public function test_constructor_accepts_db_port_and_table(): void
     {
-        $mockDb = $this->createMock(DbProxy::class);
+        $mockDb = $this->createMock(DbPort::class);
         $metrics = new Metrics($mockDb, 'wp_salloc_metrics');
 
         $this->assertInstanceOf(Metrics::class, $metrics);
@@ -28,8 +28,8 @@ final class MetricsTest extends TestCase
 
     public function test_database_exception_handling(): void
     {
-        $mockDb = $this->createMock(DbProxy::class);
-        $mockDb->method('getResults')->willThrowException(new Exception('DB Error'));
+        $mockDb = $this->createMock(DbPort::class);
+        $mockDb->method('exec')->willThrowException(new Exception('DB Error'));
 
         $metrics = new Metrics($mockDb, 'wp_salloc_metrics');
         $result = $metrics->get('foo');
@@ -39,8 +39,8 @@ final class MetricsTest extends TestCase
 
     public function test_error_logging_on_database_failure(): void
     {
-        $mockDb = $this->createMock(DbProxy::class);
-        $mockDb->method('insert')->willThrowException(new Exception('Insert failed'));
+        $mockDb = $this->createMock(DbPort::class);
+        $mockDb->method('exec')->willThrowException(new Exception('Insert failed'));
         $metrics = new Metrics($mockDb, 'wp_salloc_metrics');
 
         $temp = tempnam(sys_get_temp_dir(), 'log');
@@ -53,11 +53,6 @@ final class MetricsTest extends TestCase
         $this->assertStringContainsString('Metrics::inc: Insert failed', $output);
     }
 
-    public function test_factory_method_creates_with_defaults(): void
-    {
-        $metrics = Metrics::createDefault();
-        $this->assertInstanceOf(Metrics::class, $metrics);
-    }
 }
 
 }
