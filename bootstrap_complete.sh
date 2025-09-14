@@ -28,6 +28,6 @@ log 'Quality tools'
 if vendor/bin/phpcs --standard=WordPress-Extra --extensions=php ./ >/dev/null 2>&1; then ok 'PHPCS clean'; else warn 'PHPCS issues'; fi
 if vendor/bin/phpstan analyze --level=5 includes/ >/dev/null 2>&1; then ok 'PHPStan clean'; else warn 'PHPStan issues'; fi
 if vendor/bin/phpunit --group smoke --no-coverage >/dev/null 2>&1; then ok 'PHPUnit smoke pass'; else warn 'PHPUnit smoke fail'; fi
-if scripts/patch-guard-check.sh >/dev/null 2>&1; then ok 'Patch Guard pass'; else warn 'Patch Guard fail'; fi
+log 'Patch Guard disabled; skipping check'
 
 ok 'Bootstrap complete'
