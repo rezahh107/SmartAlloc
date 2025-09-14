@@ -16,23 +16,45 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     permissions:
-      contents: write        # لازم برای commit/PR
+      contents: write
       pull-requests: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run scaffold script into temp folder
+      # --- Sanity checks & diagnostics ---
+      - name: Sanity checks (files & permissions)
+        shell: bash
         run: |
+          set -euxo pipefail
+          echo "Branch: $GITHUB_REF"
+          pwd
+          ls -la
+          echo "== Check script exists =="
+          test -f scaffold-smartalloc-clean.sh
+          echo "== Bash syntax check =="
+          bash -n scaffold-smartalloc-clean.sh
+          echo "== Show head of script =="
+          head -n 20 scaffold-smartalloc-clean.sh
+
+      - name: Run scaffold script into temp folder (debug on)
+        shell: bash
+        run: |
+          set -euxo pipefail
           bash scaffold-smartalloc-clean.sh "${{ inputs.project_name }}" "${{ inputs.author_name }}"
 
       - name: Copy scaffold into repo root
+        shell: bash
         run: |
+          set -euxo pipefail
           shopt -s dotglob
           rsync -a "${{ inputs.project_name }}/" ./
           rm -rf "${{ inputs.project_name }}"
+          # normalize line endings just in case
+          sed -i 's/\r$//' scripts/run-integration.sh || true
           chmod +x scripts/run-integration.sh || true
 
       - name: Setup PHP & Composer
@@ -43,7 +65,9 @@ jobs:
           tools: composer:v2
 
       - name: Install deps & run unit tests
+        shell: bash
         run: |
+          set -euxo pipefail
           composer install --no-interaction --prefer-dist
           composer cs || true
           composer test:unit
