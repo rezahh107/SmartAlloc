@@ -102,7 +102,9 @@
     "patch:guard:ps": "powershell -ExecutionPolicy Bypass -File scripts/patch-guard-check.ps1",
     "plugin:check": "bash scripts/run-plugin-check.sh",
     "phpstan": "phpstan analyze --level=5 --no-progress",
-    "audit": "composer audit"
+    "audit": "composer audit",
+    "fix:naming": "php-cs-fixer fix --allow-risky=yes --using-cache=no --rules='{ \"psr_autoloading\": true }'",
+    "check:naming": "phpcs -q"
   },
   "scripts-descriptions": {
     "baseline:check": "Run baseline compliance check for current phase",
@@ -117,11 +119,10 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "SmartAlloc\\Tests\\": "tests/"
-    },
-    "exclude-from-classmap": [
-      "tests/"
-    ]
+      "SmartAlloc\\Tests\\Unit\\": "tests/Unit/",
+      "SmartAlloc\\Tests\\Integration\\": "tests/Integration/",
+      "SmartAlloc\\Tests\\E2E\\": "tests/E2E/"
+    }
   },
   "config": {
     "allow-plugins": {
