@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+cleanup() {
+  # Cleanup containers after tests
+  docker-compose -f docker-compose.test.yml down -v >/dev/null 2>&1 || true
+}
+
+trap cleanup EXIT
+
 # CI mode is strict: fail if Docker/DB not available
 if [[ "${CI:-}" == "true" ]]; then
   if ! command -v docker >/dev/null; then

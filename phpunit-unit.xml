@@ -29,7 +29,7 @@
   </php>
 
   <extensions>
-    <bootstrap class="Brain\Monkey\PHPUnit\BrainMonkeyPHPUnit"/>
+    <extension class="BrainMonkeyExtension"/>
   </extensions>
 
   <coverage includeUncoveredFiles="true">

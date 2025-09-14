@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="tests/bootstrap.php"
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="tools/bootstrap/autoload.php"
          colors="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true">
@@ -8,16 +10,13 @@
             <file>tests/unit/SmokeTest.php</file>
         </testsuite>
     </testsuites>
-    <coverage>
-        <include>
-            <file>src/Example.php</file>
-        </include>
-    </coverage>
-    <logging>
-        <junit outputFile="build/junit.unit.xml"/>
-        <coverage-clover outputFile="build/coverage.unit.xml"/>
-    </logging>
     <php>
         <ini name="date.timezone" value="UTC"/>
+        <env name="WP_INTEGRATION" value="0"/>
+        <env name="WP_TESTS_DOMAIN" value="localhost"/>
     </php>
+
+    <extensions>
+        <extension class="BrainMonkeyExtension"/>
+    </extensions>
 </phpunit>
