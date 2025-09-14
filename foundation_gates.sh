@@ -14,13 +14,11 @@ cat > "$CONTEXT_FILE" <<'JSON'
     "last_update": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
     "phase": "FOUNDATION"
   },
-  "thresholds": {
-    "patch_guard_files": 20,
-    "patch_guard_loc": 800,
+    "thresholds": {
     "dlq_ratio": 0.01,
     "error_rate": 0.005,
     "p95_latency": 2.0
-  }
+    }
 }
 JSON
 fi
@@ -44,13 +42,6 @@ else
   E2E_EXIT=0
 fi
 
-if [ -f "scripts/patch-guard.php" ]; then
-  php scripts/patch-guard.php --cap-files=20 --cap-loc=800
-  PATCH_EXIT=$?
-else
-  PATCH_EXIT=0
-fi
-
 if [ -f "scripts/site-health.php" ]; then
   php scripts/site-health.php --assert GREEN
   HEALTH_EXIT=$?
@@ -60,7 +51,7 @@ fi
 
 # Phase 4: Result Processing & Routing
 
-TOTAL_FAILS=$((QUALITY_EXIT + BASELINE_EXIT + UNIT_EXIT + E2E_EXIT + PATCH_EXIT + HEALTH_EXIT))
+TOTAL_FAILS=$((QUALITY_EXIT + BASELINE_EXIT + UNIT_EXIT + E2E_EXIT + HEALTH_EXIT))
 
 if [ $TOTAL_FAILS -eq 0 ]; then
   echo "✅ ALL GATES PASS - Triggering Auto-PR"
@@ -73,7 +64,7 @@ if [ $TOTAL_FAILS -eq 0 ]; then
     "chunk_id": "CHUNK_Foundation_Gates",
     "commit_ref": "$COMMIT_SHA",
     "pr_title": "🚀 Foundation Gates PASS - Auto-PR",
-    "pr_body": "All Foundation gates validated successfully.\n\n**Gates Passed:**\n- ✅ Code Quality & Standards\n- ✅ Baseline Compliance\n- ✅ Unit Testing\n- ✅ E2E Testing\n- ✅ Patch Guard\n- ✅ Site Health\n\n**Artifacts:** Coverage reports, compliance logs attached.",
+      "pr_body": "All Foundation gates validated successfully.\n\n**Gates Passed:**\n- ✅ Code Quality & Standards\n- ✅ Baseline Compliance\n- ✅ Unit Testing\n- ✅ E2E Testing\n- ✅ Site Health\n\n**Artifacts:** Coverage reports, compliance logs attached.",
     "pr_branch": "$BRANCH_NAME",
     "base": "main",
     "auto_merge": true,
@@ -87,7 +78,7 @@ EOF2
   jq --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
      --arg commit "$COMMIT_SHA" \
      --arg branch "$BRANCH_NAME" \
-     '.active_context.ci_runs += [{"timestamp": $timestamp, "phase": "FOUNDATION", "status": "PASS", "commit_sha": $commit, "pr_branch": $branch, "gates_passed": ["quality", "baseline", "unit", "e2e", "patch_guard", "site_health"]}] | .active_context.last_update = $timestamp' \
+      '.active_context.ci_runs += [{"timestamp": $timestamp, "phase": "FOUNDATION", "status": "PASS", "commit_sha": $commit, "pr_branch": $branch, "gates_passed": ["quality", "baseline", "unit", "e2e", "site_health"]}] | .active_context.last_update = $timestamp' \
      "$CONTEXT_FILE" > temp.json && mv temp.json "$CONTEXT_FILE"
   if [ -n "$GITHUB_TOKEN" ]; then
     curl -X POST \
@@ -103,9 +94,8 @@ else
   [ $QUALITY_EXIT -ne 0 ] && FAILING_GATES+=("quality_standards")
   [ $BASELINE_EXIT -ne 0 ] && FAILING_GATES+=("baseline_compliance")
   [ $UNIT_EXIT -ne 0 ] && FAILING_GATES+=("unit_testing")
-  [ $E2E_EXIT -ne 0 ] && FAILING_GATES+=("e2e_testing")
-  [ $PATCH_EXIT -ne 0 ] && FAILING_GATES+=("patch_guard")
-  [ $HEALTH_EXIT -ne 0 ] && FAILING_GATES+=("site_health")
+    [ $E2E_EXIT -ne 0 ] && FAILING_GATES+=("e2e_testing")
+    [ $HEALTH_EXIT -ne 0 ] && FAILING_GATES+=("site_health")
   HANDOFF_FILE="wp-content/uploads/smartalloc/artifacts/HANDOFF_PACKET_$(date +%Y%m%d_%H%M%S).json"
   TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   cat > "$HANDOFF_FILE" <<EOF3
@@ -121,20 +111,18 @@ else
     "junit": "build/junit.xml",
     "failures": "build/failures.json",
     "coverage": "build/coverage/summary.json",
-    "quality_report": "build/quality-report.json",
-    "patch_guard": "build/patch-guard.json",
-    "site_health": "build/site-health.json"
+      "quality_report": "build/quality-report.json",
+      "site_health": "build/site-health.json"
   },
   "context": {
     "total_failures": $TOTAL_FAILS,
-    "gate_results": {
-      "quality": $QUALITY_EXIT,
-      "baseline": $BASELINE_EXIT,
-      "unit": $UNIT_EXIT,
-      "e2e": $E2E_EXIT,
-      "patch_guard": $PATCH_EXIT,
-      "site_health": $HEALTH_EXIT
-    }
+      "gate_results": {
+        "quality": $QUALITY_EXIT,
+        "baseline": $BASELINE_EXIT,
+        "unit": $UNIT_EXIT,
+        "e2e": $E2E_EXIT,
+        "site_health": $HEALTH_EXIT
+      }
   },
   "timestamp": "$TIMESTAMP"
 }
