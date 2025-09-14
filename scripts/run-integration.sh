@@ -23,7 +23,10 @@ if [ -f "scripts/setup-wp-tests.sh" ]; then
   bash scripts/setup-wp-tests.sh "$DB_NAME" "$DB_USER" "$DB_PASS" "$DB_HOST" latest
 fi
 
+# Export vars for bootstrap
+export DB_HOST DB_USER DB_PASS DB_NAME
+export WP_PATH="$PWD/wordpress"
+
 # 3) اجرای PHPUnit در حالت Integration
 export WP_INTEGRATION=1
-# export WP_PATH=${WP_PATH:-/var/www/html}
 vendor/bin/phpunit --testsuite=integration
