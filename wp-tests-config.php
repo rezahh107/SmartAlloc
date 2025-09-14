@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * WordPress tests configuration (docker-compatible)
  */
@@ -19,6 +20,9 @@ define( 'WP_TESTS_DOMAIN', 'example.org' );
 define( 'WP_TESTS_EMAIL', 'admin@example.org' );
 define( 'WP_TESTS_TITLE', 'Test Blog' );
 define( 'WP_PHP_BINARY', 'php' );
+
+define( 'WP_TESTS_DB_CREATE', false );
+define( 'WP_TESTS_DIR', '/tmp/wordpress-tests-lib' );
 
 $table_prefix = 'wptests_';
 

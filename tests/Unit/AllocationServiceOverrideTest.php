@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 
 declare(strict_types=1);
 
@@ -13,6 +14,9 @@ use SmartAlloc\Tests\BaseTestCase;
 if (!defined('ARRAY_A')) {
     define('ARRAY_A', 'ARRAY_A');
 }
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
 
 final class AllocationServiceOverrideTest extends BaseTestCase {
 
@@ -22,20 +26,22 @@ final class AllocationServiceOverrideTest extends BaseTestCase {
 		parent::setUp();
 		Monkey\setUp();
 		global $wpdb;
-		$wpdb      = new class() extends \wpdb {
-			public string $prefix = 'wp_';
-			public array $rows    = array(
-				1 => array(
+                $wpdb      = new class() extends \wpdb {
+                        public $prefix = 'wp_';
+                        public array $rows    = array(
+                                1 => array(
 					'id'        => 1,
 					'mentor_id' => 2,
 					'status'    => 'pending_review',
 				),
 			);
 			public function __construct() {}
-			public function prepare( string $q, ...$a ): string {
-				return vsprintf( $q, $a[0] );}
-			public function get_row( $q, $o ) {
-				return $this->rows[1] ?? null;}
+                        public function prepare( $q, ...$a ) {
+                                return vsprintf( $q, $a[0] );
+                        }
+                        public function get_row( $q = null, $o = OBJECT, $y = 0 ) {
+                                return $this->rows[1] ?? null;
+                        }
 			public function query( $q ) {
 				if ( str_contains( $q, 'UPDATE' ) ) {
 					$this->rows[1]['mentor_id']             = 3;
