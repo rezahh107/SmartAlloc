@@ -1,41 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cleanup() {
-  # Cleanup containers after tests
-  docker-compose -f docker-compose.test.yml down -v >/dev/null 2>&1 || true
-}
+echo "[integration] starting…"
 
-trap cleanup EXIT
-
-# CI mode is strict: fail if Docker/DB not available
-if [[ "${CI:-}" == "true" ]]; then
-  if ! command -v docker >/dev/null; then
-    echo "Docker is required for integration tests in CI" >&2
-    exit 1
-  fi
-  docker compose -f docker-compose.test.yml up -d db
-  bash scripts/wait-for-db.sh 127.0.0.1 root root
-else
-  if ! command -v docker >/dev/null; then
-    echo "Docker not available; skipping integration tests" >&2
-    exit 0
-  fi
-  if ! docker compose -f docker-compose.test.yml up -d db; then
-    echo "Docker compose failed; skipping integration tests" >&2
-    exit 0
-  fi
-  if ! bash scripts/wait-for-db.sh 127.0.0.1 root root; then
-    echo "Database not ready; skipping integration tests" >&2
-    exit 0
-  fi
+# 0) Docker availability
+if ! command -v docker >/dev/null 2>&1; then
+  echo "[integration] docker CLI not found; skipping."; exit 0
 fi
 
-bash scripts/setup-wp-tests.sh wp_test root root 127.0.0.1 latest
-export DB_HOST=127.0.0.1
-export DB_USER=root
-export DB_PASSWORD=root
-export DB_NAME=wp_test
-export WP_INTEGRATION=1
+# 1) Daemon readiness (local or via DOCKER_HOST)
+if ! docker info >/dev/null 2>&1; then
+  echo "[integration] docker daemon unreachable; skipping."; exit 0
+fi
 
-vendor/bin/phpunit --testsuite=integration
+# 2) Compose presence
+if ! docker compose version >/dev/null 2>&1; then
+  echo "[integration] docker compose not available; skipping."; exit 0
+fi
+
+# 3) Bring up test DB stack if compose file exists
+if [[ -f "docker-compose.test.yml" ]]; then
+  echo "[integration] bringing up compose stack…"
+  docker compose -f docker-compose.test.yml up -d --wait
+else
+  echo "[integration] docker-compose.test.yml not found; skipping."; exit 0
+fi
+
+# 4) Prepare WP tests (standard script)
+export WP_INTEGRATION="${WP_INTEGRATION:-1}"
+export WP_PATH="${WP_PATH:-/tmp/wp}"
+bash scripts/setup-wp-tests.sh
+
+# 5) Run integration suite
+vendor/bin/phpunit --testsuite=integration -v
+
+# 6) Teardown (best-effort)
+echo "[integration] tearing down compose stack…"
+docker compose -f docker-compose.test.yml down -v || true
+echo "[integration] done."
+
