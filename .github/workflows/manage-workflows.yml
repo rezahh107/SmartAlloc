@@ -1,0 +1,71 @@
+name: Manage Workflows (enable/disable)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'disable or enable'
+        required: true
+        default: 'disable'
+      whitelist:
+        description: 'Comma-separated workflow names to keep as-is (exact name match)'
+        required: false
+        default: ''
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  manage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List & toggle workflows via API
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const mode = core.getInput('mode').trim().toLowerCase();
+            if (!['disable','enable'].includes(mode)) {
+              core.setFailed(`Invalid mode: ${mode}`); return;
+            }
+            const raw = core.getInput('whitelist') || '';
+            const whitelist = raw.split(',').map(s=>s.trim()).filter(Boolean);
+            core.info(`Mode: ${mode} | Whitelist: [${whitelist.join(', ')}]`);
+
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            // paginate all workflows
+            let page = 1, per_page = 100, all = [];
+            while (true) {
+              const { data } = await github.rest.actions.listRepoWorkflows({ owner, repo, per_page, page });
+              all = all.concat(data.workflows || []);
+              if (!data.workflows || data.workflows.length < per_page) break;
+              page++;
+            }
+            if (all.length === 0) {
+              core.info('No workflows found.'); return;
+            }
+
+            let touched = 0;
+            for (const wf of all) {
+              const name = wf.name || wf.path || String(wf.id);
+              if (whitelist.includes(name)) {
+                core.info(`SKIP (whitelisted): ${name}`);
+                continue;
+              }
+              try {
+                if (mode === 'disable') {
+                  await github.rest.actions.disableWorkflow({ owner, repo, workflow_id: wf.id });
+                  core.info(`DISABLED: ${name}`);
+                } else {
+                  await github.rest.actions.enableWorkflow({ owner, repo, workflow_id: wf.id });
+                  core.info(`ENABLED: ${name}`);
+                }
+                touched++;
+              } catch (e) {
+                core.warning(`FAILED ${mode.toUpperCase()}: ${name} -> ${e.message}`);
+              }
+            }
+            core.info(`Done. Total ${mode}d: ${touched}`);
+
