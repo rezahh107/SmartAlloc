@@ -2,7 +2,8 @@ FROM php:8.3-cli
 
 # Base tools and PHP extensions (incl. GD for phpoffice/phpspreadsheet)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git unzip zip curl ca-certificates libzip-dev libicu-dev mariadb-client \
+    git unzip zip curl ca-certificates libzip-dev libicu-dev \
+    default-mysql-client jq \
     libfreetype6-dev libjpeg62-turbo-dev libpng-dev libwebp-dev \
  && docker-php-ext-install -j"$(nproc)" mysqli zip intl \
  && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
