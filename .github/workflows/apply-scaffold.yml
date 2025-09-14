@@ -1,0 +1,67 @@
+name: Apply Scaffold
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Temp folder to scaffold into'
+        required: true
+        default: 'smartalloc-clean'
+      author_name:
+        description: 'Composer author/namespace'
+        required: true
+        default: 'yourname'
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # لازم برای commit/PR
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run scaffold script into temp folder
+        run: |
+          bash scaffold-smartalloc-clean.sh "${{ inputs.project_name }}" "${{ inputs.author_name }}"
+
+      - name: Copy scaffold into repo root
+        run: |
+          shopt -s dotglob
+          rsync -a "${{ inputs.project_name }}/" ./
+          rm -rf "${{ inputs.project_name }}"
+          chmod +x scripts/run-integration.sh || true
+
+      - name: Setup PHP & Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install deps & run unit tests
+        run: |
+          composer install --no-interaction --prefer-dist
+          composer cs || true
+          composer test:unit
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: feat/scaffold-apply
+          title: 'Scaffold: clean test baseline (unit WP-free, DinD integration, CI)'
+          commit-message: 'chore(scaffold): apply clean test baseline'
+          labels: scaffold, ci, tests
+          body: |
+            This PR applies the clean SmartAlloc scaffold:
+            - Strict unit isolation (UTC + WordPress contamination sentinel)
+            - Minimal Docker-based integration runner (graceful skip locally)
+            - GitHub Actions: unit matrix (no Xdebug), DinD integration, composer audit
+            - PSR-12 code style commands
+            **AC**
+            - `composer test:unit` green without touching WP/DB
+            - Runner owns `compose up --wait / down -v`, integration skips if Docker absent
+            - CI runs 3 jobs (unit, integration, security)
