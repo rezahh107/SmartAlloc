@@ -1,17 +1,17 @@
-version: "3.8"
+# version: '3.9'  # Compose V2 does not require a version key
 services:
   db:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: wp_test
-      MYSQL_USER: wp_test
-      MYSQL_PASSWORD: wp_test
-    ports: ["3306:3306"]
+      MYSQL_DATABASE: wp_tests
+      MYSQL_USER: wp
+      MYSQL_PASSWORD: wp
+    ports:
+      - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-    tmpfs:
-      - /var/lib/mysql
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+      start_period: 5s
