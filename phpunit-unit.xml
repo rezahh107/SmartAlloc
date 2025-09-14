@@ -6,36 +6,25 @@
          stopOnFailure="false"
          failOnRisky="true"
          failOnWarning="true">
-
   <testsuites>
     <testsuite name="unit">
       <directory>tests/Unit</directory>
     </testsuite>
   </testsuites>
-
-  <source>
-    <include>
-      <directory suffix=".php">src</directory>
-    </include>
+  <groups>
     <exclude>
-      <directory>src/Infra</directory>
+      <group>integration</group>
     </exclude>
+  </groups>
+  <source>
+    <include><directory suffix=".php">src</directory></include>
+    <exclude><directory>src/Infra</directory></exclude>
   </source>
-
   <php>
     <ini name="date.timezone" value="UTC"/>
     <env name="WP_INTEGRATION" value="0"/>
-    <env name="WP_TESTS_DOMAIN" value="localhost"/>
   </php>
-
   <extensions>
-    <extension class="BrainMonkeyExtension"/>
+    <bootstrap class="Brain\Monkey\PHPUnit\BrainMonkeyPHPUnit"/>
   </extensions>
-
-  <coverage includeUncoveredFiles="true">
-    <report>
-      <clover outputFile="coverage/clover.xml"/>
-      <html outputDirectory="coverage/html"/>
-    </report>
-  </coverage>
 </phpunit>
