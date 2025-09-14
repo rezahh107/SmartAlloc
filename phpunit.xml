@@ -1,30 +1,39 @@
-<?xml version="1.0"?>
-<phpunit bootstrap="tests/bootstrap.php" colors="true">
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+  colors="true"
+  bootstrap="tools/bootstrap/autoload.php"
+  beStrictAboutOutputDuringTests="true"
+  beStrictAboutChangesToGlobalState="true"
+  failOnRisky="true"
+  failOnWarning="true"
+>
+  <php>
+    <!-- Default: Unit mode; set WP_INTEGRATION=1 when running Integration -->
+    <env name="WP_INTEGRATION" value="0"/>
+    <ini name="date.timezone" value="UTC"/>
+  </php>
+
   <testsuites>
-    <testsuite name="Unit">
-      <directory suffix="Test.php">tests/Unit</directory>
+    <testsuite name="unit">
+      <directory>tests/Unit</directory>
     </testsuite>
-    <testsuite name="Integration">
-      <directory suffix="Test.php">tests/Integration</directory>
-    </testsuite>
-    <testsuite name="E2E">
-      <directory suffix="Test.php">tests/E2E</directory>
+    <testsuite name="integration">
+      <directory>tests/Integration</directory>
     </testsuite>
   </testsuites>
 
+  <extensions>
+    <!-- Registers our BrainMonkey per-test hook -->
+    <extension class="BrainMonkeyExtension"/>
+  </extensions>
+
   <coverage processUncoveredFiles="true">
     <include>
-      <directory suffix=".php">src</directory>
+      <directory>src</directory>
     </include>
+    <report>
+      <clover outputFile="coverage.xml"/>
+      <html outputDirectory="coverage-html"/>
+    </report>
   </coverage>
-
-  <logging>
-    <junit outputFile="build/junit.xml"/>
-    <coverage-clover outputFile="build/coverage.xml"/>
-    <testdoxText outputFile="build/testdox.txt"/>
-  </logging>
-
-  <php>
-    <env name="XDEBUG_MODE" value="coverage"/>
-  </php>
 </phpunit>
