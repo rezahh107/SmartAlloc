@@ -38,7 +38,7 @@
     "vimeo/psalm": "^5.18",
     "php-stubs/wordpress-stubs": "^6.6",
     "giorgiosironi/eris": "^1.0",
-    "wp-phpunit/wp-phpunit": "6.5.*",
+    "wp-phpunit/wp-phpunit": "6.8.*",
     "johnpbloch/wordpress-core": "^6.5",
     "friendsofphp/php-cs-fixer": "^3.59",
     "slevomat/coding-standard": "^8.14"
